@@ -970,6 +970,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GLee.c"
+				>
+			</File>
+			<File
 				RelativePath=".\GLee.h"
 				>
 			</File>
