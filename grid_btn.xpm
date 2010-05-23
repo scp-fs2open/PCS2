@@ -1,0 +1,30 @@
+/* XPM */
+static const char *grid_btn[] = {
+/* columns rows colors chars-per-pixel */
+"20 20 4 1",
+"  c black",
+". c #D4D0C8",
+"X c #FDFDFD",
+"o c gray100",
+/* pixels */
+".X.......X........X.",
+"XXXXXXXXXXXXXXXXXXXX",
+".X.......X........X.",
+".X.              .X.",
+".X. oooooooooooo .X.",
+".X. o  oo  oo  o .X.",
+".X. o  oo  oo  o .X.",
+".X. oooooooooooo .X.",
+".X. oooooooooooo .X.",
+".X. o  oo  oo  o .X.",
+"XXX o  oo  oo  o XXX",
+".X. oooooooooooo .X.",
+".X. oooooooooooo .X.",
+".X. o  oo  oo  o .X.",
+".X. o  oo  oo  o .X.",
+".X. oooooooooooo .X.",
+".X.              .X.",
+".X.......X........X.",
+"XXXXXXXXXXXXXXXXXXXX",
+".X.......X........X."
+};
