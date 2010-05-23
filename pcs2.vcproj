@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="D:\libraries\wxWidgets\lib\vc_dll\msw;D:\libraries\wxWidgets\include;D:\libraries\DevIL\include;c:\libraries\sdl\include;D:\libraries\colladadom\dom\include;D:\libraries\colladadom\dom\include\1.4;D:\libraries\boost"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;NDEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;WXUSINGDLL;__WIN95__;__WIN32__;WINVER=0x0400;STRICT"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -85,7 +85,7 @@
 				OutputFile=".\Release/pcs2.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="C:\libraries\colladadom\dom\build\vc9-1.4"
+				AdditionalLibraryDirectories="D:\libraries\wxWidgets\lib\vc_dll;D:\libraries\DevIL\lib;c:\libraries\sdl\lib;&quot;D:\libraries\colladadom\dom\external-libs\pcre\lib\vc9&quot;;&quot;D:\libraries\colladadom\dom\build\vc9-1.4&quot;;&quot;D:\libraries\colladadom\dom\external-libs\libxml2\win32\lib&quot;;D:\libraries\boost"
 				IgnoreDefaultLibraryNames="LIBC.lib;libci.lib;msvcrtd.lib"
 				GenerateDebugInformation="false"
 				AssemblyDebug="0"
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="D:\libraries\wxWidgets\lib\vc_dll\mswd;D:\libraries\wxWidgets\include;D:\libraries\DevIL\include;c:\libraries\sdl\include;D:\libraries\colladadom\dom\include;D:\libraries\colladadom\dom\include\1.4;D:\libraries\boost"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;WXUSINGDLL;WXDEBUG;__WIN95__;__WIN32__;WINVER=0x0400;STRICT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -190,7 +190,7 @@
 				OutputFile=".\Debug/pcs2d.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="C:\libraries\colladadom\dom\build\vc9-1.4-d"
+				AdditionalLibraryDirectories="D:\libraries\wxWidgets\lib\vc_dll;D:\libraries\DevIL\lib;c:\libraries\sdl\lib;&quot;D:\libraries\colladadom\dom\external-libs\pcre\lib\vc9&quot;;&quot;D:\libraries\colladadom\dom\external-libs\libxml2\win32\lib&quot;;&quot;D:\libraries\colladadom\dom\build\vc9-1.4-d&quot;"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/pcs2.pdb"
@@ -548,10 +548,6 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="FileList.h"
-				>
 			</File>
 			<File
 				RelativePath=".\matrix.cpp"
