@@ -4,6 +4,7 @@
 #ifdef WIN32 
 
 #include <windows.h>
+#include <wx/msw/winundef.h>
 #define SleepFunc Sleep
 
 #else

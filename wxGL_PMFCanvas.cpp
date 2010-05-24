@@ -520,7 +520,7 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 	if (GLEE_ARB_vertex_buffer_object)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, omni_point_buffer.buffer);
-		pglLockArraysEXT( 0, omni_point_buffer.n_verts);
+		glLockArraysEXT( 0, omni_point_buffer.n_verts);
 		ERROR_CHECK;
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -585,7 +585,7 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 		glColor4ubv( (GLubyte*)color(255,255,255,255).col);
 
 
-		pglUnlockArraysEXT();
+		glUnlockArraysEXT();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glDisableClientState(GL_VERTEX_ARRAY);

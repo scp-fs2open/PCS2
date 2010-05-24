@@ -2025,7 +2025,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 		shine_tex_id = tc.TextureTranslate(t, TC_SHINEMAP);
 
 		glBindBuffer(GL_ARRAY_BUFFER, subobjects[sobj].vertex_buffer[t].buffer);
-		pglLockArraysEXT( 0, subobjects[sobj].vertex_buffer[t].n_verts);
+		glLockArraysEXT( 0, subobjects[sobj].vertex_buffer[t].n_verts);
 	ERROR_CHECK;
 	//	glInterleavedArrays(subobjects[sobj].vertex_buffer[t].format, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)NULL);
 
@@ -2134,7 +2134,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 			glDepthMask(GL_TRUE);
 			glDisable(GL_TEXTURE_2D);
 		}
-		pglUnlockArraysEXT();
+		glUnlockArraysEXT();
 	}
 	ERROR_CHECK;
 
@@ -2150,7 +2150,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 			if (subobjects[sobj].line_vertex_buffer[t].buffer != 0)
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, subobjects[sobj].line_vertex_buffer[t].buffer);
-				pglLockArraysEXT( 0, subobjects[sobj].line_vertex_buffer[t].n_verts);
+				glLockArraysEXT( 0, subobjects[sobj].line_vertex_buffer[t].n_verts);
 
 				glActiveTexture(GL_TEXTURE0);
 				glClientActiveTextureARB(GL_TEXTURE0);
@@ -2168,7 +2168,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 				glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
 			ERROR_CHECK;
 				glDrawArrays(GL_LINES, 0, subobjects[sobj].line_vertex_buffer[t].n_verts);
-				pglUnlockArraysEXT();
+				glUnlockArraysEXT();
 			}
 		}
 	}
@@ -2177,7 +2177,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 	if(active_texture >-1 && subobjects[sobj].line_vertex_buffer[active_texture].buffer != 0){
 		glColor4ubv( (GLubyte*) get_TXTR_color().col);
 		glBindBuffer(GL_ARRAY_BUFFER, subobjects[sobj].line_vertex_buffer[active_texture].buffer);
-		pglLockArraysEXT( 0, subobjects[sobj].line_vertex_buffer[active_texture].n_verts);
+		glLockArraysEXT( 0, subobjects[sobj].line_vertex_buffer[active_texture].n_verts);
 	ERROR_CHECK;
 		glActiveTexture(GL_TEXTURE0);
 		glClientActiveTextureARB(GL_TEXTURE0);
@@ -2195,7 +2195,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
 	ERROR_CHECK;
 		glDrawArrays(GL_LINES, 0, subobjects[sobj].line_vertex_buffer[active_texture].n_verts);
-		pglUnlockArraysEXT();
+		glUnlockArraysEXT();
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
