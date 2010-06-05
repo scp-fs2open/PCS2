@@ -8,5 +8,5 @@ class text_ctrl:public wxTextCtrl{
 
 	DECLARE_EVENT_TABLE();
 public:
-	text_ctrl(wxWindow* parent, wxWindowID id, const wxString& value = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0):wxTextCtrl(parent, id, value, pos, size, style){};
+	text_ctrl(wxWindow* parent, wxWindowID id, const wxString& value = _(""), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0):wxTextCtrl(parent, id, value, pos, size, style){};
 };

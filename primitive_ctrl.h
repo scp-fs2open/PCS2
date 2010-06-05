@@ -8,23 +8,23 @@
 
 
 inline std::string get_string(text_ctrl*tc){
-	return std::string(tc->GetValue().c_str());
+	return std::string(tc->GetValue().mb_str());
 }
 inline void set_string(text_ctrl*tc, const wxString&s){
 	tc->ChangeValue(s);
 }
 inline void set_string(text_ctrl*tc, const std::string&s){
-	tc->ChangeValue(s.c_str());
+	tc->ChangeValue(wxString(s.c_str(), wxConvUTF8));
 }
 
 inline std::string get_string(wxStaticText*st){
-	return std::string(st->GetLabel().c_str());
+	return std::string(st->GetLabel().mb_str());
 }
 inline void set_string(wxStaticText*st, const wxString&s){
 	st->SetLabel(s);
 }
 inline void set_string(wxStaticText*st, const std::string&s){
-	st->SetLabel(s.c_str());
+	st->SetLabel(wxString(s.c_str(), wxConvUTF8));
 }
 
 /*
@@ -48,10 +48,10 @@ public:
 	
 	//constructor builds the text box and adds it to editor's static box sizer
 	primitive_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<type>(parent,x,y,w,h, orient, Title)
 	{
 		//make the text editor
-		text_box = new data_ctrl(this,-1,"",wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
+		text_box = new data_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
 		//add it to our controls
 		add_control(text_box, 1,wxEXPAND ,1);
 	};
@@ -60,8 +60,8 @@ public:
 	DECLARE_EVENT_TABLE();
 
 	void do_lose_focus(wxFocusEvent&){
-		wxCommandEvent event(EDIT_DONE, GetId());
-		GetEventHandler()->ProcessEvent(event);
+		wxCommandEvent event(EDIT_DONE, this->GetId());
+		this->GetEventHandler()->ProcessEvent(event);
 	}
 //	void do_data_change(wxCommandEvent&){
 //		wxCommandEvent event(EDIT_DONE, GetId());
@@ -84,18 +84,18 @@ class _string_ctrl
 
 public:
 	//the main accessors, gets/sets the value in the text box
-	virtual std::string get_value(){return get_string(text_box);}
-	virtual void set_value(const std::string&s){set_string(text_box, s);}
+	virtual std::string get_value(){return get_string(this->text_box);}
+	virtual void set_value(const std::string&s){set_string(this->text_box, s);}
 
 	//just passes parameters to primitive, and makes sure the box is clear, only doing that for completeness sake
 	_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title)
+		:primitive_ctrl<std::string, data_ctrl>(parent,x,y,w,h,Title)
 	{
 		set_value("");
 	}
 };
-class string_ctrl : public _string_ctrl<text_ctrl>{public:string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl(parent,x,y,w,h,Title){}};
-class string_disp : public _string_ctrl<wxStaticText>{public:string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl(parent,x,y,w,h,Title){}};
+class string_ctrl : public _string_ctrl<text_ctrl>{public:string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
+class string_disp : public _string_ctrl<wxStaticText>{public:string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 
 //class for multi-line string interface
@@ -106,18 +106,18 @@ class _multi_string_ctrl
 
 public:
 	//the main accessors, gets/sets the value in the text box
-	virtual std::string get_value(){return get_string(text_box);}
-	virtual void set_value(const std::string&s){set_string(text_box, s);}
+	virtual std::string get_value(){return get_string(this->text_box);}
+	virtual void set_value(const std::string&s){set_string(this->text_box, s);}
 
 	//just passes parameters to primitive, and makes sure the box is clear, only doing that for completeness sake
 	_multi_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title, wxHORIZONTAL,wxTE_MULTILINE)
+		:primitive_ctrl<std::string, data_ctrl>(parent,x,y,w,h,Title, wxHORIZONTAL,wxTE_MULTILINE)
 	{
 		set_value("");
 	}
 };
-class multi_string_ctrl : public _multi_string_ctrl<text_ctrl>{public:multi_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl(parent,x,y,w,h,Title){}};
-class multi_string_disp : public _multi_string_ctrl<wxStaticText>{public:multi_string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl(parent,x,y,w,h,Title){}};
+class multi_string_ctrl : public _multi_string_ctrl<text_ctrl>{public:multi_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
+class multi_string_disp : public _multi_string_ctrl<wxStaticText>{public:multi_string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 //class for float interface
 template<class data_ctrl = text_ctrl>
@@ -127,18 +127,18 @@ class _float_ctrl
 
 public:
 	//the main accessors, gets/sets the value in the text box
-	virtual float get_value(){return (float)atof(get_string(text_box).c_str());}
-	virtual void set_value(const float&f){set_string(text_box, wxString().Format("%f",f));}
+	virtual float get_value(){return (float)atof(get_string(this->text_box).c_str());}
+	virtual void set_value(const float&f){set_string(this->text_box, wxString().Format(_("%f"),f));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
 	_float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title)
+		:primitive_ctrl<float, data_ctrl>(parent,x,y,w,h,Title)
 	{
 		set_value(0.0f);
 	}
 };
-class float_ctrl : public _float_ctrl<text_ctrl>{public:float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl(parent,x,y,w,h,Title){}};
-class float_disp : public _float_ctrl<wxStaticText>{public:float_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl(parent,x,y,w,h,Title){}};
+class float_ctrl : public _float_ctrl<text_ctrl>{public:float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
+class float_disp : public _float_ctrl<wxStaticText>{public:float_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 //class for int interface
 template<class data_ctrl = text_ctrl>
@@ -148,18 +148,18 @@ class _int_ctrl
 
 public:
 	//the main accessors, gets/sets the value in the text box
-	virtual int get_value(){return (int)atoi(get_string(text_box).c_str());}
-	virtual void set_value(const int&i){set_string(text_box, wxString().Format("%d",i));}
+	virtual int get_value(){return (int)atoi(get_string(this->text_box).c_str());}
+	virtual void set_value(const int&i){set_string(this->text_box, wxString().Format(_("%d"),i));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
 	_int_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title)
+		:primitive_ctrl<int, data_ctrl>(parent,x,y,w,h,Title)
 	{
 		set_value(0);
 	}
 };
-class int_ctrl : public _int_ctrl<text_ctrl>{public:int_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl(parent,x,y,w,h,Title){}};
-class int_disp : public _int_ctrl<wxStaticText>{public:int_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl(parent,x,y,w,h,Title){}};
+class int_ctrl : public _int_ctrl<text_ctrl>{public:int_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
+class int_disp : public _int_ctrl<wxStaticText>{public:int_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 
 //class for vector interface
@@ -171,33 +171,33 @@ class _vector_ctrl
 public:
 	//the main accessors, gets/sets the value in the text box
 	virtual vector3d get_value(){
-		wxString s = get_string(text_box).c_str();
+		wxString s = this->text_box->GetLabel();
 		if(s.Length()<1)return vector3d(0,0,0);
 
-		float x = (float)atof(s.c_str());
+		float x = (float)atof(s.mb_str());
 		s.Remove(0,s.find_first_of(':'));
 		if(s.Length()<1)return vector3d(x,0,0);
 		s.Remove(0,1);
 
-		float y = (float)atof(s.c_str());
+		float y = (float)atof(s.mb_str());
 		s.Remove(0,s.find_first_of(':'));
 		if(s.Length()<1)return vector3d(x,y,0);
 		s.Remove(0,1);
 
-		float z = (float)atof(s.c_str());
+		float z = (float)atof(s.mb_str());
 		return vector3d(x,y,z);
 	}
-	virtual void set_value(const vector3d&v){set_string(text_box, wxString().Format("%f:%f:%f",v.x,v.y,v.z));}
+	virtual void set_value(const vector3d&v){set_string(this->text_box, wxString().Format(_("%f:%f:%f"),v.x,v.y,v.z));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
 	_vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title)
+		:primitive_ctrl<vector3d, data_ctrl>(parent,x,y,w,h,Title)
 	{
 		set_value(vector3d(0,0,0));
 	}
 };
-class vector_ctrl : public _vector_ctrl<text_ctrl>{public:vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl(parent,x,y,w,h,Title){}};
-class vector_disp : public _vector_ctrl<wxStaticText>{public:vector_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl(parent,x,y,w,h,Title){}};
+class vector_ctrl : public _vector_ctrl<text_ctrl>{public:vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
+class vector_disp : public _vector_ctrl<wxStaticText>{public:vector_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 template<class data_ctrl = text_ctrl>
 class _normal_ctrl
@@ -209,17 +209,17 @@ public:
 	_normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
 		:_vector_ctrl<data_ctrl>(parent,x,y,w,h,Title)
 	{
-		add_control(norm_btn = new wxButton(this, NORM_NORMALIZE, "Norm", wxDefaultPosition, wxSize(40,20)));
-		norm_btn->SetToolTip("Normalize\nMake Unit length");
+		add_control(norm_btn = new wxButton(this, NORM_NORMALIZE, _("Norm"), wxDefaultPosition, wxSize(40,20)));
+		norm_btn->SetToolTip(_("Normalize\nMake Unit length"));
 	}
 
 	void on_normalize(wxCommandEvent& event){
-		set_value(MakeUnitVector(get_value()));
+		this->set_value(MakeUnitVector(this->get_value()));
 	}
 
 };
-class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl(parent,x,y,w,h,Title){};DECLARE_EVENT_TABLE();};
-class normal_disp : public _normal_ctrl<wxStaticText>{public:normal_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl(parent,x,y,w,h,Title){}};
+class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};DECLARE_EVENT_TABLE();};
+class normal_disp : public _normal_ctrl<wxStaticText>{public:normal_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 
 
@@ -235,17 +235,17 @@ class matrix_ctrl
 		wxString s = txt_box->GetValue();
 		if(s.Length()<1)return vector3d(0,0,0);
 
-		float x = (float)atof(s.c_str());
+		float x = (float)atof(s.mb_str());
 		s.Remove(0,s.find_first_of(':'));
 		if(s.Length()<1)return vector3d(x,0,0);
 		s.Remove(0,1);
 
-		float y = (float)atof(s.c_str());
+		float y = (float)atof(s.mb_str());
 		s.Remove(0,s.find_first_of(':'));
 		if(s.Length()<1)return vector3d(x,y,0);
 		s.Remove(0,1);
 
-		float z = (float)atof(s.c_str());
+		float z = (float)atof(s.mb_str());
 		return vector3d(x,y,z);
 	}
 public:
@@ -254,18 +254,18 @@ public:
 		return bobboau::matrix(get_vector(text_box),get_vector(text_box2),get_vector(text_box3));
 	}
 	virtual void set_value(const bobboau::matrix&m){
-		text_box->ChangeValue(wxString().Format("%e:%e:%e",m.a2d[0][0],m.a2d[0][1],m.a2d[0][2]));
-		text_box2->ChangeValue(wxString().Format("%e:%e:%e",m.a2d[1][0],m.a2d[1][1],m.a2d[1][2]));
-		text_box3->ChangeValue(wxString().Format("%e:%e:%e",m.a2d[2][0],m.a2d[2][1],m.a2d[2][2]));
+		text_box->ChangeValue(wxString().Format(_("%e:%e:%e"),m.a2d[0][0],m.a2d[0][1],m.a2d[0][2]));
+		text_box2->ChangeValue(wxString().Format(_("%e:%e:%e"),m.a2d[1][0],m.a2d[1][1],m.a2d[1][2]));
+		text_box3->ChangeValue(wxString().Format(_("%e:%e:%e"),m.a2d[2][0],m.a2d[2][1],m.a2d[2][2]));
 	}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
 	matrix_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl(parent,x,y,w,h,Title, wxVERTICAL)
+		:primitive_ctrl<bobboau::matrix>(parent,x,y,w,h,Title, wxVERTICAL)
 	{
 		//make the text editor
-		text_box2 = new text_ctrl(this,-1,"",wxPoint(6+x,15+y),wxSize(w-12,20));
-		text_box3 = new text_ctrl(this,-1,"",wxPoint(6+x,15+y),wxSize(w-12,20));
+		text_box2 = new text_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20));
+		text_box3 = new text_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20));
 		//add it to our controls
 		add_control(text_box2, 1,wxEXPAND ,1);
 		add_control(text_box3, 1,wxEXPAND ,1);
@@ -293,33 +293,33 @@ public:
 		:ctrl(parent,x,y,w,h,Title),options(Options), mode(Mode)
 	{
 		add_control(suggest_btn = new wxBitmapButton(this, STRING_SUGGEST, wxBitmap(suggest), wxDefaultPosition, wxSize(16,16)));
-		suggest_btn->SetToolTip("Suggest\nProvide Common Options");
+		suggest_btn->SetToolTip(_("Suggest\nProvide Common Options"));
 	}
 
 	DECLARE_EVENT_TABLE();
 	void on_suggest(wxCommandEvent& event){
-		wxMenu pop("");
+		wxMenu pop(_(""));
 		for(unsigned int i = 0; i<options.size(); i++){
 			if(options[i] == "")
 				pop.Append(wxID_SEPARATOR);
 			else
-				pop.Append(i,options[i].c_str());
+				pop.Append(i,wxString(options[i].c_str(), wxConvUTF8));
 		}
-		PopupMenu(&pop);
+		this->PopupMenu(&pop);
 	}
 	void on_suggest_menu(wxCommandEvent& event){
 		switch(mode){
 		case SUGGEST_APPEND:
-			text_box->ChangeValue(text_box->GetValue() + 
-				wxString(options[event.GetId()].c_str()));
+			this->text_box->ChangeValue(this->text_box->GetValue() +
+				wxString(options[event.GetId()].c_str(), wxConvUTF8));
 			break;
 		case SUGGEST_REPLACE:
 		default:
-			text_box->ChangeValue(options[event.GetId()].c_str());
+			this->text_box->ChangeValue(wxString(options[event.GetId()].c_str(), wxConvUTF8));
 			break;
 		}
-		text_box->SetFocus();
-		text_box->SetInsertionPointEnd();
+		this->text_box->SetFocus();
+		this->text_box->SetInsertionPointEnd();
 	}
 
 
@@ -351,7 +351,7 @@ protected:
 	combo*combo_box;
 	std::vector<type> option;
 
-	std::vector<primitive_list_item<type>>cur_list;
+	std::vector<primitive_list_item<type> >cur_list;
 public:
 	void set_item(const int&i){combo_box->Select(i);}
 
@@ -375,11 +375,11 @@ public:
 		}
 	}
 
-	void build_list(const std::vector<primitive_list_item<type>>&list){
+	void build_list(const std::vector<primitive_list_item<type> >&list){
 		combo_box->Clear();
 		option.resize(list.size());
 		for(unsigned int i = 0; i<list.size(); i++){
-			combo_box->Append(list[i].title.c_str());
+			combo_box->Append(wxString(list[i].title.c_str(), wxConvUTF8));
 			option[i]=list[i].data;
 		}
 		if(list.size())
@@ -389,13 +389,13 @@ public:
 	}
 	
 	//constructor builds the text box and adds it to editor's static box sizer
-	primitive_list_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type>>&list, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-	:editor(parent,x,y,w,h, orient, Title)
+	primitive_list_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+	:editor<type>(parent,x,y,w,h, orient, Title)
 	{
 		//make the text editor
-		combo_box = new combo(this,-1,"",wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
+		combo_box = new combo(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
 		//add it to our controls
-		add_control(combo_box, 1,wxEXPAND ,1);
+		this->add_control(combo_box, 1,wxEXPAND ,1);
 
 		build_list(list);
 	};
@@ -403,7 +403,7 @@ public:
 	virtual ~primitive_list_ctrl(void){};
 
 	//by default don't change anything
-	virtual std::vector<primitive_list_item<type>>&get_list(){
+	virtual std::vector<primitive_list_item<type> >&get_list(){
 		return cur_list;
 	}
 
@@ -415,7 +415,8 @@ public:
 		if(idx<(int)combo_box->GetCount())combo_box->Select(idx);
 		else combo_box->Select(0);
 
-		GetEventHandler()->ProcessEvent(wxCommandEvent(DATA_SELECTION_CHANGED, GetId()));
+    wxCommandEvent command_event(DATA_SELECTION_CHANGED, this->GetId());
+		this->GetEventHandler()->ProcessEvent(command_event);
 	}
 };
 
@@ -427,7 +428,7 @@ END_EVENT_TABLE()
 
 
 
-inline void make_int_list(const std::vector<std::string>&l, std::vector<primitive_list_item<int>>&ret){
+inline void make_int_list(const std::vector<std::string>&l, std::vector<primitive_list_item<int> >&ret){
 	ret.resize(l.size());
 
 	for(unsigned int i = 0; i< l.size(); i++){
@@ -445,13 +446,13 @@ class model_list_ctrl
 {
 public:
 	model_list_ctrl(wxWindow*Parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-		:primitive_list_ctrl(Parent, get_list(), x, y, w, h, Title, orient, Flags)
+		:primitive_list_ctrl<int>(Parent, get_list(), x, y, w, h, Title, orient, Flags)
 	{
 	}
 
-	std::vector<primitive_list_item<int>>&get_list(){
+	std::vector<primitive_list_item<int> >&get_list(){
 		static std::vector<std::string> str;
-		static std::vector<primitive_list_item<int>> l;
+		static std::vector<primitive_list_item<int> > l;
 		get_model_list(str);
 		make_int_list(str, l);
 		return l;
@@ -463,13 +464,13 @@ class path_list_ctrl
 {
 public:
 	path_list_ctrl(wxWindow*Parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-		:primitive_list_ctrl(Parent, get_list(), x, y, w, h, Title, orient, Flags)
+		:primitive_list_ctrl<int>(Parent, get_list(), x, y, w, h, Title, orient, Flags)
 	{
 	}
 
-	std::vector<primitive_list_item<int>>&get_list(){
+	std::vector<primitive_list_item<int> >&get_list(){
 		static std::vector<std::string> str;
-		static std::vector<primitive_list_item<int>> l;
+		static std::vector<primitive_list_item<int> > l;
 		get_path_list(str);
 		make_int_list(str, l);
 		return l;

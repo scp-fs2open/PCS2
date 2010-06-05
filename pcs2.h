@@ -305,7 +305,7 @@ inline wxString get_temp_path(){
 }
 
 //a little useful utility function
-inline PCS2_MainWindow*get_main_window(){
+inline PCS2_MainWindow* get_main_window(){
 	return wxGetApp().get_main_window();
 }
 
@@ -415,7 +415,7 @@ class PCS2_MainWindow : public wxFrame
 		 void get_subsystem_list(std::vector<std::string>&);
 
 		 // puts a title "" will result in "PCS2_VERSION (__DATE__ __TIME__)" a filename will result in "Filename - PCS2_VERSION (__DATE__ __TIME__)"
-		 void PCS2_MainWindow::putTitle(wxString filename);
+		 void putTitle(wxString filename);
 };
 
 

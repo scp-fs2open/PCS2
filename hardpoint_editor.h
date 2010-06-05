@@ -16,11 +16,11 @@ protected:
 public:
 	
 	hard_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<pcs_hardpoint>(parent,x,y,w,h, orient, Title)
 	{
 		//add controls
-		add_control(point=new vector_ctrl(this,0,0,60,40,"Point"),0,wxEXPAND );
-		add_control(norm=new normal_ctrl(this,0,0,60,40,"Normal"),0,wxEXPAND );
+		add_control(point=new vector_ctrl(this,0,0,60,40,_("Point")),0,wxEXPAND );
+		add_control(norm=new normal_ctrl(this,0,0,60,40,_("Normal")),0,wxEXPAND );
 	};
 
 	virtual ~hard_point_ctrl(void){};
@@ -46,7 +46,7 @@ class hard_point_array_ctrl :
 {
 public:
 	hard_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:type_array_ctrl(parent,x,y,w,h,Title, "", wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+		:type_array_ctrl<pcs_hardpoint, hard_point_ctrl>(parent,x,y,w,h,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 
 	}

@@ -8,7 +8,7 @@
 std::string get_texture_name(int idx);
 
 class TXTR_ctrl
-	:public editor_ctrl<std::vector<std::string>>
+	:public editor_ctrl<std::vector<std::string> >
 {
 	string_array_ctrl*textures;
 
@@ -18,13 +18,13 @@ public:
 	static color selected_item;
 
 	TXTR_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<std::string>>(parent, "Textures")
+		:editor_ctrl<std::vector<std::string> >(parent, _("Textures"))
 	{
 		//add controls
-		add_control(textures=new string_array_ctrl(this,0,0,90,90,"", "texture"),0,wxEXPAND );
+		add_control(textures=new string_array_ctrl(this,0,0,90,90,_(""), _("texture")),0,wxEXPAND );
 		textures->set_index_name_function(get_texture_name);
-		add_control(reload_btn = new wxButton(this, TXTR_RELOAD, "Reload Textures"));
-		add_control(open_texture_btn = new wxButton(this, TXTR_EXT_OPEN, "Open Externaly"));
+		add_control(reload_btn = new wxButton(this, TXTR_RELOAD, _("Reload Textures")));
+		add_control(open_texture_btn = new wxButton(this, TXTR_EXT_OPEN, _("Open Externaly")));
 	}
 
 	//do nothing, needed so the base destructor will get called

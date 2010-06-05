@@ -179,7 +179,7 @@ public:
 
 	virtual bool Destroy();
 
-	void SetCurOp(std::string op) { if(pstatus)pstatus->SetStatusText(op.c_str(), 0); }
+	void SetCurOp(std::string op) { if(pstatus)pstatus->SetStatusText(wxString(op.c_str(), wxConvUTF8), 0); }
 	void SetCurProg(int perc) { if(pgauge)pgauge->SetValue(perc); } 
 
 	main_panel(wxFrame* parent);

@@ -162,12 +162,14 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		void set_eye_position(const vector3d&pos){position=pos;Render();}
 
 		void display_OGL_info(){
-			wxString info = "OpenGL Version is \"" + version + "\"\nVender is \"" + vendor + "\"\nRenderer is \"" + renderer + "\"";
-			wxMessageBox(info + "\n\nThis information has been copied to the clipboard for your convenience", "OpenGL Info");
-			wxOpenClipboard();
-			wxEmptyClipboard();
-			wxSetClipboardData(wxDF_TEXT, info.c_str());
-			wxCloseClipboard();
+			wxString info = wxString::Format(_("OpenGL Version is \"%s\"\nVendor is \"%s\"\nRenderer is \"%s\""), version.c_str(), vendor.c_str(), renderer.c_str());
+			wxMessageBox(info + _("\n\nThis information has been copied to the clipboard for your convenience"), _("OpenGL Info"));
+      if (wxTheClipboard->Open()) {
+        wxTextDataObject* obj = new wxTextDataObject(info);
+        // takes ownership
+        wxTheClipboard->SetData(obj);
+        wxTheClipboard->Close();
+      }
 		}
 
 		vector3d get_eye_pos(){

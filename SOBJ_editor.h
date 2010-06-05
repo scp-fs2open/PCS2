@@ -1,5 +1,7 @@
 #pragma once
 
+#include <wx/event.h>
+
 #include"model_editor_ctrl.h"
 #include"array_ctrl.h"
 #include"primitive_ctrl.h"
@@ -23,12 +25,12 @@ protected:
 public:
 
 	sobj_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<pcs_sobj>(parent,x,y,w,h, orient, Title)
 	{
-		std::vector<primitive_list_item<int>> list;
+		std::vector<primitive_list_item<int> > list;
 
 		//add controls
-		add_control(name=new string_ctrl(this,0,0,60,40,"Name"),0,wxEXPAND );
+		add_control(name=new string_ctrl(this,0,0,60,40,_("Name")),0,wxEXPAND );
 
 		list.resize(2);
 
@@ -38,7 +40,7 @@ public:
 		list[1].title = "Rotate";
 		list[1].data = ROTATE;
 
-		add_control(movement_type=new primitive_list_ctrl<int>(this, list,0,0,60,40,"Movement Type"),0,wxEXPAND );
+		add_control(movement_type=new primitive_list_ctrl<int>(this, list,0,0,60,40,_("Movement Type")),0,wxEXPAND );
 
 		list.resize(4);
 
@@ -54,9 +56,9 @@ public:
 		list[3].title = "Z Axis";
 		list[3].data = MV_Z;
 
-		add_control(movement_axis=new primitive_list_ctrl<int>(this, list,0,0,60,40,"Axis"),0,wxEXPAND );
+		add_control(movement_axis=new primitive_list_ctrl<int>(this, list,0,0,60,40,_("Axis")),0,wxEXPAND );
 
-		add_control(offset=new vector_ctrl(this,0,0,60,40,"Offset"),0,wxEXPAND );
+		add_control(offset=new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
 
 		std::vector<std::string> op;
 		op.push_back("$special=subsystem\n");
@@ -82,7 +84,7 @@ public:
 		op.push_back("$uvec:0,1,0\n");
 		op.push_back("$fvec:0,0,1\n");
 
-		add_control(properties=new suggest_ctrl<std::string, multi_string_ctrl>(this,0,0,60,40,"Properties",op, SUGGEST_APPEND),1,wxEXPAND );
+		add_control(properties=new suggest_ctrl<std::string, multi_string_ctrl>(this,0,0,60,40,_("Properties"),op, SUGGEST_APPEND),1,wxEXPAND );
 		
 	};
 
@@ -131,7 +133,7 @@ public:
 	static color selected_item;
 
 	SOBJ_ctrl(wxWindow*parent,int Sobj_num)
-		:editor_ctrl<pcs_sobj>(parent, "Subobject"),sobj_num(Sobj_num)
+		:editor_ctrl<pcs_sobj>(parent, _("Subobject")),sobj_num(Sobj_num)
 	{
 		//add controls
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
@@ -139,14 +141,14 @@ public:
 		b->Add(del_btn = new wxBitmapButton(this, SOBJ_BUTTON_DEL, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16)));
 		add_sizer(b);
 
-		cpy_btn->SetToolTip("Copy");
-		del_btn->SetToolTip("Delete");
+		cpy_btn->SetToolTip(_("Copy"));
+		del_btn->SetToolTip(_("Delete"));
 
-		add_control(sobj=new sobj_ctrl(this,0,0,60,440,""),0,wxEXPAND );
+		add_control(sobj=new sobj_ctrl(this,0,0,60,440,_("")),0,wxEXPAND );
 
-		add_control(bsp_render_box=new wxCheckBox(this, BSP_DRAW, "Draw BSP Debug Info", wxPoint(0,415), wxSize(140,15)));
+		add_control(bsp_render_box=new wxCheckBox(this, BSP_DRAW, _("Draw BSP Debug Info"), wxPoint(0,415), wxSize(140,15)));
 		bsp_render_box->Disable();
-		add_control(sobj_info = new string_disp(this,0,0,60,160,"Subobject Info"),0,wxEXPAND );
+		add_control(sobj_info = new string_disp(this,0,0,60,160,_("Subobject Info")),0,wxEXPAND );
 
 	}
 
@@ -177,8 +179,8 @@ public:
 			bsp_render_box->SetValue(model.draw_bsp);
 
 			vector3d size = data.bounding_box_max_point - data.bounding_box_min_point;
-			sobj_info->set_value(wxString::Format(
-				"Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\nBoundingbox Min:  %0.2f, %0.2f, %0.2f\nBoundingbox Max:  %0.2f, %0.2f, %0.2f\nH: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  %s\n",
+			sobj_info->set_value(std::string(wxString::Format(
+				_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\nBoundingbox Min:  %0.2f, %0.2f, %0.2f\nBoundingbox Max:  %0.2f, %0.2f, %0.2f\nH: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  %s\n"),
 					
 				data.polygons.size(), 
 				model.get_child_subobj_poly_count(sobj_num), 
@@ -189,10 +191,10 @@ public:
 				data.radius, 
 				(
 					(data.parent_sobj>-1)?
-						model.SOBJ(data.parent_sobj).name.c_str()
-						:"*NONE*"
+						wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8).c_str()
+						:_("*NONE*")
 				)
-					).c_str()
+					).mb_str())
 				);
 			}
 	}
@@ -224,7 +226,8 @@ public:
 	void set_omnipoints(const omnipoints&points){
 		if(points.point.size() == 1 && points.point[0].size() == 1){
 			sobj->set_pos(points.point[0][0].pos);
-			GetEventHandler()->ProcessEvent(wxCommandEvent(SUBOBJECT_UPDATE, GetId()));
+      wxCommandEvent event(SUBOBJECT_UPDATE, GetId());
+			GetEventHandler()->ProcessEvent(event);
 		}
 	}
 	void get_omnipoint_coords(int&list, int&item){

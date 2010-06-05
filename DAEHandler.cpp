@@ -11,6 +11,11 @@
 #define VECTOR_GROWTH_FACTOR 4
 #define VECTOR_INITIAL_SIZE 100
 
+#ifdef UNIX
+#define strnicmp strncasecmp
+#define stricmp strcasecmp
+#endif
+
 using namespace std;
 
 DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) {
@@ -200,7 +205,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	if (geom == NULL) {
 		stringstream gah;
 		gah << "instance_geometry not found for subobject " << element->getAttribute("name");
-		wxMessageBox(gah.str().c_str());
+		wxMessageBox(wxString(gah.str().c_str(), wxConvUTF8));
 		return;
 	}
 	texture_mapping = get_texture_mappings(geom);
@@ -898,7 +903,7 @@ vector<int> *parse_int_array(const char* chars, unsigned int count) {
 	if (i < count && count != -1) {
 		stringstream error;
 		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
-		wxMessageBox(error.str().c_str());
+		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
 	}
 	if (i != result->size()) {
 		result->resize(i);
@@ -929,7 +934,7 @@ vector<float> *parse_float_array(const char* chars, unsigned int count) {
 	if (i < count && count != -1) {
 		stringstream error;
 		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
-		wxMessageBox(error.str().c_str());
+		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
 	}
 	if (i != result->size()) {
 		result->resize(i);

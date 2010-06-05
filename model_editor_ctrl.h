@@ -1,6 +1,6 @@
 
 #pragma once
-#include <wx\wx.h>
+#include <wx/wx.h>
 #include "pcs_file.h"
 #include "primitive_ctrl.h"
 #include "omnipoints.h"
@@ -106,7 +106,7 @@ protected:
 
 public:
 	void push_undo(){
-		data = get_value();
+		data = this->get_value();
 		undo_stack.push(data);
 	}
 	void undo(){
@@ -136,11 +136,11 @@ public:
 			if(Y>y)y=Y;
 			if(X>x)x=X;
 		}
-		SetMinSize(wxSize(x,y+6));//6 is for the border, this is an aproximation
+		this->SetMinSize(wxSize(x,y+6));//6 is for the border, this is an aproximation
 	}
 
 	editor_ctrl(wxWindow*parent, const wxString&Title, int orient = wxVERTICAL)
-		:editor(parent,0,0,30,30,orient, Title)
+		:editor<type>(parent,0,0,30,30,orient, Title)
 	{
 	}
 	virtual ~editor_ctrl(){}

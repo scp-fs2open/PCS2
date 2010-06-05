@@ -26,7 +26,7 @@ public:
 	editor(wxWindow*parent, int x, int y, int w, int h, int orientation, wxString Title, int ID=-1)
 		:wxPanel(parent,ID,wxPoint(x,y),wxSize(w,h)),title(Title)
 	{
-		if(Title == ""){
+		if(Title == _("")){
 			box = new wxBoxSizer(orientation);
 		}else{
 			box = new wxStaticBoxSizer(new wxStaticBox(this,-1,Title,wxPoint(0,0),wxSize(w,h)),orientation);

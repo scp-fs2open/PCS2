@@ -102,14 +102,14 @@ vector3d average_vectors_if_less_than_angle(int numvectors, float angle, vector3
 //****************************************************************************************************************
 
 
-float Magnitude(vector3d &vec)
+float Magnitude(const vector3d &vec)
 {
 	return (float)sqrt(vec.x*vec.x + vec.y*vec.y + vec.z*vec.z);
 }
 
 //****************************************************************************************************************
 
-vector3d CrossProduct(vector3d &one, vector3d &two)
+vector3d CrossProduct(const vector3d &one, const vector3d &two)
 {
   return MakeVector(float(double(one.y)*double(two.z)-double(two.y)*double(one.z)), 
 					float(double(two.x)*double(one.z)-double(one.x)*double(two.z)), 
@@ -177,7 +177,7 @@ float Angle(vector3d &v1, vector3d &v2)
 
 //****************************************************************************************************************
 
-vector3d operator+=(vector3d &one, const vector3d &two)
+vector3d& operator+=(vector3d &one, const vector3d &two)
 {
 	one = one + two;
 	return one;
@@ -214,7 +214,7 @@ vector3d MakeVector(float ax, float ay, float az)
 
 //****************************************************************************************************************
 
-vector3d MakeUnitVector(vector3d &vect)
+vector3d MakeUnitVector(const vector3d &vect)
 {
 	double VMag = sqrt(double(vect.x * vect.x) 
 		+ double(vect.y * vect.y) 

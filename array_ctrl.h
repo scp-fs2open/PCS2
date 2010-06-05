@@ -10,14 +10,16 @@
 
 
 
-inline wxString itoa(int i){return wxString().Format("%d",i);}
+inline wxString itoa(int i){return wxString().Format(_("%d"),i);}
 
 //a static sized array, note it only hides resizeing functionality
 //you can still resize programaticly by setting a diferent sized array
 template<class type>
 class array_ctrl :
-	public editor<std::vector<type>>
+	public editor<std::vector<type> >
 {
+protected:
+	int control_orient;
 protected:
 
 	//a sizer for the control box
@@ -41,9 +43,9 @@ protected:
 	void set_array(const std::vector<type>&n_array){
 		array=n_array;//yeah
 
-		if(array.size()>0){
+		if((this->array.size())>0){
 			if(index<0)index=0;
-			if(index>=(int)array.size())index=(int)array.size()-1;
+			if(index>=(int)(this->array.size()))index=(int)(this->array.size())-1;
 			//if there is anything in the array
 			
 			set_curent_value(array[index]);
@@ -63,14 +65,15 @@ protected:
 		}
 	}
 
-	virtual void enable(){Enable();};
-	virtual void disable(){Disable();};
+	virtual void enable(){this->Enable();};
+	virtual void disable(){this->Disable();};
 
 
 	//event handeling!
 	DECLARE_EVENT_TABLE();
 
 	//when the item in the item in the combo box changes
+public:
 	void on_selection_change(wxCommandEvent& event){
 		set_index(array_list->GetCurrentSelection());
 	//	GetEventHandler()->ProcessEvent(wxCommandEvent(DATA_SELECTION_CHANGED, GetId()));
@@ -78,13 +81,14 @@ protected:
 		rebuild_array_list();
 	}
 
+protected:
 	void on_select(wxCommandEvent& event){
 		rebuild_array_list();
 		event.Skip();
 	}
 
 	array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1,bool a=false)//bool to diferentiate
-		:editor(parent, x, y, w, h, orient, Title, ID),index(-1), get_index_name(NULL)
+		:editor<std::vector<type> >(parent, x, y, w, h, orient, Title, ID),index(-1), get_index_name(NULL)
 	{
 	}
 
@@ -95,14 +99,14 @@ protected:
 		//clear off the exsisting selections
 		array_list->Clear();
 		//repopulate
-		for(unsigned int i = 0; i<array.size();i++){
+		for(unsigned int i = 0; i<(this->array.size());i++){
 			if(get_index_name)
-				array_list->Append((*get_index_name)(i).c_str());
+				array_list->Append(wxString((*get_index_name)(i).c_str(), wxConvUTF8));
 			else
-				array_list->Append(wxString().Format("%d",i+1));
+				array_list->Append(wxString().Format(_("%d"),i+1));
 		}
 		//update the size box
-		array_size_box->ChangeValue(wxString().Format("%d",array.size()));
+		array_size_box->ChangeValue(wxString().Format(_("%d"),(this->array.size())));
 		//make sure the cuurent item is selected in the combo box
 		array_list->Select(index);
 	}
@@ -115,7 +119,7 @@ public:
 	//set's the control's current index to the one passed
 	void set_index(int idx){
 
-		if(idx>(int)array.size())
+		if(idx>(int)(this->array.size()))
 			idx=-1;//if we are out of bounds set to nothing
 
 		//if we were told to set it to nothing
@@ -127,7 +131,7 @@ public:
 			//otherwise enable
 			enable();
 			//copy what is in the control into the array
-			if(index>-1 && index<(int)array.size())
+			if(index>-1 && index<(int)(this->array.size()))
 				array[index]=get_curent_value();
 			index=idx;
 			//and make sure the controls have the right value
@@ -135,18 +139,19 @@ public:
 		}
 		//set the combo box to the proper item
 		array_list->Select(idx);
-		
-		GetEventHandler()->ProcessEvent(wxCommandEvent(DATA_SELECTION_CHANGED, GetId()));
+
+		wxCommandEvent commandEvent(DATA_SELECTION_CHANGED, this->GetId());
+		this->GetEventHandler()->ProcessEvent(commandEvent);
 
 	};
 
 	//accessor
 	int get_index(){return index;}
 
-	size_t get_size(){return array.size();}
+	size_t get_size(){return (this->array.size());}
 
 	array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1)
-		:editor(parent, x, y, w, h, orient, Title, ID),index(-1),control_orient(orient)
+		:editor<std::vector<type> >(parent, x, y, w, h, orient, Title, ID),index(-1),control_orient(orient)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
 		box = new wxStaticBoxSizer(wxHORIZONTAL, this,"Select");
@@ -154,7 +159,7 @@ public:
 		box->Add(array_size_box = new wxTextCtrl(this,-1,"0",wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE));
 		box->Add(array_list = new wxComboBox(this,ARRAY_SELECT,"",wxPoint(10,10),wxSize(64,30)),1.0);
 	}
-	virtual std::vector<type> get_value(){if((int)array.size() > index && index>-1)array[index] = get_curent_value(); return array;}
+	virtual std::vector<type> get_value(){if((int)(this->array.size()) > index && index>-1)array[index] = get_curent_value(); return array;}
 	virtual void set_value(const std::vector<type>&i){set_array(i);}
 
 	//get's/sets the currently selected item
@@ -162,19 +167,19 @@ public:
 	virtual void set_curent_value(const type&i)=0;
 
 	void increment_selection(wxCommandEvent& event){
-		if(array.size()<1 || index < 0)return;
+		if((this->array.size())<1 || index < 0)return;
 
-		if(index + 1 >= (int)array.size())
+		if(index + 1 >= (int)(this->array.size()))
 			set_index(0);
 		else
 			set_index(index+1);
 	}
 
 	void decrement_selection(wxCommandEvent& event){
-		if(array.size()<1 || index < 0)return;
+		if((this->array.size())<1 || index < 0)return;
 
 		if(index - 1 < 0)
-			set_index(array.size()-1);
+			set_index((this->array.size())-1);
 		else
 			set_index(index-1);
 	}
@@ -198,36 +203,34 @@ class resizeable_array_ctrl :
 	wxBitmapButton*del_btn;
 	wxBitmapButton*cpy_btn;
 
-protected:
-	int control_orient;
 public:
 	//constructor, DOES _NOT_ take an array, they must be set after the 
 	//control is is constructed or you get virtual function problems
 	resizeable_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1)
-		:array_ctrl(parent, x, y, w, h, Title, orient,ID,true)
+		:array_ctrl<type>(parent, x, y, w, h, Title, orient,ID,true)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
-		box = new wxStaticBoxSizer(wxVERTICAL, this,"Select");
+		this->box = new wxStaticBoxSizer(wxVERTICAL, this,_("Select"));
 		//the combo box
-		array_list = new combo(this,ARRAY_SELECT,"",wxPoint(10,10),wxSize(64,30));
+		this->array_list = new combo(this,ARRAY_SELECT,_(""),wxPoint(10,10),wxSize(64,30));
 		//sizer that holds the size display and the new/copy/delete buttons
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
-		array_size_box = new wxTextCtrl(this,-1,"0",wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE);
+		this->array_size_box = new wxTextCtrl(this,-1,_("0"),wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE);
 		new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxPoint(26,0),wxSize(16,16));
 		cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxPoint(42,0),wxSize(16,16));
 		del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16));
-		new_btn->SetToolTip("New");
-		cpy_btn->SetToolTip("Copy");
-		del_btn->SetToolTip("Delete");
+		new_btn->SetToolTip(_("New"));
+		cpy_btn->SetToolTip(_("Copy"));
+		del_btn->SetToolTip(_("Delete"));
 		//add the buttons'n stuff to the proper sizer
-		b->Add(array_size_box);
+		b->Add(this->array_size_box);
 		b->Add(new_btn);
 		b->Add(cpy_btn);
 		b->Add(del_btn);
-		box->Add(array_list);
-		box->Add(b);
+		this->box->Add(this->array_list);
+		this->box->Add(b);
 		//add all this to the editor
-		add_sizer(box);
+		this->add_sizer(this->box);
 		disable();//untill someone set's an array
 	}
 public:
@@ -235,7 +238,7 @@ public:
 
 	//disable's everything exept the new buton
 	void disable(){
-		wxWindowList&children = GetChildren();
+		wxWindowList&children = this->GetChildren();
 		for(wxWindowListNode*child = children.GetFirst();child;child=child->GetNext()){
 			child->GetData()->Disable();
 		}
@@ -244,7 +247,7 @@ public:
 
 	//enable's everything
 	void enable(){
-		wxWindowList&children = GetChildren();
+		wxWindowList&children = this->GetChildren();
 		for(wxWindowListNode*child = children.GetFirst();child;child=child->GetNext()){
 			child->GetData()->Enable();
 		}
@@ -254,8 +257,8 @@ public:
 	//add a new item to the end of the array, 
 	//let the item's default constructor initalize it
 	virtual void on_new_clicked(wxCommandEvent&){
-		array.resize(array.size()+1);
-		if(array.size()==1){
+		this->array.resize((this->array.size())+1);
+		if((this->array.size())==1){
 			//if there was nothing in the array, then the control was 
 			//probably disabled exapt for the new button, so enable everything
 			index = -1;
@@ -263,32 +266,32 @@ public:
 		}
 
 		//select the new item
-		set_index((int)array.size()-1);
+		this->set_index((int)(this->array.size())-1);
 		//fix the combo box
-		rebuild_array_list();
+		this->rebuild_array_list();
 //		rebuild_tree();
 
-		wxCommandEvent event(ARRAY_NEW, GetId());
-		event.SetInt((int)array.size()-1);
+		wxCommandEvent event(ARRAY_NEW, this->GetId());
+		event.SetInt((int)(this->array.size())-1);
 		this->GetEventHandler()->ProcessEvent(event);
 
 	}
 
 	//copy the current item to the end of the array
 	virtual void on_copy_clicked(wxCommandEvent&e){
-		if(array.size()<1 || index<0){
+		if((this->array.size())<1 || this->index<0){
 			on_new_clicked(e);
 			return;
 		}
-		array[index]=get_curent_value();
-		array.push_back(type(array[index]));
-		set_index((int)array.size()-1);
+		this->array[this->index]=this->get_curent_value();
+		this->array.push_back(type(this->array[this->index]));
+		this->set_index((int)(this->array.size())-1);
 	//	set_curent_value(array[index]);
-		rebuild_array_list();
+		this->rebuild_array_list();
 //		rebuild_tree();
 
-		wxCommandEvent event(ARRAY_CPY, GetId());
-		event.SetInt((int)array.size()-1);
+		wxCommandEvent event(ARRAY_CPY, this->GetId());
+		event.SetInt((int)(this->array.size())-1);
 		this->GetEventHandler()->ProcessEvent(event);
 		event.SetEventType(ARRAY_NEW);
 		this->GetEventHandler()->ProcessEvent(event);
@@ -296,22 +299,22 @@ public:
 
 	//get rid of the currentlly selected item
 	virtual void on_delete_clicked(wxCommandEvent&){
-		if(array.size()<1)
+		if((this->array.size())<1)
 			return;
-		wxCommandEvent event(ARRAY_DEL, GetId());
-		event.SetInt(index);
+		wxCommandEvent event(ARRAY_DEL, this->GetId());
+		event.SetInt(this->index);
 
-		if(index>-1 && index<(int)array.size()){
+		if(this->index>-1 && this->index<(int)(this->array.size())){
 			//check to see if there is a current item to delete
-			array.erase(array.begin()+index);
+			this->array.erase(this->array.begin()+this->index);
 			//get rid of the current item
 
-			if(index>=(int)array.size() && array.size()){
+			if(this->index>=(int)(this->array.size()) && (this->array.size())){
 				//if that was the end of the array move to the new end
 				//unless the array is now empty
-				set_index((int)array.size()-1);
+				this->set_index((int)(this->array.size())-1);
 			}
-			if(array.size()<=0){
+			if((this->array.size())<=0){
 				//if the array is empty disable everything 
 				//exept the new button
 				disable();
@@ -319,10 +322,10 @@ public:
 				index=-1;
 			}else{
 				//set the control's value to the new item
-				set_curent_value(array[index]);
+				this->set_curent_value(this->array[this->index]);
 			}
 		}
-		rebuild_array_list();
+		this->rebuild_array_list();
 
 		this->GetEventHandler()->ProcessEvent(event);
 	}
@@ -330,15 +333,15 @@ public:
 	DECLARE_EVENT_TABLE();
 };
 
-BEGIN_EVENT_TABLE_TEMPLATE1 (resizeable_array_ctrl,array_ctrl,type)
-	EVT_COMBOBOX(ARRAY_SELECT,array_ctrl::on_selection_change)
-	EVT_COMMAND(ARRAY_SELECT, EDIT_DONE, array_ctrl::on_selection_change)
-	EVT_COMMAND(wxID_ANY, ARRAY_INCREMENT, array_ctrl::increment_selection)
-	EVT_COMMAND(wxID_ANY, ARRAY_DECREMENT, array_ctrl::decrement_selection)
+BEGIN_EVENT_TABLE_TEMPLATE1 (resizeable_array_ctrl,array_ctrl<type>,type)
+	EVT_COMBOBOX(ARRAY_SELECT,array_ctrl<type>::on_selection_change)
+	EVT_COMMAND(ARRAY_SELECT, EDIT_DONE, array_ctrl<type>::on_selection_change)
+	EVT_COMMAND(wxID_ANY, ARRAY_INCREMENT, array_ctrl<type>::increment_selection)
+	EVT_COMMAND(wxID_ANY, ARRAY_DECREMENT, array_ctrl<type>::decrement_selection)
 	//you'd think it'd inherit that
-	EVT_BUTTON(ARRAY_BUTTON_NEW,resizeable_array_ctrl::on_new_clicked)
-	EVT_BUTTON(ARRAY_BUTTON_COPY,resizeable_array_ctrl::on_copy_clicked)
-	EVT_BUTTON(ARRAY_BUTTON_DELETE,resizeable_array_ctrl::on_delete_clicked)
+	EVT_BUTTON(ARRAY_BUTTON_NEW,resizeable_array_ctrl<type>::on_new_clicked)
+	EVT_BUTTON(ARRAY_BUTTON_COPY,resizeable_array_ctrl<type>::on_copy_clicked)
+	EVT_BUTTON(ARRAY_BUTTON_DELETE,resizeable_array_ctrl<type>::on_delete_clicked)
 END_EVENT_TABLE()
 
 
@@ -354,19 +357,19 @@ protected:
 	type_control*ctrl;
 public:
 	type_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1)
-		:resizeable_array_ctrl(parent,x,y,w,h,Title,orient,ID)
+		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient,ID)
 	{
-		add_control(ctrl=new type_control(this,0,30,90,(subTitle=="")?20:40,subTitle),1,flags);
+		add_control(ctrl=new type_control(this,0,30,90,(subTitle==_(""))?20:40,subTitle),1,flags);
 	}
 
-	virtual type get_curent_value(){array[index] = ctrl->get_value(); return array[index];}
-	virtual void set_curent_value(const type&i){array[index] = i; ctrl->set_value(array[index]);}
+	virtual type get_curent_value(){this->array[this->index] = ctrl->get_value(); return this->array[this->index];}
+	virtual void set_curent_value(const type&i){this->array[this->index] = i; ctrl->set_value(this->array[this->index]);}
 
 	type_control*get_child_control(){return ctrl;}
 
 	void set_indexes(std::vector<int> i){
-		if(i[0]>-1 && i[0]<(int)get_size())
-			set_index(i[0]);
+		if(i[0]>-1 && i[0]<(int)this->get_size())
+			this->set_index(i[0]);
 
 		if(i.size()>1 && i[1]>-1){
 			i.erase(i.begin());
@@ -384,13 +387,13 @@ class type_static_array_ctrl
 	type_control*ctrl;
 public:
 	type_static_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0)
-		:resizeable_array_ctrl(parent,x,y,w,h,Title,orient)
+		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient)
 	{
-		add_control(ctrl=new type_control(this,0,30,90,(subTitle=="")?20:40,subTitle),1,flags);
+		add_control(ctrl=new type_control(this,0,30,90,(subTitle==_(""))?20:40,subTitle),1,flags);
 	}
 
-	virtual type get_curent_value(){array[index] = ctrl->get_value(); return array[index];}
-	virtual void set_curent_value(const type&i){array[index] = i; ctrl->set_value(array[index]);}
+	virtual type get_curent_value(){this->array[this->index] = ctrl->get_value(); return this->array[this->index];}
+	virtual void set_curent_value(const type&i){this->array[this->index] = i; ctrl->set_value(this->array[this->index]);}
 };
 
 //array of floats
@@ -399,12 +402,12 @@ class float_array_ctrl
 {
 public:
 	float_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<float, float_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 	}
 
-	void on_new_clicked(wxCommandEvent&e){
-		resizeable_array_ctrl::on_new_clicked(e);
+	virtual void on_new_clicked(wxCommandEvent&e){
+		resizeable_array_ctrl<float>::on_new_clicked(e);
 		set_curent_value(0.0f);
 	}
 };
@@ -415,12 +418,12 @@ class int_array_ctrl
 {
 public:
 	int_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<int, int_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 	}
 
-	void on_new_clicked(wxCommandEvent&e){
-		resizeable_array_ctrl::on_new_clicked(e);
+	virtual void on_new_clicked(wxCommandEvent&e){
+		resizeable_array_ctrl<int>::on_new_clicked(e);
 		set_curent_value(0);
 	}
 };
@@ -431,7 +434,7 @@ class model_array_ctrl
 {
 public:
 	model_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<int, model_list_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 	}
 };
@@ -442,7 +445,7 @@ class path_idx_array_ctrl
 {
 public:
 	path_idx_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<int, path_list_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 	}
 };
@@ -453,13 +456,13 @@ class string_array_ctrl
 {
 public:
 	string_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<std::string, string_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 		ctrl->SetSize(w, h-40);
 	}
 
-	void on_new_clicked(wxCommandEvent&e){
-		resizeable_array_ctrl::on_new_clicked(e);
+	virtual void on_new_clicked(wxCommandEvent&e){
+		resizeable_array_ctrl<std::string>::on_new_clicked(e);
 		set_curent_value("");
 	}
 };
@@ -470,13 +473,13 @@ class multi_string_array_ctrl
 {
 public:
 	multi_string_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<std::string, multi_string_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 				ctrl->SetSize(200, h-50);
 	}
 
-	void on_new_clicked(wxCommandEvent&e){
-		resizeable_array_ctrl::on_new_clicked(e);
+	virtual void on_new_clicked(wxCommandEvent&e){
+		resizeable_array_ctrl<std::string>::on_new_clicked(e);
 		set_curent_value("");
 	}
 };
@@ -487,12 +490,12 @@ class vector_array_ctrl
 {
 public:
 	vector_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+		:type_array_ctrl<vector3d, vector_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
 	{
 	}
 
-	void on_new_clicked(wxCommandEvent&e){
-		resizeable_array_ctrl::on_new_clicked(e);
+	virtual void on_new_clicked(wxCommandEvent&e){
+		resizeable_array_ctrl<vector3d>::on_new_clicked(e);
 		set_curent_value(vector3d(0,0,0));
 	}
 };

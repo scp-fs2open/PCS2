@@ -27,7 +27,7 @@ struct omnipoints{
 	omnipoints()
 		:flags(OMNIPOINT_DONT_DRAW)
 	{}
-	std::vector<std::vector<omnipoint>> point;
+	std::vector<std::vector<omnipoint> > point;
 	color selected_item;
 	color selected_list;
 	color unselected;

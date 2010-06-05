@@ -6,7 +6,7 @@
 #include"pcs_file.h"
 
 class SHLD_ctrl
-	:public editor_ctrl<std::vector<pcs_shield_triangle>>
+	:public editor_ctrl<std::vector<pcs_shield_triangle> >
 {
 	string_disp*info;
 
@@ -14,10 +14,10 @@ public:
 	static color selected_item;
 
 	SHLD_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<pcs_shield_triangle>>(parent, "Shields")
+		:editor_ctrl<std::vector<pcs_shield_triangle> >(parent, _("Shields"))
 	{
 		//add controls
-		add_control(info=new string_disp(this,0,0,60,80,"Shield Info"),0,wxEXPAND );
+		add_control(info=new string_disp(this,0,0,60,80,_("Shield Info")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called
@@ -26,7 +26,7 @@ public:
 	//set's the control's value
 	void set_value(const std::vector<pcs_shield_triangle>&t){
 		data=t;
-		info->set_value(wxString::Format("Editing of shield data is currently unavailable\nshield has %d faces", data.size()).c_str());
+		info->set_value(std::string(wxString::Format(_("Editing of shield data is currently unavailable\nshield has %d faces"), data.size()).mb_str()));
 	}
 
 	//return's the control's value

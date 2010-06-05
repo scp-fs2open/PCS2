@@ -10,5 +10,5 @@ class combo:public wxComboBox{
 
 	DECLARE_EVENT_TABLE();
 public:
-	combo(wxWindow* parent, wxWindowID id, const wxString& value = "", const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, int n = 0, const wxString choices[] = NULL, long style = 0):wxComboBox(parent,id, value, pos, size, n, choices, style){};
+	combo(wxWindow* parent, wxWindowID id, const wxString& value = _(""), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, int n = 0, const wxString choices[] = NULL, long style = 0):wxComboBox(parent,id, value, pos, size, n, choices, style){};
 };

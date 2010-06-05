@@ -8,10 +8,10 @@ class debug_window
 	wxStaticText*text;
 
 public:
-	debug_window(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = "dialogBox")
+	debug_window(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE, const wxString& name = _("dialogBox"))
 		:wxDialog(parent, id, title, pos, size, style, name)
 	{
-		text = new wxStaticText((wxWindow*)this,-1,"");
+		text = new wxStaticText((wxWindow*)this,-1,_(""));
 		Show();
 	}
 

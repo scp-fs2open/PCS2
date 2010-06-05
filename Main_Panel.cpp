@@ -144,6 +144,7 @@
 
 #include<wx/filename.h>
 #include <wx/progdlg.h>
+#include <wx/imaglist.h>
 
 #include <map>
 
@@ -267,8 +268,8 @@ main_panel::main_panel(wxFrame* parent)
 			wxBoxSizer*button_sizer = new wxBoxSizer(wxHORIZONTAL);
 
 			//the buttons themselves
-			button_sizer->Add(load_chunk_btn = new wxButton(control_pane, MAIN_PANEL_LOAD_CHUNK_BTN, "Load"),1.0);
-			button_sizer->Add(save_chunk_btn = new wxButton(control_pane, MAIN_PANEL_SAVE_CHUNK_BTN, "Save"),1.0);
+			button_sizer->Add(load_chunk_btn = new wxButton(control_pane, MAIN_PANEL_LOAD_CHUNK_BTN, _("Load")),1.0);
+			button_sizer->Add(save_chunk_btn = new wxButton(control_pane, MAIN_PANEL_SAVE_CHUNK_BTN, _("Save")),1.0);
 		
 			//sizer that holds the buttons and the actual control panel
 			control_sizer = new wxBoxSizer(wxVERTICAL);
@@ -281,7 +282,7 @@ main_panel::main_panel(wxFrame* parent)
 //			control_sizer->Add(control_panel = new model_editor_ctrl<header_data, header_ctrl>				(control_pane, model, HDR2),1.0,wxEXPAND);
 //			control_sizer->Add(control_panel = new model_editor_ctrl<vector3d, ACEN_ctrl>					(control_pane, model, ACEN),1.0,wxEXPAND);
 //			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<std::string>, TXTR_ctrl>		(control_pane, model, TXTR),1.0,wxEXPAND);
-//			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<GUN>>	(control_pane, model, GPNT),1.0,wxEXPAND);
+//			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<GUN> >	(control_pane, model, GPNT),1.0,wxEXPAND);
 //			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_dock_point>, DOCK_ctrl>	(control_pane, model, DOCK),1.0,wxEXPAND);
 //			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_special>, SPCL_ctrl>	(control_pane, model, SPCL),1.0,wxEXPAND);
 //			control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_eye_pos>, EYE_ctrl>		(control_pane, model, EYE),1.0,wxEXPAND);
@@ -321,42 +322,42 @@ main_panel::main_panel(wxFrame* parent)
 
 
 	//setup the tree
-	tree_id.ROOT_ID = navigation_panel->AddRoot("model");
+	tree_id.ROOT_ID = navigation_panel->AddRoot(_("model"));
 
 	std::vector<int> path;
 
-	tree_id.HDR2_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Header", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(HDR2, path));
+	tree_id.HDR2_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Header"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(HDR2, path));
 	navigation_panel->SetItemImage(tree_id.HDR2_ID, TREE_NOSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.HDR2_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
 
 	path.resize(1);
 	path[0] = -1;
 
-	tree_id.SOBJ_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"SubObjects", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SOBJ, path));
+	tree_id.SOBJ_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("SubObjects"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SOBJ, path));
 	navigation_panel->SetItemImage(tree_id.SOBJ_ID, TREE_NOSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.SOBJ_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
 		
 	path.resize(2);
 	path[1] = -1;
 
-	tree_id.TXTR_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Textures", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TXTR, path));
-	tree_id.WEAP_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Weapon Points", TREE_NOUNSEL, TREE_NOSEL);
-		tree_id.GPNT_ID = navigation_panel->AppendItem(tree_id.WEAP_ID,"Gun Points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(GPNT, path));
-		tree_id.MPNT_ID = navigation_panel->AppendItem(tree_id.WEAP_ID,"Missle Points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(MPNT, path));
-	tree_id.DOCK_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Docking points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(DOCK, path));
-	tree_id.FUEL_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Thrusters", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(FUEL, path));
-	tree_id.GLOW_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Glow Points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(GLOW, path));
-	tree_id.SPCL_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Special Points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SPCL, path));
-	tree_id.TGUN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Turrets", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TGUN, path));
-	tree_id.PATH_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Paths", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PATH, path));
-	tree_id.EYE_ID  = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Eye Points", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(EYE, path));
+	tree_id.TXTR_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Textures"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TXTR, path));
+	tree_id.WEAP_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Weapon Points"), TREE_NOUNSEL, TREE_NOSEL);
+		tree_id.GPNT_ID = navigation_panel->AppendItem(tree_id.WEAP_ID,_("Gun Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(GPNT, path));
+		tree_id.MPNT_ID = navigation_panel->AppendItem(tree_id.WEAP_ID,_("Missle Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(MPNT, path));
+	tree_id.DOCK_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Docking points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(DOCK, path));
+	tree_id.FUEL_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Thrusters"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(FUEL, path));
+	tree_id.GLOW_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Glow Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(GLOW, path));
+	tree_id.SPCL_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Special Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SPCL, path));
+	tree_id.TGUN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Turrets"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TGUN, path));
+	tree_id.PATH_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Paths"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PATH, path));
+	tree_id.EYE_ID  = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Eye Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(EYE, path));
 
 	path.resize(0);
 
-//	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Insignia", TREE_NOSEL, TREE_NOSEL, new tree_node_id(INSG, path));
-	tree_id.SHLD_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Shield", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SHLD, path));
-	tree_id.ACEN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Auto-centering", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(ACEN, path));
-	tree_id.PINF_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),"Model Comments", TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PINF, path));
+//	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Insignia"), TREE_NOSEL, TREE_NOSEL, new tree_node_id(INSG, path));
+	tree_id.SHLD_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Shield"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SHLD, path));
+	tree_id.ACEN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Auto-centering"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(ACEN, path));
+	tree_id.PINF_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Model Comments"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PINF, path));
 
 	navigation_panel->SetItemImage(tree_id.TXTR_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.TXTR_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
@@ -490,7 +491,7 @@ void main_panel::on_cpy_sobj(wxCommandEvent &event){
 	bool child_copy = false;
 	for( int i = 0; i<model.GetSOBJCount(); i++){
 		if(model.SOBJ(i).parent_sobj == model.get_active_model()){
-			if(wxMessageBox("This subobject has children, would you like to copy them as well?", "Subobject Copy", wxYES_NO) == wxYES)
+			if(wxMessageBox(_("This subobject has children, would you like to copy them as well?"), _("Subobject Copy"), wxYES_NO) == wxYES)
 				child_copy = true;
 			break;
 		}
@@ -511,8 +512,8 @@ void main_panel::on_cpy_sobj(wxCommandEvent &event){
 	}
 
 	//turret
-	if(wxString(model.SOBJ(model.get_active_model()).properties.c_str()).Contains("$fov=") && 
-		wxMessageBox("The subobject you have copied seems like it might be a turret, \nwould you like to copy the pertenent turret data if it exsists?", "Subobject Copy", wxYES_NO) == wxYES)
+	if(wxString(model.SOBJ(model.get_active_model()).properties.c_str(), wxConvUTF8).Contains(_("$fov=")) && 
+		wxMessageBox(_("The subobject you have copied seems like it might be a turret, \nwould you like to copy the pertenent turret data if it exsists?"), _("Subobject Copy"), wxYES_NO) == wxYES)
 	{
 		//turrets first, then paths
 		for( int i = 0; i<model.GetTurretCount(); i++){
@@ -569,7 +570,7 @@ int delete_child_subobjects(PCS_Model&model, int del_sobj){
 void main_panel::on_del_sobj(wxCommandEvent &event){
 	if(model.get_active_model() < 0 || model.get_active_model() >= (int)model.get_subobjects().size())
 		return;//no valis subobject selected
-	if(wxMessageBox(wxString::Format("Are your *REALLY SURE* you want to delete the object %s?\nbecause it will be gone if you do.", model.SOBJ(model.get_active_model()).name.c_str()), "Subobject Delete", wxYES_NO) == wxNO)
+	if(wxMessageBox(wxString::Format(_("Are your *REALLY SURE* you want to delete the object %s?\nbecause it will be gone if you do."), model.SOBJ(model.get_active_model()).name.c_str()), _("Subobject Delete"), wxYES_NO) == wxNO)
 		return;
 
 	bool child_delete = false;
@@ -581,7 +582,7 @@ void main_panel::on_del_sobj(wxCommandEvent &event){
 
 	for( int i = 0; i<model.GetSOBJCount(); i++){
 		if(model.SOBJ(i).parent_sobj == model.get_active_model()){
-			if(wxMessageBox("This subobject has children, would you like to kill them as well?", "Subobject Delete", wxYES_NO) == wxYES)
+			if(wxMessageBox(_("This subobject has children, would you like to kill them as well?"), _("Subobject Delete"), wxYES_NO) == wxYES)
 				child_delete = true;
 			break;
 		}
@@ -592,8 +593,8 @@ void main_panel::on_del_sobj(wxCommandEvent &event){
 	}
 
 		//turret
-	if(wxString(model.SOBJ(model.get_active_model()).properties.c_str()).Contains("$fov=") && 
-		wxMessageBox("The subobject you have deleted seems like it might be a turret, \nwould you like to delete the pertenent turret data if it exsists?", "Subobject Delete", wxYES_NO) == wxYES)
+	if(wxString(model.SOBJ(model.get_active_model()).properties.c_str(), wxConvUTF8).Contains(_("$fov=")) && 
+		wxMessageBox(_("The subobject you have deleted seems like it might be a turret, \nwould you like to delete the pertenent turret data if it exsists?"), _("Subobject Delete"), wxYES_NO) == wxYES)
 	{
 		for( int i = 0; i<model.GetTurretCount(); i++){
 			if(model.Turret(i).sobj_parent == model.get_active_model()){
@@ -633,13 +634,13 @@ void add_child_subobjects(PCS_Model&model, int parent_new, int imported_sobj, PC
 
 void main_panel::on_load_chunk(wxCommandEvent &event){
 
-	wxFileDialog fdlg(NULL, "Select Import File", "", "", PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
 	if (fdlg.ShowModal() != wxID_OK)
 		return;
 
 	PCS_Model import_model;
 
-	if(!LoadImportModel(fdlg.GetPath().c_str(), &import_model))
+	if(!LoadImportModel(std::string(fdlg.GetPath().mb_str()), &import_model))
 		return;
 
 	if(control_panel->chunk_type == SOBJ){
@@ -653,13 +654,13 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 		//get all the available subobjects
 		wxArrayString sobj_names;
 
-		sobj_names.Add("All Subobjects");
+		sobj_names.Add(_("All Subobjects"));
 
 		for( i = 0; i<import_model.GetSOBJCount(); i++){
-			sobj_names.Add(import_model.SOBJ(i).name.c_str());
+			sobj_names.Add(wxString(import_model.SOBJ(i).name.c_str(), wxConvUTF8));
 		}
 
-		int imported_sobj = wxGetSingleChoiceIndex( "Select Subobject for Importation", "Subobject Import", sobj_names, this);
+		int imported_sobj = wxGetSingleChoiceIndex( _("Select Subobject for Importation"), _("Subobject Import"), sobj_names, this);
 
 
 		
@@ -686,7 +687,7 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 			bool child_import = false;
 			for( i = 0; i<import_model.GetSOBJCount(); i++){
 				if(import_model.SOBJ(i).parent_sobj == imported_sobj){
-					if(wxMessageBox("This subobject has children, would you like to import them as well?", "Subobject Import", wxYES_NO) == wxYES)
+					if(wxMessageBox(_("This subobject has children, would you like to import them as well?"), _("Subobject Import"), wxYES_NO) == wxYES)
 						child_import = true;
 					break;
 				}
@@ -697,8 +698,8 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 
 			bool path_import = false;
 			//turret/path import
-			if(wxString(import_model.SOBJ(imported_sobj).properties.c_str()).Contains("$fov=") && 
-				wxMessageBox("The subobject you have imported seems like it might be a turret, \nwould you like to import the pertenent turret and path data if it exsists?", "Subobject Import", wxYES_NO) == wxYES)
+			if(wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$fov=")) && 
+				wxMessageBox(_("The subobject you have imported seems like it might be a turret, \nwould you like to import the pertenent turret and path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES)
 			{
 				path_import = true;
 				//turrets first, then paths
@@ -715,11 +716,11 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 
 			//path import
 			if(path_import || 
-				wxString(import_model.SOBJ(imported_sobj).properties.c_str()).Contains("$special=subsystem") && 
-				wxMessageBox("The subobject you have imported seems like it might be a subsystem, \nwould you like to import the pertenent path data if it exsists?", "Subobject Import", wxYES_NO) == wxYES)
+				wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$special=subsystem")) && 
+				wxMessageBox(_("The subobject you have imported seems like it might be a subsystem, \nwould you like to import the pertenent path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES)
 			{
 				for( i = 0; i<import_model.GetPathCount(); i++){
-					if(wxString(import_model.Path(i).parent.c_str()).Contains(import_model.SOBJ(imported_sobj).name.c_str())){
+					if(wxString(import_model.Path(i).parent.c_str(), wxConvUTF8).Contains(wxString(import_model.SOBJ(imported_sobj).name.c_str(), wxConvUTF8))){
 						model.AddPath(&import_model.Path(i));
 					}
 				}
@@ -883,7 +884,8 @@ void main_panel::global_import(std::string filename){
 	model.set_turrets(import_model.get_turrets());
 	model.set_weapons(import_model.get_weapons());
 
-	on_update_tree(wxCommandEvent());
+	wxCommandEvent event;
+	on_update_tree(event);
 
 }
 
@@ -939,7 +941,8 @@ void main_panel::ImportGeometry(std::string filename)
 	// reset the view, load textures, etc
 	SignalModelChange("");
 	
-	on_update_tree(wxCommandEvent());
+	wxCommandEvent event;
+	on_update_tree(event);
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -949,7 +952,7 @@ void main_panel::open_progbar_start(wxAsyncProgressStartEvt &event)
 	glcanvas->FreezeRender = true;
 	if (UseThreadedProgBar)
 	{
-		threaded_prog_bar = new wxProgressDialog("Opening File", "Starting File Load"); 
+		threaded_prog_bar = new wxProgressDialog(_("Opening File"), _("Starting File Load")); 
 		threaded_prog_bar->SetSize(300,125);
 		threaded_prog_bar->ShowModal();
 	}
@@ -961,10 +964,10 @@ void main_panel::open_progbar_update(wxAsyncProgressUpdateEvt &event)
 {
 	if (threaded_prog_bar != NULL)
 	{
-		threaded_prog_bar->Update(int(event.getPercent()), event.getMessage());
+		threaded_prog_bar->Update(int(event.getPercent()), wxString(event.getMessage().c_str(), wxConvUTF8));
 	}
 
-	pstatus->SetStatusText(event.getMessage(), 0);
+	pstatus->SetStatusText(wxString(event.getMessage().c_str(), wxConvUTF8), 0);
 	pgauge->SetValue(int(event.getPercent()));
 }
 
@@ -977,14 +980,14 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 		delete threaded_prog_bar;
 		threaded_prog_bar = NULL;
 	}
-	pstatus->SetStatusText("Idle", 0);
+	pstatus->SetStatusText(_("Idle"), 0);
 	pgauge->SetValue(0);
 
 	if (event.getEarlyTerminated())
 	{
 		wxMessageDialog errormsg((wxWindow*)this, 
-			event.getMessage().c_str(), 
-			"Error Opening File", wxOK | wxICON_HAND);
+			wxString(event.getMessage().c_str(), wxConvUTF8), 
+			_("Error Opening File"), wxOK | wxICON_HAND);
 		errormsg.ShowModal();
 	
 	}
@@ -998,7 +1001,7 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 	int itemp;
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/gr_options/"));
-	pConfig->Read("use_vertex_buffer_objects", &itemp, 0); // default to off
+	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 	if (itemp == 1)
 		model.make_vertex_buffers();
 
@@ -1042,14 +1045,14 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 		delete threaded_prog_bar;
 		threaded_prog_bar = NULL;
 	}
-	pstatus->SetStatusText("Idle", 0);
+	pstatus->SetStatusText(_("Idle"), 0);
 	pgauge->SetValue(0);
 
 	if (event.getEarlyTerminated())
 	{
 		wxMessageDialog errormsg((wxWindow*)this, 
-			event.getMessage().c_str(), 
-			"Error Loading Textures", wxOK | wxICON_HAND);
+			wxString(event.getMessage().c_str(), wxConvUTF8),
+			_("Error Loading Textures"), wxOK | wxICON_HAND);
 		errormsg.ShowModal();
 	
 	}
@@ -1065,7 +1068,7 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 void main_panel::SignalModelChange(std::string filename, bool skipProgdlg) 
 {
 	UseThreadedProgBar = !skipProgdlg;
-	wxSetWorkingDirectory(wxString(filename.c_str()).BeforeLast('\\'));
+	wxSetWorkingDirectory(wxString(filename.c_str(), wxConvUTF8).BeforeLast('\\'));
 	glcanvas->FreezeRender = true;
 	//while (glcanvas->IsRendering);
 
@@ -1114,16 +1117,16 @@ public:
 */
 
 void main_panel::open_texture_externaly(wxString filename){
-	if(filename == "")
+	if(filename == _(""))
 		return;
 
-	if(filename.Contains(".vp:")){
+	if(filename.Contains(_(".vp:"))){
 		//if the texture is in a VP we need to extract it to the temp directory
 		//and open it from there
 		wxString vp_file = filename.BeforeLast(':');
 		wxString file = filename.AfterLast(':');
 		filename = get_temp_path()+'\\'+file;
-		VolitionPackfileReader::ReadFromVP(vp_file.c_str(), file.c_str(), filename.c_str());
+		VolitionPackfileReader::ReadFromVP(std::string(vp_file.mb_str()), std::string(file.mb_str()), std::string(filename.mb_str()));
 	}
 
 /*
@@ -1149,7 +1152,7 @@ void main_panel::open_texture_externaly(wxString filename){
 	//hard for you to not give me some DDE bullshit rather than a 
 	//simple proper open comand line
 
-	wxExecute( "rundll32 SHELL32.DLL,ShellExec_RunDLL " + filename, wxEXEC_ASYNC );
+	wxExecute( _("rundll32 SHELL32.DLL,ShellExec_RunDLL ") + filename, wxEXEC_ASYNC );
 
 
 }
@@ -1158,11 +1161,11 @@ void main_panel::open_texture_externaly(wxString filename){
 
 void main_panel::on_texture_external_open(wxCommandEvent& event){
 	if(control_panel->chunk_type != TXTR)return;
-	wxString filename = glcanvas->get_texture_filename(control_panel->get_item()[0]).c_str();
+	wxString filename(glcanvas->get_texture_filename(control_panel->get_item()[0]).c_str(), wxConvUTF8);
 	open_texture_externaly(filename);
-	filename = glcanvas->get_texture_filename(control_panel->get_item()[0], TC_GLOW).c_str();
+	filename = wxString(glcanvas->get_texture_filename(control_panel->get_item()[0], TC_GLOW).c_str(), wxConvUTF8);
 	open_texture_externaly(filename);
-	filename = glcanvas->get_texture_filename(control_panel->get_item()[0], TC_SHINEMAP).c_str();
+	filename = wxString(glcanvas->get_texture_filename(control_panel->get_item()[0], TC_SHINEMAP).c_str(), wxConvUTF8);
 	open_texture_externaly(filename);
 
 	//if the user has set there temp directory to an active mod directory
@@ -1172,7 +1175,7 @@ void main_panel::on_texture_external_open(wxCommandEvent& event){
 }
 
 void main_panel::on_moi_recalc(wxCommandEvent& event){
-		if(wxMessageBox("Are you sure you want PCS2 to try to recalculate the MOI?\nit\'s probably not very good at it.", "MOI Recalc", wxYES_NO) == wxNO)
+		if(wxMessageBox(_("Are you sure you want PCS2 to try to recalculate the MOI?\nit\'s probably not very good at it."), _("MOI Recalc"), wxYES_NO) == wxNO)
 			return;
 		vector3d min = model.GetMinBounding();
 		vector3d max = model.GetMaxBounding();
@@ -1290,10 +1293,10 @@ void main_panel::parents_first(int i, std::vector<wxTreeItemId>&model_nodes){
 			}
 			parent = model_nodes[model.SOBJ(i).parent_sobj];
 	}
-	wxString label = model.SOBJ(i).name.c_str();
-	label += " (";
+	wxString label(model.SOBJ(i).name.c_str(), wxConvUTF8);
+	label += _(" (");
 	label += _itoa(i, ibuf, 10);
-	label += ")";
+	label += _(")");
 	model_nodes[i] = navigation_panel->AppendItem(parent, label, TREE_UNSEL, TREE_SEL, new tree_node_id(SOBJ, path, true));
 	navigation_panel->SetItemImage(model_nodes[i], TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(model_nodes[i], TREE_SEL_OP, wxTreeItemIcon_SelectedExpanded);
@@ -1349,10 +1352,10 @@ void main_panel::rebuild_tree(){
 			parent = model_nodes[model.SOBJ(i).parent_sobj];
 		}
 		char ibuf[16];
-		wxString label = model.SOBJ(i).name.c_str();
-		label += " (";
+		wxString label(model.SOBJ(i).name.c_str(), wxConvUTF8);
+		label += _(" (");
 		label += _itoa(i, ibuf, 10);
-		label += ")";
+		label += _(")");
 		model_nodes[i] = navigation_panel->AppendItem(parent, label, TREE_UNSEL, TREE_SEL, new tree_node_id(SOBJ, path, true));
 		navigation_panel->SetItemImage(model_nodes[i], TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
 		navigation_panel->SetItemImage(model_nodes[i], TREE_SEL_OP, wxTreeItemIcon_SelectedExpanded);
@@ -1360,22 +1363,22 @@ void main_panel::rebuild_tree(){
 
 	for(i=0; i<model.GetTexturesCount(); i++){
 		path[0] = i;
-		navigation_panel->AppendItem(tree_id.TXTR_ID, model.Texture(i).c_str(), TREE_UNSEL, TREE_SEL, new tree_node_id(TXTR, path));
+		navigation_panel->AppendItem(tree_id.TXTR_ID, wxString(model.Texture(i).c_str(), wxConvUTF8), TREE_UNSEL, TREE_SEL, new tree_node_id(TXTR, path));
 	}
 
 
 	for(i=0; i<model.GetSpecialCount(); i++){
 		path[0] = i;
-		wxString str = model.Special(i).name.c_str();
-		if(str == "")str = wxString().Format("Special Point %i", i+1);
+		wxString str(model.Special(i).name.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Special Point %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.SPCL_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(SPCL, path));
 	}
 
 	for(i=0; i<model.GetEyeCount(); i++){
 		path[0] = i;
-		wxString str = "";
-		if(model.Eye(i).sobj_number > -1 && model.Eye(i).sobj_number < model.GetSOBJCount())str = model.SOBJ(model.Eye(i).sobj_number).name.c_str();
-		if(str == "")str = wxString().Format("Eye %i", i+1);
+		wxString str = _("");
+		if(model.Eye(i).sobj_number > -1 && model.Eye(i).sobj_number < model.GetSOBJCount())str = wxString(model.SOBJ(model.Eye(i).sobj_number).name.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Eye %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.EYE_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(EYE, path));
 	}
 
@@ -1391,14 +1394,14 @@ void main_panel::rebuild_tree(){
 		if(model.Weapon(i).type == GUN){
 			path[0] = g++;
 			path[1] = -1;
-			w_type_str = "Gun Point ";
-			parent = navigation_panel->AppendItem(tree_id.GPNT_ID, wxString().Format("Gun Bank %i",g), TREE_UNSEL, TREE_SEL, new tree_node_id(GPNT, path));
+			w_type_str = _("Gun Point ");
+			parent = navigation_panel->AppendItem(tree_id.GPNT_ID, wxString().Format(_("Gun Bank %i"),g), TREE_UNSEL, TREE_SEL, new tree_node_id(GPNT, path));
 			ctype = GPNT;
 		}else{
 			path[0] = m++;
 			path[1] = -1;
-			w_type_str = "Missile Point ";
-			parent = navigation_panel->AppendItem(tree_id.MPNT_ID, wxString().Format("Missile Bank %i",m), TREE_UNSEL, TREE_SEL, new tree_node_id(MPNT, path));
+			w_type_str = _("Missile Point ");
+			parent = navigation_panel->AppendItem(tree_id.MPNT_ID, wxString().Format(_("Missile Bank %i"),m), TREE_UNSEL, TREE_SEL, new tree_node_id(MPNT, path));
 			ctype = MPNT;
 		}
 
@@ -1407,7 +1410,7 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Weapon(i).muzzles.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("%s%i", w_type_str, j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(ctype, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("%s%i"), w_type_str.c_str(), j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(ctype, path, true));
 		}
 	}
 
@@ -1415,9 +1418,9 @@ void main_panel::rebuild_tree(){
 	for(i=0; i<model.GetDockingCount(); i++){
 		path[0] = i;
 		path[1] = -1;
-		wxString str = model.Dock(i).properties.c_str();
-		if(str == "")str = wxString().Format("Dock %i", i+1);
-		else str.Replace("$name=","");
+		wxString str(model.Dock(i).properties.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Dock %i"), i+1);
+		else str.Replace(_("$name="),_(""));
 		str.Trim(true);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.DOCK_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(DOCK, path));
 
@@ -1426,15 +1429,15 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Dock(i).dockpoints.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("Docking Point %i",j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(DOCK, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("Docking Point %i"),j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(DOCK, path, true));
 		}
 	}
 
 	for(i=0; i<model.GetThrusterCount(); i++){
 		path[0] = i;
 		path[1] = -1;
-		wxString str = model.Thruster(i).properties.c_str();
-		if(str == "")str = wxString().Format("Thruster %i", i+1);
+		wxString str(model.Thruster(i).properties.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Thruster %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.FUEL_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(FUEL, path));
 
 		navigation_panel->SetItemImage(parent, TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
@@ -1442,16 +1445,16 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Thruster(i).points.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("Thruster Point %i",j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(FUEL, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("Thruster Point %i"),j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(FUEL, path, true));
 		}
 	}
 
 	for(i=0; i<model.GetLightCount(); i++){
 		path[0] = i;
 		path[1] = -1;
-		wxString str = model.Light(i).properties.c_str();
-		if(str == "")str = wxString().Format("Glow Bank %i", i+1);
-		else str.Replace("$glow_texture=","");
+		wxString str(model.Light(i).properties.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Glow Bank %i"), i+1);
+		else str.Replace(_("$glow_texture="),_(""));
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.GLOW_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(GLOW, path));
 
 		navigation_panel->SetItemImage(parent, TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
@@ -1459,16 +1462,16 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Light(i).lights.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("Glow Point %i",j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(GLOW, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("Glow Point %i"),j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(GLOW, path, true));
 		}
 	}
 
 	for(i=0; i<model.GetTurretCount(); i++){
 		path[0] = i;
 		path[1] = -1;
-		wxString str = "";
-		if(model.Turret(i).sobj_parent > -1 && model.Turret(i).sobj_parent < model.GetSOBJCount())str = model.SOBJ(model.Turret(i).sobj_parent).name.c_str();
-		if(str == "")str = wxString().Format("Turret %i", i+1);
+		wxString str = _("");
+		if(model.Turret(i).sobj_parent > -1 && model.Turret(i).sobj_parent < model.GetSOBJCount())str = wxString(model.SOBJ(model.Turret(i).sobj_parent).name.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Turret %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.TGUN_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(TGUN, path));
 
 		navigation_panel->SetItemImage(parent, TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
@@ -1476,15 +1479,15 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Turret(i).fire_points.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("Fire Point %i",j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(TGUN, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("Fire Point %i"),j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(TGUN, path, true));
 		}
 	}
 
 	for(i=0; i<model.GetPathCount(); i++){
 		path[0] = i;
 		path[1] = -1;
-		wxString str = model.Path(i).name.c_str();
-		if(str == "")str = wxString().Format("Path %i", i+1);
+		wxString str(model.Path(i).name.c_str(), wxConvUTF8);
+		if(str == _(""))str = wxString().Format(_("Path %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.PATH_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(PATH, path));
 
 		navigation_panel->SetItemImage(parent, TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
@@ -1492,7 +1495,7 @@ void main_panel::rebuild_tree(){
 
 		for(unsigned int j = 0; j<model.Path(i).verts.size(); j++){
 			path[1] = j;
-			navigation_panel->AppendItem(parent, wxString().Format("Vertex %i",j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(PATH, path, true));
+			navigation_panel->AppendItem(parent, wxString().Format(_("Vertex %i"),j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(PATH, path, true));
 		}
 	}
 
@@ -1583,10 +1586,10 @@ void main_panel::on_tree_selection(wxTreeEvent& event){
 				break;
 			case WEAP:
 			case GPNT:
-					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<GUN>>		(control_pane, model, GPNT),1.0,wxEXPAND);
+					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<GUN> >		(control_pane, model, GPNT),1.0,wxEXPAND);
 				break;
 			case MPNT:
-					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<MISSILE>>	(control_pane, model, MPNT),1.0,wxEXPAND);
+					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_slot>, WPNT_ctrl<MISSILE> >	(control_pane, model, MPNT),1.0,wxEXPAND);
 				break;
 			case DOCK:
 					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_dock_point>, DOCK_ctrl>		(control_pane, model, DOCK),1.0,wxEXPAND);
@@ -1645,7 +1648,8 @@ void main_panel::on_tree_selection(wxTreeEvent& event){
 
 	glcanvas->set_active_chunk(id.type);
 
-	GetEventHandler()->ProcessEvent(wxCommandEvent(DATA_SELECTION_CHANGED, GetId()));
+	wxCommandEvent commandEvent(DATA_SELECTION_CHANGED, GetId());
+	GetEventHandler()->ProcessEvent(commandEvent);
 
 	control_panel->fix_buttons();
 

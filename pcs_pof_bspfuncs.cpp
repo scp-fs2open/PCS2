@@ -128,7 +128,7 @@
 
 
 #include "pcs_pof_bspfuncs.h"
-#include <math.h>
+#include <cmath>
 #include <wx/stopwatch.h>
 
 vector3d POFTranslate(vector3d v)

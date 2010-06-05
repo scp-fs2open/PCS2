@@ -17,11 +17,11 @@ protected:
 public:
 	
 	path_vert_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<pcs_pvert>(parent,x,y,w,h, orient, Title)
 	{
 		//add controls
-		add_control(radius =new float_ctrl(this,0,0,60,40,"Radius"),0,wxEXPAND );
-		add_control(pos =new vector_ctrl(this,0,0,60,40,"Position"),0,wxEXPAND ); 
+		add_control(radius =new float_ctrl(this,0,0,60,40,_("Radius")),0,wxEXPAND );
+		add_control(pos =new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
 	};
 
 	virtual ~path_vert_ctrl(void){};
@@ -47,7 +47,7 @@ class point_array_ctrl :
 {
 public:
 	point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl(parent,x,y,w,h,subtitle, "", wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+		:type_array_ctrl<pcs_pvert, path_vert_ctrl>(parent,x,y,w,h,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 	}
 
@@ -68,17 +68,17 @@ protected:
 public:
 	
 	path_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<pcs_path>(parent,x,y,w,h, orient, Title)
 	{
 		//add controls
-		add_control(name =new string_ctrl(this,0,0,60,40,"Name"),0,wxEXPAND );
+		add_control(name =new string_ctrl(this,0,0,60,40,_("Name")),0,wxEXPAND );
 
 		std::vector<std::string> op;
 		get_subsystem_list(op);
 
-		add_control(parent_str =new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,"Parent",op),0,wxEXPAND ); 
+		add_control(parent_str =new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Parent"),op),0,wxEXPAND );
 
-		add_control(verts =new point_array_ctrl(this,0,0,60,150,"Verts", ""),0,wxEXPAND ); 
+		add_control(verts =new point_array_ctrl(this,0,0,60,150,_("Verts"), _("")),0,wxEXPAND );
 	};
 
 	virtual ~path_ctrl(void){};
@@ -119,7 +119,7 @@ class path_array_ctrl :
 {
 public:
 	path_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl(parent,x,y,w,h,subtitle, "", wxVERTICAL, wxEXPAND, ARRAY_LIST)
+		:type_array_ctrl<pcs_path, path_ctrl>(parent,x,y,w,h,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -145,8 +145,8 @@ public:
 			//first one
 			str = "$Path01";
 		}else{
-			wxString s = array[event.GetInt()-1].name.c_str();
-			if(s.Left(4) == "$bay" || s.Left(4) == "$Bay")
+			wxString s(array[event.GetInt()-1].name.c_str(), wxConvUTF8);
+			if(s.Left(4) == _("$bay") || s.Left(4) == _("$Bay"))
 				str = "$Bay";
 			else
 				str = "$Path";
@@ -154,9 +154,9 @@ public:
 			long l;
 			(s.Right(2)).ToLong(&l);
 			if(l<10)
-				str = wxString::Format("%s0%i",str.c_str(), int(l+1));
+				str = wxString::Format(_("%s0%i"),str.c_str(), int(l+1)).mb_str();
 			else 
-				str = wxString::Format("%s%i",str.c_str(), int(l+1));
+				str = wxString::Format(_("%s%i"),str.c_str(), int(l+1)).mb_str();
 		}
 		array[event.GetInt()].name = str;
 		ctrl->set_value(array[index]);
@@ -165,7 +165,7 @@ public:
 
 
 class PATH_ctrl
-	:public editor_ctrl<std::vector<pcs_path>>
+	:public editor_ctrl<std::vector<pcs_path> >
 {
 	path_array_ctrl*paths;
 	wxButton*auto_gen_btn;
@@ -176,11 +176,11 @@ public:
 	static color unselected;
 
 	PATH_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<pcs_path>>(parent, "Paths")
+		:editor_ctrl<std::vector<pcs_path> >(parent, _("Paths"))
 	{
 		//add controls
-		add_control(paths=new path_array_ctrl(this,0,0,60,300,"Path", ""),0,wxEXPAND );
-		add_control(auto_gen_btn = new wxButton(this, PATH_AUTO_GEN, "Auto-Gen"));
+		add_control(paths=new path_array_ctrl(this,0,0,60,300,_("Path"), _("")),0,wxEXPAND );
+		add_control(auto_gen_btn = new wxButton(this, PATH_AUTO_GEN, _("Auto-Gen")));
 	}
 
 	//do nothing, needed so the base destructor will get called
@@ -303,7 +303,7 @@ public:
 		pcs_path path;
 		pcs_dock_point & dock = get_main_window()->get_model().Dock(dock_idx);
 
-		path.parent = wxString::Format("$dock%0.2d-01", dock_idx+1).c_str();
+		path.parent = wxString::Format(_("$dock%0.2d-01"), dock_idx+1).mb_str();
 
 		path.verts.resize(4);
 
@@ -323,7 +323,7 @@ public:
 	DECLARE_EVENT_TABLE();
 	void on_auto_gen(wxCommandEvent& event){
 		if(get_value().size() > 0){
-			if(wxMessageBox("Warning: Path Auto-Generation will erase all exsisting Paths,\ndo you wish to proceed?", "WARNING", wxYES_NO) == wxNO)
+			if(wxMessageBox(_("Warning: Path Auto-Generation will erase all exsisting Paths,\ndo you wish to proceed?"), _("WARNING"), wxYES_NO) == wxNO)
 				return;
 		}
 
@@ -332,15 +332,15 @@ public:
 		int i;
 		for(i = 0; i<get_main_window()->get_model().GetTurretCount(); i++){
 			path.push_back(auto_gen_turret(i));
-			path[path.size()-1].name = wxString::Format("$Path%0.2d", path.size()).c_str();
+			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
 		}
 		for(i = 0; i<get_main_window()->get_model().GetSpecialCount(); i++){
 			path.push_back(auto_gen_spcl(i));
-			path[path.size()-1].name = wxString::Format("$Path%0.2d", path.size()).c_str();
+			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
 		}
 		for(i = 0; i<get_main_window()->get_model().GetDockingCount(); i++){
 			path.push_back(auto_gen_dock(i));
-			path[path.size()-1].name = wxString::Format("$Path%0.2d", path.size()).c_str();
+			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
 			get_main_window()->get_model().Dock(i).paths.resize(1);
 			get_main_window()->get_model().Dock(i).paths[0] = (int)path.size()-1;
 		}
@@ -349,8 +349,8 @@ public:
 
 		//add all fighter bay paths from the old list
 		for(i = 0; i< (int)old_path.size(); i++){
-			if(wxString(old_path[i].name.c_str()).Find("Bay") != wxNOT_FOUND ||
-				wxString(old_path[i].name.c_str()).Find("bay") != wxNOT_FOUND)
+			if(wxString(old_path[i].name.c_str(), wxConvUTF8).Find(_("Bay")) != wxNOT_FOUND ||
+				wxString(old_path[i].name.c_str(), wxConvUTF8).Find(_("bay")) != wxNOT_FOUND)
 				path.push_back(old_path[i]);
 		}
 

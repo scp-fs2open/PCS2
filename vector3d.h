@@ -129,9 +129,9 @@ bool operator!=(vector3d &one, vector3d &two);
 
 vector3d operator-(const vector3d &one, const vector3d &two);
 vector3d operator+(const vector3d &one, const vector3d &two);
-vector3d operator+=(vector3d &one, const vector3d &two);
+vector3d& operator+=(vector3d &one, const vector3d &two);
 
-vector3d MakeUnitVector(vector3d &vect); 
+vector3d MakeUnitVector(const vector3d &vect);
 
 vector3d operator *(float scalar, vector3d &v); 
 vector3d operator *(vector3d &v, float scalar); 
@@ -150,9 +150,9 @@ float Abs(float n);
 vector3d AverageVectors(int numvectors, vector3d *vects);
 float Angle(vector3d &v1, vector3d &v2);
 
-vector3d CrossProduct(vector3d &one, vector3d &two);
+vector3d CrossProduct(const vector3d &one, const vector3d &two);
 float dot(vector3d&A, vector3d&B);
-float Magnitude(vector3d &vec);
+float Magnitude(const vector3d &vec);
 inline bool null_vec(vector3d &a){return a.x == 0.0f && a.y == 0.0f && a.z == 0.0f;}
 
 vector3d average_vectors_if_less_than_angle(int numvectors, float angle, vector3d src, vector3d *vects);

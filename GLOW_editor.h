@@ -16,20 +16,20 @@ protected:
 public:
 	
 	glow_bank_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor(parent,x,y,w,h, orient, Title)
+	:editor<pcs_glow_array>(parent,x,y,w,h, orient, Title)
 	{
 		std::vector<std::string> op;
 		op.push_back("$glow_texture=");
 		
 		//add controls
-		add_control(disp_time =new int_ctrl(this,0,0,60,40,"Displacement Time"),0,wxEXPAND );
-		add_control(on_time =new int_ctrl(this,0,0,60,40,"On Time"),0,wxEXPAND ); 
-		add_control(off_time =new int_ctrl(this,0,0,60,40,"Off Time"),0,wxEXPAND ); 
-		add_control(obj_parent =new model_list_ctrl(this,0,0,60,40,"Parent Subobject"),0,wxEXPAND );  
-		add_control(LOD =new int_ctrl(this,0,0,60,40,"LOD"),0,wxEXPAND ); 
-		add_control(type =new int_ctrl(this,0,0,60,40,"Type"),0,wxEXPAND ); 
-		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,"Properties",op),0,wxEXPAND );
-		add_control(points=new glow_point_array_ctrl(this,0,0,60,215,"Glow Points"),0,wxEXPAND );
+		add_control(disp_time =new int_ctrl(this,0,0,60,40,_("Displacement Time")),0,wxEXPAND );
+		add_control(on_time =new int_ctrl(this,0,0,60,40,_("On Time")),0,wxEXPAND );
+		add_control(off_time =new int_ctrl(this,0,0,60,40,_("Off Time")),0,wxEXPAND );
+		add_control(obj_parent =new model_list_ctrl(this,0,0,60,40,_("Parent Subobject")),0,wxEXPAND );
+		add_control(LOD =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
+		add_control(type =new int_ctrl(this,0,0,60,40,_("Type")),0,wxEXPAND );
+		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Properties"),op),0,wxEXPAND );
+		add_control(points=new glow_point_array_ctrl(this,0,0,60,215,_("Glow Points")),0,wxEXPAND );
 	};
 
 	virtual ~glow_bank_point_ctrl(void){};
@@ -77,7 +77,7 @@ class glow_bank_array_ctrl :
 {
 public:
 	glow_bank_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:type_array_ctrl(parent,x,y,w,h,Title, "", wxVERTICAL, wxEXPAND, ARRAY_LIST)
+		:type_array_ctrl<pcs_glow_array, glow_bank_point_ctrl>(parent,x,y,w,h,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -87,7 +87,7 @@ public:
 
 //the chunk's editor
 class GLOW_ctrl
-	:public editor_ctrl<std::vector<pcs_glow_array>>
+	:public editor_ctrl<std::vector<pcs_glow_array> >
 {
 	glow_bank_array_ctrl*thrusters;
 
@@ -97,10 +97,10 @@ public:
 	static color unselected;
 
 	GLOW_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<pcs_glow_array>>(parent, "Glow Points")
+		:editor_ctrl<std::vector<pcs_glow_array> >(parent, _("Glow Points"))
 	{
 		//add controls
-		add_control(thrusters=new glow_bank_array_ctrl(this,0,0,90,580,""),0,wxEXPAND );
+		add_control(thrusters=new glow_bank_array_ctrl(this,0,0,90,580,_("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

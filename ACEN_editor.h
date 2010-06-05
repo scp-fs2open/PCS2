@@ -16,10 +16,10 @@ public:
 	static color unselected;
 
 	ACEN_ctrl(wxWindow*parent)
-		:editor_ctrl<vector3d>(parent, "Auto-Center")
+		:editor_ctrl<vector3d>(parent, _("Auto-Center"))
 	{
 		//add controls
-		add_control(auto_center=new vector_ctrl(this,0,0,60,40,"Point"),0,wxEXPAND );
+		add_control(auto_center=new vector_ctrl(this,0,0,60,40,_("Point")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

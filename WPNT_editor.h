@@ -28,23 +28,23 @@ class convergence_calculator :
 
 public:
 	convergence_calculator()
-		:wxDialog(NULL, -1, "Convergence Calculator", wxPoint(-1,-1), wxSize(238,235))
+		:wxDialog(NULL, -1, _("Convergence Calculator"), wxPoint(-1,-1), wxSize(238,235))
 		,mask(0)
 	{
-		check_box[0] =	new wxCheckBox(this, CHECK_X, "Converge X", wxPoint(75,12), wxSize(80,16));
-		check_box[1] =	new wxCheckBox(this, CHECK_Y, "Converge Y", wxPoint(75,36), wxSize(80,16));
-		check_box[2] =	new wxCheckBox(this, CHECK_Z, "Converge Z", wxPoint(75,60), wxSize(80,16));
+		check_box[0] =	new wxCheckBox(this, CHECK_X, _("Converge X"), wxPoint(75,12), wxSize(80,16));
+		check_box[1] =	new wxCheckBox(this, CHECK_Y, _("Converge Y"), wxPoint(75,36), wxSize(80,16));
+		check_box[2] =	new wxCheckBox(this, CHECK_Z, _("Converge Z"), wxPoint(75,60), wxSize(80,16));
 
-		check_box[3] =	new wxCheckBox(this, CHECK_THIS_ONLY, "This Point Only", wxPoint(75,84), wxSize(80,16));
+		check_box[3] =	new wxCheckBox(this, CHECK_THIS_ONLY, _("This Point Only"), wxPoint(75,84), wxSize(80,16));
 		
 		for(int i = 0; i<4; i++){
 			check_box[i]->SetValue(i!=3);
 		}
 
-		pnt_ctrl =		new vector_ctrl(this, 12,108, 204,46, "Point to Converge to");
+		pnt_ctrl =		new vector_ctrl(this, 12,108, 204,46, _("Point to Converge to"));
 
-		ok_btn =		new wxButton(this, CONVERGE_OK, "OK",			wxPoint(35, 165),  wxSize(75, 23));
-		cancel_btn =	new wxButton(this, CONVERGE_CANCEL, "Cancel",	wxPoint(116, 165), wxSize(75, 23));
+		ok_btn =		new wxButton(this, CONVERGE_OK, _("OK"),			wxPoint(35, 165),  wxSize(75, 23));
+		cancel_btn =	new wxButton(this, CONVERGE_CANCEL, _("Cancel"),	wxPoint(116, 165), wxSize(75, 23));
 	};
 public:
 	~convergence_calculator(void){};
@@ -79,7 +79,7 @@ public:
 	weapon_hard_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
 		:hard_point_array_ctrl(parent, x, y, w, h, Title, orient)
 	{
-		add_control(converge_btn = new wxButton(this, WPN_CONVERGENCE, "Convergence"));
+		add_control(converge_btn = new wxButton(this, WPN_CONVERGENCE, _("Convergence")));
 	}
 
 	DECLARE_EVENT_TABLE();
@@ -110,7 +110,8 @@ public:
 			}
 		}
 		set_value(array);//refresh
-		GetEventHandler()->ProcessEvent(wxCommandEvent(EDIT_DONE, GetId()));
+		wxCommandEvent commandEvent(EDIT_DONE, GetId());
+		GetEventHandler()->ProcessEvent(commandEvent);
 	}
 
 };
@@ -121,7 +122,7 @@ class weapon_point_type_ctrl :
 {
 public:
 	weapon_point_type_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl(parent,x,y,w,h,subtitle, "Point", wxVERTICAL, wxEXPAND, ARRAY_LIST)
+		:type_array_ctrl<std::vector<pcs_hardpoint>, weapon_hard_point_array_ctrl>(parent,x,y,w,h,subtitle, _("Point"), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -132,7 +133,7 @@ public:
 /*
 //control for both types of weapon points
 class weapon_point_both_type_ctrl :
-	public type_static_array_ctrl<std::vector<std::vector<pcs_slot>>,weapon_point_type_ctrl>
+	public type_static_array_ctrl<std::vector<std::vector<pcs_slot> >,weapon_point_type_ctrl>
 {
 public:
 	weapon_point_both_type_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
@@ -144,7 +145,7 @@ public:
 
 	void set_large_value(const std::vector<pcs_slot>&t)
 	{
-		std::vector<std::vector<pcs_slot>> temp;
+		std::vector<std::vector<pcs_slot> > temp;
 		temp.resize(2);
 		for(int i = 0; i<t.size();i++){
 			temp[t[i].type] = t[i];
@@ -153,7 +154,7 @@ public:
 	}
 	std::vector<pcs_slot>get_large_value()
 	{
-		std::vector<std::vector<pcs_slot>> temp = get_value();
+		std::vector<std::vector<pcs_slot> > temp = get_value();
 		std::vector<pcs_slot> ret = temp[0];
 		for(int i = 0; i<temp[1].size();i++){
 			ret.push_back(temp[1][i]);
@@ -166,7 +167,7 @@ public:
 //the chunk's editor
 template<int slot_type>
 class WPNT_ctrl
-	:public editor_ctrl<std::vector<pcs_slot>>
+	:public editor_ctrl<std::vector<pcs_slot> >
 {
 	weapon_point_type_ctrl*wpn;
 
@@ -176,10 +177,10 @@ public:
 	static color unselected;
 
 	WPNT_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<pcs_slot>>(parent, "Weapon Points")
+		:editor_ctrl<std::vector<pcs_slot> >(parent, _("Weapon Points"))
 	{
 		//add controls
-		add_control(wpn=new weapon_point_type_ctrl(this,0,0,90,290,"Gunpoint","Bank"),0,wxEXPAND );
+		add_control(wpn=new weapon_point_type_ctrl(this,0,0,90,290,_("Gunpoint"),_("Bank")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called
@@ -188,7 +189,7 @@ public:
 	//set's the control's value
 	void set_value(const std::vector<pcs_slot>&t){
 		data=t;
-		std::vector<std::vector<pcs_hardpoint>> temp;
+		std::vector<std::vector<pcs_hardpoint> > temp;
 		for(unsigned int i = 0; i<data.size(); i++){
 			if(data[i].type == slot_type)
 			temp.push_back(data[i].muzzles);
@@ -207,7 +208,7 @@ public:
 				i++;
 			}
 		}
-		std::vector<std::vector<pcs_hardpoint>> temp = wpn->get_value();
+		std::vector<std::vector<pcs_hardpoint> > temp = wpn->get_value();
 		data.resize(temp.size());
 		for(unsigned int i = 0; i<temp.size(); i++){
 			data[i].muzzles = temp[i];
@@ -289,13 +290,13 @@ public:
 /*
 //both chunk's editor
 class WPNT_ctrl2
-	:public editor_ctrl<std::vector<pcs_slot>>
+	:public editor_ctrl<std::vector<pcs_slot> >
 {
 	weapon_point_both_type_ctrl*wpn;
 
 public:
 	WPNT_ctrl(wxWindow*parent)
-		:editor_ctrl<std::vector<pcs_slot>>(parent, "Weapon Points")
+		:editor_ctrl<std::vector<pcs_slot> >(parent, "Weapon Points")
 	{
 		//add controls
 		add_control(wpn=new weapon_point_both_type_ctrl(this,0,0,90,260,"Type",""),0,wxEXPAND );
@@ -307,7 +308,7 @@ public:
 	//set's the control's value
 	void set_value(const std::vector<pcs_slot>&t){
 		data=t;
-		std::vector<std::vector<pcs_hardpoint>> temp;
+		std::vector<std::vector<pcs_hardpoint> > temp;
 		for(int i = 0; i<data.size(); i++){
 			if(data[i].type == slot_type)
 			temp.push_back(data[i].muzzles);
@@ -326,7 +327,7 @@ public:
 				i++;
 			}
 		}
-		std::vector<std::vector<pcs_hardpoint>> temp = wpn->get_value();
+		std::vector<std::vector<pcs_hardpoint> > temp = wpn->get_value();
 		data.resize(temp.size());
 		for(int i = 0; i<temp.size(); i++){
 			data[i].muzzles = temp[i];
