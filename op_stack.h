@@ -1,3 +1,6 @@
+#ifndef _OP_STACK_H_
+#define _OP_STACK_H_
+
 #include "pcs2.h"
 #include <string>
 #include <wx/wx.h>
@@ -39,79 +42,4 @@ public:
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-template<class type>
-void op_stack<type>::push(const type&new_state){
-	if(operation.size()>0){
-		//if we already have this, there is no need to save it again
-		if(top > -1 && operation[top] == new_state)
-			return;
-	}
-	top++;
-	operation.resize(top+1);
-	(operation[top]) = new_state;
-
-	if(get_main_window()){
-	//this function always kills redo
-		get_main_window()->on_redo_enable(false);
-	//this function always enables undo
-		if(top>0)get_main_window()->on_undo_enable();
-	}
-}
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-template<class type>
-bool op_stack<type>::undo(type&state){
-	top--;
-	//pushed past the begining of the stack
-	if(top <= 0){
-		//if we are at the bottom of the stack there is nothing to undo so disable it
-		if(get_main_window())get_main_window()->on_undo_enable(false);
-		if(top<0)return false;
-	}
-	//this function always enables redo
-			if(get_main_window())get_main_window()->on_redo_enable();
-
-	state = (operation[top]);
-	return true;
-}
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-template<class type>
-bool op_stack<type>::redo(type&state){
-	if(top < (int)operation.size()-1){
-		top++;
-		if(top == (int)operation.size()-1){
-			//if we are at the top of the stack there is nothing to redo so disable it
-			if(get_main_window())get_main_window()->on_redo_enable(false);
-		}
-		//this function always enables undo
-		if(get_main_window())get_main_window()->on_undo_enable();
-		state = (operation[top]);
-		return true;
-	}
-	return false;
-}
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-template<class type>
-void op_stack<type>::fix_buttons(){
-	if(top > 0){
-		if(get_main_window())
-			get_main_window()->on_undo_enable();
-	}else{
-		if(get_main_window())
-			get_main_window()->on_undo_enable(false);
-	}
-
-	if(top > -1 && top < (int)operation.size()){
-		if(get_main_window())
-			get_main_window()->on_redo_enable();
-	}else{
-		if(get_main_window())
-			get_main_window()->on_redo_enable(false);
-	}
-
-}
+#endif /* _OP_STACK_H_ */
