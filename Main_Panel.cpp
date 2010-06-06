@@ -147,6 +147,7 @@
 #include <wx/imaglist.h>
 
 #include <map>
+#include <algorithm>
 
 #define TREE_SEL 0
 #define TREE_UNSEL 1
@@ -963,13 +964,14 @@ void main_panel::open_progbar_start(wxAsyncProgressStartEvt &event)
 
 void main_panel::open_progbar_update(wxAsyncProgressUpdateEvt &event)
 {
+	int percent = std::min(std::max((int)event.getPercent(), 0), 100);
 	if (threaded_prog_bar != NULL)
 	{
-		threaded_prog_bar->Update(int(event.getPercent()), wxString(event.getMessage().c_str(), wxConvUTF8));
+		threaded_prog_bar->Update(percent, wxString(event.getMessage().c_str(), wxConvUTF8));
 	}
 
 	pstatus->SetStatusText(wxString(event.getMessage().c_str(), wxConvUTF8), 0);
-	pgauge->SetValue(int(event.getPercent()));
+	pgauge->SetValue(percent);
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
