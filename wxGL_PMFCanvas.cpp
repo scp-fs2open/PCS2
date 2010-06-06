@@ -856,14 +856,14 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 		mainpanel->control_panel->push_undo();
 	}
 
-	if(!event.Leaving()){
-		if(this != FindFocus()){
-			previus_focus = FindFocus();
-			SetFocus();
-		}
-	}else{
-		if(previus_focus)previus_focus->SetFocus();
-	}
+	//if(!event.Leaving()){
+	//	if(this != FindFocus()){
+	//		previus_focus = FindFocus();
+	//		SetFocus();
+	//	}
+	//}else{
+	//	if(previus_focus)previus_focus->SetFocus();
+	//}
 
 	if (!model.GetSOBJCount())
 	{
@@ -877,12 +877,11 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 	{
 		mouse_start = wxPoint(event.GetX(), event.GetY());
 	}
-	else if (event.GetEventType() == wxEVT_MOTION && 
-				event.Dragging())
+	else if (event.GetEventType() == wxEVT_MOTION && event.Dragging())
 	{
 //########################start mouse movement code########################//
 		if(event.m_controlDown){
-	//------------------------start omnipoint code------------------------//
+//------------------------start omnipoint code------------------------//
 			//if control is down we move the selected omnipoint
 			if(omni.point.size() > 0 && omni_selected_list >-1 && omni_selected_list < (int)omni.point.size() && omni_selected_item >-1 && omni_selected_item < (int)omni.point[omni_selected_list].size()){
 				//but only if we have omnipoints and our selected coords are valid
@@ -925,9 +924,9 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 					update_omnipoints = true;
 				}
 			}
-	//------------------------end omnipoint code------------------------//
-	}else{
-	//++++++++++++++++++++++++start view code++++++++++++++++++++++++//
+//------------------------end omnipoint code------------------------//
+		}else{
+//++++++++++++++++++++++++start view code++++++++++++++++++++++++//
 			if (!event.m_shiftDown)
 			{
 				//if shift is not down we rotate
@@ -967,7 +966,7 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 		Render();
 //########################end mouse movement code########################//
 	}
-	else if (event.GetEventType() == wxEVT_MOUSEWHEEL){
+	/*else*/ if (event.GetEventType() == wxEVT_MOUSEWHEEL){
 //************************start scroll code************************//
 		if(event.m_controlDown){
 	//------------------------start omnipoint code------------------------//

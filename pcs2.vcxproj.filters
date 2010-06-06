@@ -1,0 +1,555 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{e754c06c-b2d7-4490-8264-b66a86943761}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{dc9df80a-0b63-472b-97dc-8ef7f691cf8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{7e5c7f56-9260-4a0d-8b9a-437ba926a009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\Editors">
+      <UniqueIdentifier>{2e176108-e4c0-4509-806b-214db7513f7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\Editors\common">
+      <UniqueIdentifier>{a23edd27-bc21-4c16-b3f2-63c2a4c7d2f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\Main Window">
+      <UniqueIdentifier>{f06f8b01-155c-4093-bc83-ad2c8c43b066}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI\Main Window\graphics">
+      <UniqueIdentifier>{cf64fa99-d850-4e94-831a-8fdfaf336e83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="compat">
+      <UniqueIdentifier>{a9598029-3ecb-4c72-b5f0-22faa4df5c0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes">
+      <UniqueIdentifier>{962117aa-c947-4816-8522-da0fa412c286}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\ASE">
+      <UniqueIdentifier>{e3732994-a4a2-448d-8c90-20de357ea791}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\COB">
+      <UniqueIdentifier>{b7c67d7f-7894-48f8-8b5f-ba0f18a83588}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\PMF">
+      <UniqueIdentifier>{3e7aef30-b6d1-4387-ac9a-02628b6e8dbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\OBJ">
+      <UniqueIdentifier>{f34c10a4-38b8-44c3-a267-f3fb12f22786}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\POF">
+      <UniqueIdentifier>{508d355e-ab8b-4585-ae59-7c7318082ff5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\POF\BSP">
+      <UniqueIdentifier>{f274388e-b34f-412f-9030-03ce8611526b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FileTypes\DAE">
+      <UniqueIdentifier>{6eb7c9d7-ab30-4859-84bc-e83152e63cd3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="apply.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bullet.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="colours.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="copy_btn.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="delete_btn.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dock.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="down.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dragable_selected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dragable_selected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dragable_unselected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dragable_unselected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="fuel.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="glow.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="grid_btn.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="header.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="left.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lock_X.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lock_Y.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lock_Z.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="new.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="new_btn.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="open_texture.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="paths.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="pcs2.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="pcsico.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="placeholder.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="proj_ortho.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="proj_persp.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="redo.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="revert.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="right.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="save.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="selected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="selected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="solid.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="spcl.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="splash.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="subobjects.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="suggest.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="textured.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="textures.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="top_level_selected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="top_level_selected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="top_level_unselected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="top_level_unselected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="turrets.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="undo.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="unselectable.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="unselectable_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="unselected.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="unselected_open.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="up.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="weap.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="wireframe.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="xleft.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="xright.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="XY_plane.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="XZ_plane.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="yleft.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="yright.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="YZ_plane.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="zin.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="zleft.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="zout.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="zright.xpm">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="pcs2.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AsyncProgress.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="FileList.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="matrix.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="matrix3d.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="tex_ctrl.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="vector3d.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="VPReader.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="combo.cpp">
+      <Filter>GUI\Editors\common</Filter>
+    </ClCompile>
+    <ClCompile Include="editor.cpp">
+      <Filter>GUI\Editors\common</Filter>
+    </ClCompile>
+    <ClCompile Include="text_ctrl.cpp">
+      <Filter>GUI\Editors\common</Filter>
+    </ClCompile>
+    <ClCompile Include="color_options_dlg.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Main_Panel.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs2.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs2_filethread.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="versions.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="wxPCSPref.cpp">
+      <Filter>GUI\Main Window</Filter>
+    </ClCompile>
+    <ClCompile Include="geo_sphere.cpp">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="ogl_vertex_buffers.cpp">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="wxGL_PMFCanvas.cpp">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\filelength.cpp">
+      <Filter>compat</Filter>
+    </ClCompile>
+    <ClCompile Include="compat\strncmp.cpp">
+      <Filter>compat</Filter>
+    </ClCompile>
+    <ClCompile Include="ase_file.cpp">
+      <Filter>FileTypes\ASE</Filter>
+    </ClCompile>
+    <ClCompile Include="COBHandler.cpp">
+      <Filter>FileTypes\COB</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_file.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_file_dstructs.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_pmf_ase.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_pmf_cob.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_pmf_dae.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_pmf_pof.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="pcs_pof_bspfuncs.cpp">
+      <Filter>FileTypes\PMF</Filter>
+    </ClCompile>
+    <ClCompile Include="obj_file.cpp">
+      <Filter>FileTypes\OBJ</Filter>
+    </ClCompile>
+    <ClCompile Include="POFHandler.cpp">
+      <Filter>FileTypes\POF</Filter>
+    </ClCompile>
+    <ClCompile Include="BSPDataStructs.cpp">
+      <Filter>FileTypes\POF\BSP</Filter>
+    </ClCompile>
+    <ClCompile Include="BSPHandler.cpp">
+      <Filter>FileTypes\POF\BSP</Filter>
+    </ClCompile>
+    <ClCompile Include="DAEHandler.cpp">
+      <Filter>FileTypes\DAE</Filter>
+    </ClCompile>
+    <ClCompile Include="GLee.c">
+      <Filter>compat</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AsyncProgress.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix3d.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="tex_ctrl.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="vector3d.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="VPReader.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="omnipoints.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="ACEN_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="DOCK_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="EYE_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="FUEL_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="GLOW_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="glow_points.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="hardpoint_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="header_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="PATH_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="PINF_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="SHLD_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="SOBJ_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="SPCL_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="TURRET_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="TXTR_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="WPNT_editor.h">
+      <Filter>GUI\Editors</Filter>
+    </ClInclude>
+    <ClInclude Include="array_ctrl.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="chunk_editors.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="combo.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="editor.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="model_editor_ctrl.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="op_stack.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="primitive_ctrl.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="text_ctrl.h">
+      <Filter>GUI\Editors\common</Filter>
+    </ClInclude>
+    <ClInclude Include="color_options_dlg.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_window.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="main_panel.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs2.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs2_CIDs.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs2_filethread.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="wxPCSPref.h">
+      <Filter>GUI\Main Window</Filter>
+    </ClInclude>
+    <ClInclude Include="color.h">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="geo_sphere.h">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="ogl_vertex_buffers.h">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="wxGL_PMFCanvas.h">
+      <Filter>GUI\Main Window\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\filelength.h">
+      <Filter>compat</Filter>
+    </ClInclude>
+    <ClInclude Include="GLee.h">
+      <Filter>compat</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\sleep.h">
+      <Filter>compat</Filter>
+    </ClInclude>
+    <ClInclude Include="compat\strncmp.h">
+      <Filter>compat</Filter>
+    </ClInclude>
+    <ClInclude Include="ase_dstructs.h">
+      <Filter>FileTypes\ASE</Filter>
+    </ClInclude>
+    <ClInclude Include="ase_file.h">
+      <Filter>FileTypes\ASE</Filter>
+    </ClInclude>
+    <ClInclude Include="COBDataStructs.h">
+      <Filter>FileTypes\COB</Filter>
+    </ClInclude>
+    <ClInclude Include="COBHandler.h">
+      <Filter>FileTypes\COB</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs_file.h">
+      <Filter>FileTypes\PMF</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs_file_dstructs.h">
+      <Filter>FileTypes\PMF</Filter>
+    </ClInclude>
+    <ClInclude Include="pcs_pof_bspfuncs.h">
+      <Filter>FileTypes\PMF</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_dstructs.h">
+      <Filter>FileTypes\OBJ</Filter>
+    </ClInclude>
+    <ClInclude Include="obj_file.h">
+      <Filter>FileTypes\OBJ</Filter>
+    </ClInclude>
+    <ClInclude Include="POFDataStructs.h">
+      <Filter>FileTypes\POF</Filter>
+    </ClInclude>
+    <ClInclude Include="POFHandler.h">
+      <Filter>FileTypes\POF</Filter>
+    </ClInclude>
+    <ClInclude Include="BSPDataStructs.h">
+      <Filter>FileTypes\POF\BSP</Filter>
+    </ClInclude>
+    <ClInclude Include="BSPHandler.h">
+      <Filter>FileTypes\POF\BSP</Filter>
+    </ClInclude>
+    <ClInclude Include="DAEDataStructs.h">
+      <Filter>FileTypes\DAE</Filter>
+    </ClInclude>
+    <ClInclude Include="DAEHandler.h">
+      <Filter>FileTypes\DAE</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+</Project>

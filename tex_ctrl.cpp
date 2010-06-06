@@ -405,8 +405,8 @@ GLuint TextureControl::LoadTexture(std::string texname,
 	unsigned int texId = 0xFFFFFFFF;
 
 	int num_exts = 7;
-	char *extensions[] = { ".pcx", ".dds", ".jpg", ".png", ".tga", ".gif", ".bmp" };
-	ILenum type_codes[] = { IL_PCX, IL_DDS , IL_JPG, IL_PNG, IL_TGA, IL_GIF, IL_BMP };
+	char *extensions[] = { ".dds", ".tga",".png", ".jpg", ".pcx"};
+	ILenum type_codes[] = {  IL_DDS, IL_TGA, IL_PNG, IL_JPG, IL_PCX  };
 
 	float sz;
 	bool found;
