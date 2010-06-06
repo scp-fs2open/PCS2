@@ -261,7 +261,7 @@ public:
 		if((this->array.size())==1){
 			//if there was nothing in the array, then the control was 
 			//probably disabled exapt for the new button, so enable everything
-			index = -1;
+			this->index = -1;
 			enable();
 		}
 
@@ -319,7 +319,7 @@ public:
 				//exept the new button
 				disable();
 				//nothing is in the list so nothing can be selected
-				index=-1;
+				this->index=-1;
 			}else{
 				//set the control's value to the new item
 				this->set_curent_value(this->array[this->index]);
