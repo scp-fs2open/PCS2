@@ -338,16 +338,16 @@ std::vector<file_context> model_files;
 int current_model_file;
 
 #ifdef PUBLIC_RELEASE
-wxString BUILD_TYPE = "Stable";
-wxString BUILD_VER = "2.0";
+wxString BUILD_TYPE = _("Stable");
+wxString BUILD_VER = _("2.0");
 #else
-wxString BUILD_TYPE = "Alpha";
-wxString BUILD_VER = "2.1";
+wxString BUILD_TYPE = _("Alpha");
+wxString BUILD_VER = _("2.1");
 #endif
 
-wxString PCS2_COMP_VERSION = "PCS 2.0 Compiler Version 2 Final";
+wxString PCS2_COMP_VERSION = _("PCS 2.0 Compiler Version 2 Final");
 
-wxString PCS2_SUPPORTED_FORMATS = "All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae";
+wxString PCS2_SUPPORTED_FORMATS = _("All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae");
 //op_gl_funcs GLFunctions;
 
 //*******************************************************************************
@@ -480,7 +480,7 @@ bool PCS2_App::OnInit()
 
 	// Setup the Config stuff
 	wxFile cfg_file; //("pcs2.ini", wxFile::read);
-	wxString cfgFilename = Root_path + wxString("\\pcs2.ini");
+	wxString cfgFilename = Root_path + wxString(_("\\pcs2.ini"));
 	if (!cfg_file.Exists(cfgFilename))
 	{
 		
@@ -503,25 +503,25 @@ bool PCS2_App::OnInit()
 
 		wxString str;
 		pConfig->SetPath(_T("/tpaths/"));
-		pConfig->Read("numpaths", 3l);
+		pConfig->Read(_("numpaths"), 3l);
 	#if defined(WIN32)
-		pConfig->Read("path0", &str, ".\\");
-		pConfig->Read("path1", &str, "<appdir>\\textures\\");
-		pConfig->Read("path2", &str, "c:\\games\\freespace2\\");
+		pConfig->Read(_("path0"), &str, _(".\\"));
+		pConfig->Read(_("path1"), &str, _("<appdir>\\textures\\"));
+		pConfig->Read(_("path2"), &str, _("c:\\games\\freespace2\\"));
 	#else
-		pConfig->Read("path0", &str, "./");
-		pConfig->Read("path1", &str, "~.pcs2\textures\");
-		pConfig->Read("path2", &str, "fs2/");
+		pConfig->Read(_("path0"), &str, _("./"));
+		pConfig->Read(_("path1"), &str, _("~/.pcs2/textures/"));
+		pConfig->Read(_("path2"), &str, _("fs2/"));
 	#endif
 
 		pConfig->SetPath(_T("/convoptions/"));
 		double d;
 		int itemp;
-		pConfig->Read("cobscale", &d, 20.00);
-		pConfig->Read("use_geometry_filter", &itemp, 1); // default to on
+		pConfig->Read(_("cobscale"), &d, 20.00);
+		pConfig->Read(_("use_geometry_filter"), &itemp, 1); // default to on
 
 		pConfig->SetPath(_T("/gr_options/"));
-		pConfig->Read("use_vertex_buffer_objects", &itemp, 0); // default to off
+		pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 		pConfig->Flush();
 
 		wxFileOutputStream cfg_out(cfgFilename);
@@ -536,7 +536,7 @@ bool PCS2_App::OnInit()
 		wxConfigBase::Set(fConfig);
 	}
 	wxConfigBase::Get()->SetPath(_T("/tpaths/"));
-	wxConfigBase::Get()->Read("temp_path", &temp_path, Root_path + "\\temp");
+	wxConfigBase::Get()->Read(_("temp_path"), &temp_path, Root_path + _("\\temp"));
 
 	if (!wxDirExists(temp_path))
 		wxMkdir(temp_path);//just in case it isn't there
@@ -587,7 +587,7 @@ IMPLEMENT_APP(PCS2_App)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, "POF Constructor Suite 2", wxDefaultPosition, wxSize(600,400)),mypanel(NULL)
+PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, _("POF Constructor Suite 2"), wxDefaultPosition, wxSize(600,400)),mypanel(NULL)
 {
 	wxGridSizer*sizer = new wxGridSizer(1,1,0,0);
 	wxBitmap pcsicon((xpms::pcsico));
@@ -606,7 +606,7 @@ PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, "POF Constructor Suite 2"
 	update_color_options();
 
 
-	putTitle("");
+	putTitle(_(""));
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -614,21 +614,21 @@ PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, "POF Constructor Suite 2"
 void PCS2_MainWindow::putTitle(wxString filename)
 {
 	wxString Title;
-	loaded_file = filename;
+	loaded_file = filename.mb_str();
 	filename = filename.AfterLast('\\');
-	if (filename == "")
+	if (filename == _(""))
 		Title = PCS2_VERSION;
 	else
-		Title = filename + " - " + PCS2_VERSION;
+		Title = filename + _(" - ") + PCS2_VERSION;
 	SetTitle(Title);
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 void PCS2_MainWindow::load_file(wxString filename, bool skipProgdlg){
-	if(filename!=""){
+	if(filename!=_("")){
 		//if we were given a file to load, do it
 		putTitle(filename);
-		mypanel->SignalModelChange(filename.c_str(), skipProgdlg);
+		mypanel->SignalModelChange(std::string(filename.mb_str()), skipProgdlg);
 		toolBar->ToggleTool(PCS2_TBCTRL_TEXTURED, true);
 	}
 }
@@ -645,7 +645,7 @@ void PCS2_MainWindow::File_Menu_New(wxCommandEvent &event)
 void PCS2_MainWindow::File_Menu_Open(wxCommandEvent &event)
 {
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, "Select File(s)", "", "", PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
@@ -658,7 +658,7 @@ void PCS2_MainWindow::save_progbar_start(wxAsyncProgressStartEvt &event)
 {
 	if (UseThreadedProgBar)
 	{
-		threaded_prog_bar = new wxProgressDialog("Saving File", "Starting File Save"); 
+		threaded_prog_bar = new wxProgressDialog(_("Saving File"), _("Starting File Save")); 
 		threaded_prog_bar->SetSize(300,125);
 		threaded_prog_bar->ShowModal();
 	}
@@ -670,10 +670,10 @@ void PCS2_MainWindow::save_progbar_update(wxAsyncProgressUpdateEvt &event)
 {
 	if (threaded_prog_bar != NULL)
 	{
-		threaded_prog_bar->Update(int(event.getPercent()), event.getMessage());
+		threaded_prog_bar->Update(int(event.getPercent()), wxString(event.getMessage().c_str(), wxConvUTF8));
 	}
 
-	mypanel->pstatus->SetStatusText(event.getMessage(), 0);
+	mypanel->pstatus->SetStatusText(wxString(event.getMessage().c_str(), wxConvUTF8), 0);
 	mypanel->pgauge->SetValue(int(event.getPercent()));
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -685,21 +685,21 @@ void PCS2_MainWindow::save_progbar_end(wxAsyncProgressEndEvt &event)
 		delete threaded_prog_bar;
 		threaded_prog_bar = NULL;
 	}
-	mypanel->pstatus->SetStatusText("Idle", 0);
+	mypanel->pstatus->SetStatusText(_("Idle"), 0);
 	mypanel->pgauge->SetValue(0);
 
 	if (event.getEarlyTerminated())
 	{
 		wxMessageDialog errormsg((wxWindow*)this, 
-			event.getMessage().c_str(), 
-			"Error Loading Textures", wxOK | wxICON_HAND);
+			wxString(event.getMessage().c_str(), wxConvUTF8), 
+			_("Error Loading Textures"), wxOK | wxICON_HAND);
 		errormsg.ShowModal();
 	
 	}
 	
 	if (PCS_Model::BSP_COMPILE_ERROR)
 	{
-		wxMessageDialog errormsg((wxWindow*)this, "An error occured compiling the BSP data for one or more submodels", "BSP Compilation Error", wxOK | wxICON_HAND);
+		wxMessageDialog errormsg((wxWindow*)this, _("An error occured compiling the BSP data for one or more submodels"), _("BSP Compilation Error"), wxOK | wxICON_HAND);
 		errormsg.ShowModal();
 	}
 
@@ -712,14 +712,14 @@ void PCS2_MainWindow::save_progbar_end(wxAsyncProgressEndEvt &event)
 void PCS2_MainWindow::File_Menu_Save(wxCommandEvent &event)
 {
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, "Save File", "", loaded_file.c_str(), PCS2_SUPPORTED_FORMATS, wxSAVE | wxOVERWRITE_PROMPT);
+	fdlg = new wxFileDialog(this, _("Save File"), _(""), wxString(loaded_file.c_str(), wxConvUTF8), PCS2_SUPPORTED_FORMATS, wxSAVE | wxOVERWRITE_PROMPT);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
 	UseThreadedProgBar = true;
 
 	AsyncProgress *prog_messenger = new wxAsyncProgress(this, SAVE_FILE_PROGRESS_MESSAGER);
-	wxPCS2SaveThread *thread = new wxPCS2SaveThread(&(mypanel)->model,  fdlg->GetPath().c_str(), prog_messenger);
+	wxPCS2SaveThread *thread = new wxPCS2SaveThread(&(mypanel)->model, std::string(fdlg->GetPath().mb_str()), prog_messenger);
 
 	thread->Create();
 	thread->Run();
@@ -735,58 +735,58 @@ void PCS2_MainWindow::InitMenu()
 	mymenu = new wxMenuBar();
 	// File menu
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MFILE_NEW, "&New", "New file");
-	m_pFileMenu->Append(PCS2_MFILE_OPEN, "&Open", "Open file");
-	m_pFileMenu->Append(PCS2_MFILE_SAVE, "&Save", "Save file");
+	m_pFileMenu->Append(PCS2_MFILE_NEW, _("&New"), _("New file"));
+	m_pFileMenu->Append(PCS2_MFILE_OPEN, _("&Open"), _("Open file"));
+	m_pFileMenu->Append(PCS2_MFILE_SAVE, _("&Save"), _("Save file"));
 	//m_pFileMenu->Append(PCS2_MFILE_SAVEAS, "Save &As", "Save file as");
 	//m_pFileMenu->Append(PCS2_MFILE_CLOSE, "&Close", "Close File");
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MFILE_IMPORT, "Global &Import", "Import All Non-Subobject Data From Another Model");
+	m_pFileMenu->Append(PCS2_MFILE_IMPORT, _("Global &Import"), _("Import All Non-Subobject Data From Another Model"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MFILE_QUIT, "&Quit", "Quit");
-	mymenu->Append(m_pFileMenu, "&File");
+	m_pFileMenu->Append(PCS2_MFILE_QUIT, _("&Quit"), _("Quit"));
+	mymenu->Append(m_pFileMenu, _("&File"));
 
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_EDIT_UNDO, "&Undo\tCTRL+z", "Undoes the last major edit");
-	m_pFileMenu->Append(PCS2_EDIT_REDO, "&Redo\tCTRL+y", "Undoes the last undo");
+	m_pFileMenu->Append(PCS2_EDIT_UNDO, _("&Undo\tCTRL+z"), _("Undoes the last major edit"));
+	m_pFileMenu->Append(PCS2_EDIT_REDO, _("&Redo\tCTRL+y"), _("Undoes the last undo"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_EDIT_GEOIMPORT, "&Import Geometry\tCTRL+i", "Imports Geometry into currently loaded model");
-	mymenu->Append(m_pFileMenu, "&Edit");
+	m_pFileMenu->Append(PCS2_EDIT_GEOIMPORT, _("&Import Geometry\tCTRL+i"), _("Imports Geometry into currently loaded model"));
+	mymenu->Append(m_pFileMenu, _("&Edit"));
 
 
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MVIEW_TOP, "&Top", "View from the top of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_BOTTOM, "&Bottom", "View from the bottom of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_LEFT, "&Left", "View from the left of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_RIGHT, "&Right", "View from the right of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_FRONT, "&Front", "View from the front of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_BACK, "B&ack", "View from the back of the model");
-	m_pFileMenu->Append(PCS2_MVIEW_RESET, "Re&set", "Set the view back to it's default position");
-	mymenu->Append(m_pFileMenu, "&View");
+	m_pFileMenu->Append(PCS2_MVIEW_TOP, _("&Top"), _("View from the top of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_BOTTOM, _("&Bottom"), _("View from the bottom of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_LEFT, _("&Left"), _("View from the left of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_RIGHT, _("&Right"), _("View from the right of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_FRONT, _("&Front"), _("View from the front of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_BACK, _("B&ack"), _("View from the back of the model"));
+	m_pFileMenu->Append(PCS2_MVIEW_RESET, _("Re&set"), _("Set the view back to it's default position"));
+	mymenu->Append(m_pFileMenu, _("&View"));
 
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MOPT_PREF, "&Preferences", "PCS2 Program Preferences");
-	m_pFileMenu->Append(PCS2_MOPT_GL_VERS, "&Query OpenGL", "Information about your Open GL Version");
-	mymenu->Append(m_pFileMenu, "&Options");
+	m_pFileMenu->Append(PCS2_MOPT_PREF, _("&Preferences"), _("PCS2 Program Preferences"));
+	m_pFileMenu->Append(PCS2_MOPT_GL_VERS, _("&Query OpenGL"), _("Information about your Open GL Version"));
+	mymenu->Append(m_pFileMenu, _("&Options"));
 
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MDATA_ADD_LIST, "Add &List\tCTRL+SHIFT+L", "Adds a new high level list of data, i.e. a new thruster bank");
-	m_pFileMenu->Append(PCS2_MDATA_ADD_ITEM, "&Add Item\tCTRL+SHIFT+I", "Adds new low level data, i.e. a new thruster point");
+	m_pFileMenu->Append(PCS2_MDATA_ADD_LIST, _("Add &List\tCTRL+SHIFT+L"), _("Adds a new high level list of data, i.e. a new thruster bank"));
+	m_pFileMenu->Append(PCS2_MDATA_ADD_ITEM, _("&Add Item\tCTRL+SHIFT+I"), _("Adds new low level data, i.e. a new thruster point"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MDATA_COPY_LIST, "Copy List\tCTRL+L", "Copies current high level list of data");
-	m_pFileMenu->Append(PCS2_MDATA_COPY_ITEM, "&Copy Item\tCTRL+I", "Copies current low level data");
+	m_pFileMenu->Append(PCS2_MDATA_COPY_LIST, _("Copy List\tCTRL+L"), _("Copies current high level list of data"));
+	m_pFileMenu->Append(PCS2_MDATA_COPY_ITEM, _("&Copy Item\tCTRL+I"), _("Copies current low level data"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MDATA_DELETE_LIST, "Delete List\tCTRL+ALT+SHIFT+L", "Copies current high level list of data");
-	m_pFileMenu->Append(PCS2_MDATA_DELETE_ITEM, "&Delete Item\tCTRL+ALT+SHIFT+I", "Copies current low level data");
+	m_pFileMenu->Append(PCS2_MDATA_DELETE_LIST, _("Delete List\tCTRL+ALT+SHIFT+L"), _("Copies current high level list of data"));
+	m_pFileMenu->Append(PCS2_MDATA_DELETE_ITEM, _("&Delete Item\tCTRL+ALT+SHIFT+I"), _("Copies current low level data"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MDATA_UP_ITEM, "&Previous Item\tEND", "Move selection to the item preceding the currently selected one");
-	m_pFileMenu->Append(PCS2_MDATA_DOWN_ITEM, "&Next Item\tHOME", "Move selection to the item following the currently selected one");
-	m_pFileMenu->Append(PCS2_MDATA_UP_LIST, "Previous List\tPGDN", "Move selection to the list preceding the currently selected one");
-	m_pFileMenu->Append(PCS2_MDATA_DOWN_LIST, "Next List\tPGUP", "Move selection to the list following the currently selected one");
+	m_pFileMenu->Append(PCS2_MDATA_UP_ITEM, _("&Previous Item\tEND"), _("Move selection to the item preceding the currently selected one"));
+	m_pFileMenu->Append(PCS2_MDATA_DOWN_ITEM, _("&Next Item\tHOME"), _("Move selection to the item following the currently selected one"));
+	m_pFileMenu->Append(PCS2_MDATA_UP_LIST, _("Previous List\tPGDN"), _("Move selection to the list preceding the currently selected one"));
+	m_pFileMenu->Append(PCS2_MDATA_DOWN_LIST, _("Next List\tPGUP"), _("Move selection to the list following the currently selected one"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MDATA_PURGEBSPCACHE, "Purge BSP Cache", "Purges the BSP cache on a model if a recompile needs to be forced.");
-	m_pFileMenu->Append(PCS2_MDATA_SMOOTHINGCALC, "Calculate Smoothing Data", "Attempts to reverse engineer facet/smooth/autofacet data");
-	mymenu->Append(m_pFileMenu, "&Data");
+	m_pFileMenu->Append(PCS2_MDATA_PURGEBSPCACHE, _("Purge BSP Cache"), _("Purges the BSP cache on a model if a recompile needs to be forced."));
+	m_pFileMenu->Append(PCS2_MDATA_SMOOTHINGCALC, _("Calculate Smoothing Data"), _("Attempts to reverse engineer facet/smooth/autofacet data"));
+	mymenu->Append(m_pFileMenu, _("&Data"));
 
 	// the "Model" Menu - for selecting the active model
 	/*m_pModelMenu = new wxMenu();
@@ -864,31 +864,31 @@ void PCS2_MainWindow::InitMenu()
 
 	// Movement
     toolBar->AddSeparator();
-	ADD_RADIO_TOOL(PCS2_TBCTRL_XZ_PLANE,		"XZ Plane",tbBitmaps[5], 	"Constrain Movement to the XZ Plane","");
-	ADD_RADIO_TOOL(PCS2_TBCTRL_XY_PLANE,		 "XY Plane",tbBitmaps[6],	"Constrain Movement to the XY Plane","");
-	ADD_RADIO_TOOL(PCS2_TBCTRL_YZ_PLANE,		 "YZ Plane",tbBitmaps[7],	"Constrain Movement to the YZ Plane","");
+	ADD_RADIO_TOOL(PCS2_TBCTRL_XZ_PLANE,		_("XZ Plane"),tbBitmaps[5], 	_("Constrain Movement to the XZ Plane"),_(""));
+	ADD_RADIO_TOOL(PCS2_TBCTRL_XY_PLANE,		 _("XY Plane"),tbBitmaps[6],	_("Constrain Movement to the XY Plane"),_(""));
+	ADD_RADIO_TOOL(PCS2_TBCTRL_YZ_PLANE,		 _("YZ Plane"),tbBitmaps[7],	_("Constrain Movement to the YZ Plane"),_(""));
 	
 	
 	//axis locking
     toolBar->AddSeparator();
-	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_X,		tbBitmaps[8], "Lock X",	"Toggle Movement Along the X Axis");
-	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_Y,		tbBitmaps[9], "Lock Y",	"Toggle Movement Along the Y Axis");
-	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_Z,		tbBitmaps[10], "Lock Z",	"Toggle Movement Along the Z Axis");
+	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_X,		tbBitmaps[8], _("Lock X"),	_("Toggle Movement Along the X Axis"));
+	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_Y,		tbBitmaps[9], _("Lock Y"),	_("Toggle Movement Along the Y Axis"));
+	ADD_TOGGLE_TOOL(PCS2_TBCTRL_LOCK_Z,		tbBitmaps[10], _("Lock Z"),	_("Toggle Movement Along the Z Axis"));
 
 	//projection options
     toolBar->AddSeparator();
-	ADD_RADIO_TOOL(PCS2_TBCTRL_PROJ_PERSP,		"Perspective",	tbBitmaps[11], "Use Perspective Projection", "");
-	ADD_RADIO_TOOL(PCS2_TBCTRL_PROJ_ORTHO,		"Orthographic",	tbBitmaps[12], "Use Orthographic Projection", "");
+	ADD_RADIO_TOOL(PCS2_TBCTRL_PROJ_PERSP,		_("Perspective"),	tbBitmaps[11], _("Use Perspective Projection"), _(""));
+	ADD_RADIO_TOOL(PCS2_TBCTRL_PROJ_ORTHO,		_("Orthographic"),	tbBitmaps[12], _("Use Orthographic Projection"), _(""));
 
 	//projection options
     toolBar->AddSeparator();
-	ADD_TOGGLE_TOOL(PCS2_TBCTRL_GRID,		tbBitmaps[13], "Grid",	"Toggle the Auto-Grid");
+	ADD_TOGGLE_TOOL(PCS2_TBCTRL_GRID,		tbBitmaps[13], _("Grid"),	_("Toggle the Auto-Grid"));
 	
 	// Textured/Solid/Wireframe
     toolBar->AddSeparator();
-	ADD_RADIO_TOOL(PCS2_TBCTRL_TEXTURED,	"Textured",		tbBitmaps[14], "Render the model textured", "");
-	ADD_RADIO_TOOL(PCS2_TBCTRL_SOLID,		"Solid",		tbBitmaps[15], "Render the model as a textureless solid", "");
-	ADD_RADIO_TOOL(PCS2_TBCTRL_WIREFRAME,	"Wireframe",	tbBitmaps[16], "Render the model as a wireframe", "");
+	ADD_RADIO_TOOL(PCS2_TBCTRL_TEXTURED,	_("Textured"),		tbBitmaps[14], _("Render the model textured"), _(""));
+	ADD_RADIO_TOOL(PCS2_TBCTRL_SOLID,		_("Solid"),		tbBitmaps[15], _("Render the model as a textureless solid"), _(""));
+	ADD_RADIO_TOOL(PCS2_TBCTRL_WIREFRAME,	_("Wireframe"),	tbBitmaps[16], _("Render the model as a wireframe"), _(""));
 
 	toolBar->EnableTool(PCS2_TBCTRL_LOCK_Y, false);
 
@@ -1008,18 +1008,19 @@ void PCS2_MainWindow::update_color_options(){
 	long r,g,b;
 
 	pConfig->SetPath(_T("/gr_options/ambient"));
-	pConfig->Read("R", &r, 25);
-	pConfig->Read("G", &g, 25);
-	pConfig->Read("B", &b, 25);
+	pConfig->Read(_("R"), &r, 25);
+	pConfig->Read(_("G"), &g, 25);
+	pConfig->Read(_("B"), &b, 25);
 	mypanel->glcanvas->set_ambient_light(r,g,b);
 
 	pConfig->SetPath(_T("/gr_options/diffuse"));
-	pConfig->Read("R", &r, 230);
-	pConfig->Read("G", &g, 230);
-	pConfig->Read("B", &b, 230);
+	pConfig->Read(_("R"), &r, 230);
+	pConfig->Read(_("G"), &g, 230);
+	pConfig->Read(_("B"), &b, 230);
 	mypanel->glcanvas->set_diffuse_light(r,g,b);
 
-	mypanel->GetEventHandler()->ProcessEvent(wxCommandEvent(EDIT_DONE, GetId()));
+	wxCommandEvent commandEvent(EDIT_DONE, GetId());
+	mypanel->GetEventHandler()->ProcessEvent(commandEvent);
 
 	mypanel->glcanvas->Render();
 }
@@ -1292,7 +1293,10 @@ void PCS2_MainWindow::OnClose(wxCloseEvent& event)
 void PCS2_MainWindow::menu_data_new_list(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_LIST, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_NEW));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_NEW);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1300,7 +1304,10 @@ void PCS2_MainWindow::menu_data_new_list(wxCommandEvent &event)
 void PCS2_MainWindow::menu_data_new_item(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_ITEM, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_NEW));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_NEW);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1308,15 +1315,20 @@ void PCS2_MainWindow::menu_data_new_item(wxCommandEvent &event)
 void PCS2_MainWindow::menu_data_copy_list(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_LIST, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_COPY));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_COPY);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 void PCS2_MainWindow::menu_data_copy_item(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_ITEM, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_COPY));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_COPY);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1324,7 +1336,10 @@ void PCS2_MainWindow::menu_data_copy_item(wxCommandEvent &event)
 void PCS2_MainWindow::menu_data_delete_list(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_LIST, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_DELETE));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_DELETE);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1332,39 +1347,54 @@ void PCS2_MainWindow::menu_data_delete_list(wxCommandEvent &event)
 void PCS2_MainWindow::menu_data_delete_item(wxCommandEvent &event)
 {
 	wxWindow*win = FindWindowById(ARRAY_ITEM, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_DELETE));	
+	if(win) {
+		wxCommandEvent commandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ARRAY_BUTTON_DELETE);
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 void PCS2_MainWindow::menu_data_increment_list(wxCommandEvent &event){
 	wxWindow*win = FindWindowById(ARRAY_LIST, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(ARRAY_INCREMENT, GetId()));	
+	if(win) {
+		wxCommandEvent commandEvent(ARRAY_INCREMENT, GetId());
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 void PCS2_MainWindow::menu_data_decrement_list(wxCommandEvent &event){
 	wxWindow*win = FindWindowById(ARRAY_LIST, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(ARRAY_DECREMENT, GetId()));	
+	if(win) {
+		wxCommandEvent commandEvent(ARRAY_DECREMENT, GetId());
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 void PCS2_MainWindow::menu_data_increment_item(wxCommandEvent &event){
 	wxWindow*win = FindWindowById(ARRAY_ITEM, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(ARRAY_INCREMENT, GetId()));	
+	if(win) {
+		wxCommandEvent commandEvent(ARRAY_INCREMENT, GetId());
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 void PCS2_MainWindow::menu_data_decrement_item(wxCommandEvent &event){
 	wxWindow*win = FindWindowById(ARRAY_ITEM, this);
-	if(win)win->GetEventHandler()->ProcessEvent(wxCommandEvent(ARRAY_DECREMENT, GetId()));	
+	if(win) {
+		wxCommandEvent commandEvent(ARRAY_DECREMENT, GetId());
+		win->GetEventHandler()->ProcessEvent(commandEvent);	
+	}
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 
 void PCS2_MainWindow::on_global_import(wxCommandEvent &event){
-	wxFileDialog fdlg(NULL, "Select Import File", "", "", "All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae", 
+	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), _("All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae"), 
 							wxOPEN | wxFILE_MUST_EXIST);
 	if (fdlg.ShowModal() != wxID_OK)
 		return;
 
-	mypanel->global_import(fdlg.GetPath().c_str());
+	mypanel->global_import(std::string(fdlg.GetPath().mb_str()));
 }
 
 void PCS2_MainWindow::on_undo(wxCommandEvent &event){
@@ -1379,11 +1409,11 @@ void PCS2_MainWindow::on_redo(wxCommandEvent &event){
 
 void PCS2_MainWindow::on_import(wxCommandEvent &event){
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, "Select File(s)", "", "", PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
-	mypanel->ImportGeometry(fdlg->GetPath().c_str());
+	mypanel->ImportGeometry(std::string(fdlg->GetPath().mb_str()));
 }
 
 void PCS2_MainWindow::on_redo_enable(bool enable){
