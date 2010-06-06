@@ -683,7 +683,8 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 				) && trys <= max_trys; 
 			trys++)
 		{
-			vector3d delta = node->normal * (dot(node->normal, Max) - dot(node->normal, Min))/float((trys+1)*(trys+1));//divide by 2, 4, 8, 16 ect
+			vector3d delta = node->normal * (dot(node->normal, Max) - dot(node->normal, Min));//divide by 2, 4, 8, 16 ect
+			delta = delta / float((trys+1)*(trys+1));
 			//move the split by ever shinking amounts tward which ever box has the most polys
 			if(front_polys < back_polys)
 				delta = delta * -1.0f;
@@ -787,7 +788,9 @@ void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
 		// center is always the average
 		//p_point = Max + Min;
 		//p_point = p_point/2;
-		p_point = Min + (vector3d(x,y,z)/2);
+		vector3d temp(x,y,z);
+		temp = temp / 2;
+		p_point = Min + (temp);
 	}
 	else
 	{
@@ -795,7 +798,8 @@ void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
 		y = (float)fabs((double)centera->y-centerb->y);
 		z = (float)fabs((double)centera->z-centerb->z);
 
-		p_point = (*centera + *centerb)/2;
+		vector3d temp(*centera + *centerb);
+		p_point = temp / 2;
 	}
 
 	fmax = Max;
@@ -927,7 +931,9 @@ float FindIntersection(vector3d &intersect, vector3d p1, vector3d p2, vector3d p
 	float d = -(plane_point.x*plane_normal.x + plane_point.y*plane_normal.y + plane_point.z*plane_normal.z);
 	float num = plane_normal.x*p1.x + plane_normal.y*p1.y + plane_normal.z*p1.z + d;
 	
-	intersect = p1 + (num/den)*(p2-p1);
+	vector3d temp(p2-p1);
+	temp = temp * (num / den);
+	intersect = p1 + temp;
 
 	//colinear check
 	//vector3d tempa = MakeUnitVector(p2-p1), tempb = MakeUnitVector(intersect-p1);

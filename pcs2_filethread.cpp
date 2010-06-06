@@ -170,7 +170,7 @@ void *wxPCS2SaveThread::Entry()
 		double scale;
 		wxConfigBase *pConfig = wxConfigBase::Get();
 		pConfig->SetPath(_T("/convoptions/"));
-		pConfig->Read("cobscale", &scale, 1.00);
+		pConfig->Read(_("cobscale"), &scale, 1.00);
 
 		err = model->SaveToCOB(selfile, progress, float(scale));
 		
@@ -224,8 +224,8 @@ void *wxPCS2SaveThread::Entry()
 		int helpers, props_as_helpers;
 		wxConfigBase *pConfig = wxConfigBase::Get();
 		pConfig->SetPath(_T("/collada_options/"));
-		pConfig->Read("export_helpers", &helpers, 1);
-		pConfig->Read("export_properties_as_helpers", &props_as_helpers, 0);
+		pConfig->Read(_("export_helpers"), &helpers, 1);
+		pConfig->Read(_("export_properties_as_helpers"), &props_as_helpers, 0);
 
 
 		err = model->SaveToDAE(selfile, progress, helpers, props_as_helpers);
@@ -247,8 +247,8 @@ void *wxPCS2SaveThread::Entry()
 	}
 	else
 	{
-		pop = new wxMessageDialog(NULL, "You have selected a non-supported file format", 
-				"Error", wxOK);
+		pop = new wxMessageDialog(NULL, _("You have selected a non-supported file format"), 
+				_("Error"), wxOK);
 		pop->ShowModal();
 	}
 
@@ -338,8 +338,8 @@ void *wxPCS2OpenThread::Entry()
 		int itemp;
 		wxConfigBase *pConfig = wxConfigBase::Get();
 		pConfig->SetPath(_T("/convoptions/"));
-		pConfig->Read("cobscale", &scale, 1.00);
-		pConfig->Read("use_geometry_filter", &itemp, 1); // default to on
+		pConfig->Read(_("cobscale"), &scale, 1.00);
+		pConfig->Read(_("use_geometry_filter"), &itemp, 1); // default to on
 
 		err = model->LoadFromCOB(selfile, progress, scale, itemp == 1);
 
@@ -416,11 +416,11 @@ void *wxPCS2OpenThread::Entry()
 		bool x = false, y = false, z = false;
 		wxConfigBase *pConfig = wxConfigBase::Get();
 		pConfig->SetPath(_T("/collada_options/"));
-		pConfig->Read("mirror_x", &temp, 0);
+		pConfig->Read(_("mirror_x"), &temp, 0);
 		if (temp) x = true;
-		pConfig->Read("mirror_y", &temp, 0);
+		pConfig->Read(_("mirror_y"), &temp, 0);
 		if (temp) y = true;
-		pConfig->Read("mirror_z", &temp, 0);
+		pConfig->Read(_("mirror_z"), &temp, 0);
 		if (temp) z = true;
 
 
@@ -449,8 +449,8 @@ void *wxPCS2OpenThread::Entry()
 	}
 	else
 	{
-		pop = new wxMessageDialog(NULL, "You have selected a non-supported file format", 
-				"Error", wxOK);
+		pop = new wxMessageDialog(NULL, _("You have selected a non-supported file format"), 
+				_("Error"), wxOK);
 		pop->ShowModal();
 	}
 

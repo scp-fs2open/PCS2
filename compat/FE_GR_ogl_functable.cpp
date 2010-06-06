@@ -58,7 +58,7 @@
 #include <cstring>
 
 // borrowed from NeHe
-bool op_gl_funcs::IsExtensionSupported( char* szTargetExtension )
+bool op_gl_funcs::IsExtensionSupported( const char* szTargetExtension )
 {
 	const unsigned char *pszExtensions = NULL;
 	const unsigned char *pszStart;
@@ -95,10 +95,12 @@ void op_gl_funcs::LoadFunctionTable()
 	
   // ************************************* GL functions ************************************* 
   // all GL functions i know off
-	this->glGetString = (const GLubyte*(GLAPIENTRY*)(GLenum))															GetGLFunc("glGetString");
+	this->glGetString = (const GLubyte*(GLAPIENTRY*)(GLenum))GetGLFunc("glGetString");
 
 	/* windows debug */
+#ifndef UNIX
 	int errornumber = GetLastError();
+#endif
 
   	this->glAccum = (void(GLAPIENTRY*)(GLenum, GLfloat))															GetGLFunc("glAccum");
 	this->glActiveTextureARB = (void (GLAPIENTRY*)(GLenum))															GetGLFunc("glActiveTextureARB");

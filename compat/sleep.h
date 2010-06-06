@@ -8,6 +8,7 @@
 #define SleepFunc Sleep
 
 #else
+#define SleepFunc sleep
 
 
 #endif

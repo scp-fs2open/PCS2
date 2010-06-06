@@ -2,7 +2,7 @@
 #include"text_ctrl.h"
 
 BEGIN_EVENT_TABLE(text_ctrl, wxTextCtrl)
-	EVT_KILL_FOCUS(do_focus)
+	EVT_KILL_FOCUS(text_ctrl::do_focus)
 END_EVENT_TABLE()
 
 extern const wxEventType EDIT_DONE;

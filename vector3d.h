@@ -151,20 +151,20 @@ vector3d AverageVectors(int numvectors, vector3d *vects);
 float Angle(vector3d &v1, vector3d &v2);
 
 vector3d CrossProduct(const vector3d &one, const vector3d &two);
-float dot(vector3d&A, vector3d&B);
+float dot(const vector3d& A, const vector3d& B);
 float Magnitude(const vector3d &vec);
 inline bool null_vec(vector3d &a){return a.x == 0.0f && a.y == 0.0f && a.z == 0.0f;}
 
 vector3d average_vectors_if_less_than_angle(int numvectors, float angle, vector3d src, vector3d *vects);
 
 vector3d FigureNormal(vector3d &one, vector3d &two, vector3d &three);
-float FindObjectRadius(vector3d &max, vector3d &min, vector3d &center);
-void ExpandBoundingBoxes(vector3d &max, vector3d &min, vector3d &cur);
+float FindObjectRadius(const vector3d &max, const vector3d &min, const vector3d &center);
+void ExpandBoundingBoxes(vector3d &max, vector3d &min, const vector3d &cur);
 
 //returns distance of p from the line defined as starting at lp and
 //going in the direction of ln, is negitive if the point is behind
 //the start of the line
-float point_line_distance(vector3d&p, vector3d&lp, vector3d&ln);
+float point_line_distance(const vector3d& p, const vector3d& lp, vector3d& ln);
 
 //gives the point were the
 //success is true unless the line is paralel to the plane,

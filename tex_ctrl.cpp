@@ -140,13 +140,14 @@
  *
  */
 
+#define ILUT_USE_OPENGL
 
 #include "tex_ctrl.h"
 #include "FileList.h"
 #include "VPReader.h"
-#include <il/il.h>
-#include <il/ilu.h>
-#include <il/ilut.h>
+#include <IL/il.h>
+#include <IL/ilu.h>
+#include <IL/ilut.h>
 #include <fstream>
 #include "pcs2.h"
 #include "main_panel.h"
@@ -169,7 +170,7 @@ try{
 	return false;
 }
 #else
-}catch{
+}catch (int) {
 	return false;
 }
 #endif
@@ -187,7 +188,7 @@ try{
 	return false;
 }
 #else
-}catch{
+}catch (int) {
 	return false;
 }
 #endif
@@ -405,7 +406,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 	unsigned int texId = 0xFFFFFFFF;
 
 	int num_exts = 7;
-	char *extensions[] = { ".pcx", ".dds", ".jpg", ".png", ".tga", ".gif", ".bmp" };
+	const char *extensions[] = { ".pcx", ".dds", ".jpg", ".png", ".tga", ".gif", ".bmp" };
 	ILenum type_codes[] = { IL_PCX, IL_DDS , IL_JPG, IL_PNG, IL_TGA, IL_GIF, IL_BMP };
 
 	float sz;
@@ -458,9 +459,9 @@ GLuint TextureControl::LoadTexture(std::string texname,
 								texture_log << " (Accepted)";
 #endif
 								rfname = fname;
-								wxString temp(rfname.c_str());
-								temp.Replace(".\\",wxGetCwd()+"\\");
-								rfname = temp.c_str();
+								wxString temp(rfname.c_str(), wxConvUTF8);
+								temp.Replace(_(".\\"),wxGetCwd()+_("\\"));
+								rfname = temp.mb_str();
 								img_type = type_codes[k];
 								found = true;
 							}

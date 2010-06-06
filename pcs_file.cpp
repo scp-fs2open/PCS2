@@ -294,7 +294,7 @@ bool PCS_Model::split_poly(std::vector<pcs_polygon>&polys, int I, int i, int j){
 	j-i<2 || i==0 && j == polys[I].verts.size()-1){
 	//one of them would have fewer than 3 verts: degenerate
 		return false;
-		wxMessageBox("*ERROR*:bad split attempted! \n\nOH NOE NOT THAT!.", "in an emergency, your seat cusion may be used as a flotation device");
+		wxMessageBox(_("*ERROR*:bad split attempted! \n\nOH NOE NOT THAT!."), _("in an emergency, your seat cusion may be used as a flotation device"));
 	}
 
 
@@ -494,7 +494,7 @@ void interconect_poly_on_verts(std::vector<pcs_polygon>&polys, int i, std::vecto
 					}
 				}else{
 					//now we are fairly screwed, as there is no way to fix this
-					wxMessageBox("*ERROR*:uncorectable geometry encountered! \n\nTruly this is the darkest of hours.", "Think about the CHILDREN damnit!!!!!!!");
+					wxMessageBox(_("*ERROR*:uncorectable geometry encountered! \n\nTruly this is the darkest of hours."), _("Think about the CHILDREN damnit!!!!!!!"));
 				}
 			}
 		}
@@ -1539,7 +1539,7 @@ void PCS_Model::DelLight(unsigned int idx)
 
 void PCS_Model::Calculate_Smoothing_Data(int &sobjs_comp)
 {
-	std::vector<std::vector<int>> covertals; // other polygons that share a vertex with us
+	std::vector<std::vector<int> > covertals; // other polygons that share a vertex with us
 	unsigned int i, j, k, l, m, cvc;
 	bool tBool;//, afKill;
 	vector3d tvect;//, *vects;

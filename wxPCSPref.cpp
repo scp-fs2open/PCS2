@@ -68,83 +68,80 @@
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 PCS_Preferences::PCS_Preferences(wxWindow *parent)
-	: wxDialog(parent, -1, "PCS Preferences", wxDefaultPosition, wxSize(450,300))
+	: wxDialog(parent, -1, _("PCS Preferences"), wxDefaultPosition, wxSize(450,300))
 {
 	// ----------------- Create Controls ------------------
 	texture_paths = new wxListBox(this, PCS2_PREF_LBOX, wxPoint(5,15), 
 				wxSize(430, 80), 0);
-	tpath_txt = new wxStaticText(this, -1,"Texture Paths", wxPoint(5, 0));
+	tpath_txt = new wxStaticText(this, -1,_("Texture Paths"), wxPoint(5, 0));
 
 	
-	tadd = new wxButton(this, PCS2_PREF_TADD,	"Add",			wxPoint(5, 100), wxSize(50, 20));
-	tdele = new wxButton(this, PCS2_PREF_TDELE, "Delete",		wxPoint(60, 100), wxSize(50, 20));
-	tbrowse = new wxButton(this, PCS2_PREF_TBROWSE, "Browse",	wxPoint(115, 100), wxSize(50, 20));
+	tadd = new wxButton(this, PCS2_PREF_TADD,	_("Add"),			wxPoint(5, 100), wxSize(50, 20));
+	tdele = new wxButton(this, PCS2_PREF_TDELE, _("Delete"),		wxPoint(60, 100), wxSize(50, 20));
+	tbrowse = new wxButton(this, PCS2_PREF_TBROWSE, _("Browse"),	wxPoint(115, 100), wxSize(50, 20));
 
-	tpath = new wxTextCtrl(this, PCS2_PREF_TCTRL, "", wxPoint(5, 125), wxSize(430, 20));
+	tpath = new wxTextCtrl(this, PCS2_PREF_TCTRL, _(""), wxPoint(5, 125), wxSize(430, 20));
 
 	// ------
-	cob_scale_text = new wxStaticText(this, -1,"COB Scaling Factor", wxPoint(5, 200));
-	cob_scale = new wxTextCtrl(this, PCS2_PREF_CSFTXT, "", wxPoint(25, 215), wxSize(50, 20));
+	cob_scale_text = new wxStaticText(this, -1,_("COB Scaling Factor"), wxPoint(5, 200));
+	cob_scale = new wxTextCtrl(this, PCS2_PREF_CSFTXT, _(""), wxPoint(25, 215), wxSize(50, 20));
 	
-	temp_path_title = new wxStaticText(this, -1,"Temporary Dir", wxPoint(5, 150));
-	temp_path = new wxTextCtrl(this, PCS2_PREF_TMPD_TXT, "", wxPoint(60, 165), wxSize(375, 20));
-	tbrowse = new wxButton(this, PCS2_PREF_TMPD_BTN, "Browse",	wxPoint(5, 165), wxSize(50, 20));
+	temp_path_title = new wxStaticText(this, -1,_("Temporary Dir"), wxPoint(5, 150));
+	temp_path = new wxTextCtrl(this, PCS2_PREF_TMPD_TXT, _(""), wxPoint(60, 165), wxSize(375, 20));
+	tbrowse = new wxButton(this, PCS2_PREF_TMPD_BTN, _("Browse"),	wxPoint(5, 165), wxSize(50, 20));
 
-	geo_filter = new wxCheckBox(this, PCS2_PREF_CKBX_GFILT, "Use Geometry Filter", wxPoint(130, 200));
-	vbos = new wxCheckBox(this, PCS2_PREF_CKBX_VBO, "Use OpenGL VBOs (if able)", wxPoint(250, 200));;
+	geo_filter = new wxCheckBox(this, PCS2_PREF_CKBX_GFILT, _("Use Geometry Filter"), wxPoint(130, 200));
+	vbos = new wxCheckBox(this, PCS2_PREF_CKBX_VBO, _("Use OpenGL VBOs (if able)"), wxPoint(250, 200));;
 
 	// old positions
-	/*def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, "Diffuse",	wxPoint(170, 225), wxSize(50, 20));
-	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, "Ambient",	wxPoint(220, 225), wxSize(50, 20));
-	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, "Color Options",	wxPoint(170, 245), wxSize(100, 20));*/
+	/*def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, _("Diffuse"),	wxPoint(170, 225), wxSize(50, 20));
+	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, _("Ambient"),	wxPoint(220, 225), wxSize(50, 20));
+	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, _("Color Options"),	wxPoint(170, 245), wxSize(100, 20));*/
 
-	def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, "Diffuse",	wxPoint(270, 225), wxSize(50, 20));
-	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, "Ambient",	wxPoint(320, 225), wxSize(50, 20));
-	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, "Color Options",	wxPoint(270, 245), wxSize(100, 20));
+	def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, _("Diffuse"),	wxPoint(270, 225), wxSize(50, 20));
+	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, _("Ambient"),	wxPoint(320, 225), wxSize(50, 20));
+	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, _("Color Options"),	wxPoint(270, 245), wxSize(100, 20));
 
 	// Collada options
-	helpers = new wxCheckBox(this, PCS2_PREF_CKBX_HELPERS, "Export helpers to DAE", wxPoint(5, 240));
-	props_as_helpers = new wxCheckBox(this, PCS2_PREF_CKBX_PROPS_AS_HELPERS, "Export properties as helpers", wxPoint(5, 255));
+	helpers = new wxCheckBox(this, PCS2_PREF_CKBX_HELPERS, _("Export helpers to DAE"), wxPoint(5, 240));
+	props_as_helpers = new wxCheckBox(this, PCS2_PREF_CKBX_PROPS_AS_HELPERS, _("Export properties as helpers"), wxPoint(5, 255));
 
-	dae_flip_axes = new wxStaticText(this, -1,"Mirror DAE axes", wxPoint(180, 240));
-	mirror_x = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_X, "X", wxPoint(180, 255));
-	mirror_y = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Y, "Y", wxPoint(210, 255));
-	mirror_z = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Z, "Z", wxPoint(240, 255));
+	dae_flip_axes = new wxStaticText(this, -1,_("Mirror DAE axes"), wxPoint(180, 240));
+	mirror_x = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_X, _("X"), wxPoint(180, 255));
+	mirror_y = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Y, _("Y"), wxPoint(210, 255));
+	mirror_z = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Z, _("Z"), wxPoint(240, 255));
 
 	//wxID_CANCEL
 	//wxID_OK
-	ok = new wxButton(this, wxID_OK, "Ok",	wxPoint(385, 225), wxSize(50, 20));
-	cancel = new wxButton(this, wxID_CANCEL, "Cancel", wxPoint(385, 245), wxSize(50, 20));
+	ok = new wxButton(this, wxID_OK, _("Ok"),	wxPoint(385, 225), wxSize(50, 20));
+	cancel = new wxButton(this, wxID_CANCEL, _("Cancel"), wxPoint(385, 245), wxSize(50, 20));
 
 	// -----------------  Load Values ------------------
 	
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/tpaths/"));
-	int num_paths = pConfig->Read("numpaths", 0l);
+	int num_paths = pConfig->Read(_("numpaths"), 0l);
 	int itemp;
-	char cstr[16];
 	wxString *strs = new wxString[num_paths];
 
 	for (int i = 0; i < num_paths; i++)
 	{
-		sprintf(cstr, "path%d", i);
-		pConfig->Read(cstr, &strs[i]);
+		pConfig->Read(wxString::Format(_("path%d"), i), &strs[i]);
 	}
 	texture_paths->InsertItems(num_paths, strs, 0);
 	delete[] strs;
 
 	wxString temp;
-	pConfig->Read("temp_path", &temp, get_temp_path());
+	pConfig->Read(_("temp_path"), &temp, get_temp_path());
 	temp_path->ChangeValue(temp);
 
 	pConfig->SetPath(_T("/convoptions/"));
 	double d;
-	pConfig->Read("cobscale", &d);
+	pConfig->Read(_("cobscale"), &d);
 	
-	sprintf(cstr, "%.2f", (float)d);
-	cob_scale->ChangeValue(cstr);
+	cob_scale->ChangeValue(wxString::Format(_("%.2f"), (float)d));
 
-	pConfig->Read("use_geometry_filter", &itemp, 1); // default to on
+	pConfig->Read(_("use_geometry_filter"), &itemp, 1); // default to on
 	if (itemp == 1)
 		this->geo_filter->SetValue(true);
 	else
@@ -154,24 +151,24 @@ PCS_Preferences::PCS_Preferences(wxWindow *parent)
 	long r,g,b;
 	pConfig->SetPath(_T("/gr_options/"));
 
-	pConfig->Read("use_vertex_buffer_objects", &itemp, 0); // default to off
+	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 	if (itemp == 1)
 		this->vbos->SetValue(true);
 	else
 		this->vbos->SetValue(false);
 
 	pConfig->SetPath(_T("/gr_options/ambient"));
-	pConfig->Read("R", &r, 25);
-	pConfig->Read("G", &g, 25);
-	pConfig->Read("B", &b, 25);
+	pConfig->Read(_("R"), &r, 25);
+	pConfig->Read(_("G"), &g, 25);
+	pConfig->Read(_("B"), &b, 25);
 
 	amb_col->SetBackgroundColour(wxColour(r,g,b));
 	amb_col->SetForegroundColour(wxColour((r+128)%255,(g+128)%255,(b+128)%255));
 
 	pConfig->SetPath(_T("/gr_options/diffuse"));
-	pConfig->Read("R", &r, 230);
-	pConfig->Read("G", &g, 230);
-	pConfig->Read("B", &b, 230);
+	pConfig->Read(_("R"), &r, 230);
+	pConfig->Read(_("G"), &g, 230);
+	pConfig->Read(_("B"), &b, 230);
 
 	def_col->SetBackgroundColour(wxColour(r,g,b));
 	def_col->SetForegroundColour(wxColour((r+128)%255,(g+128)%255,(b+128)%255));
@@ -179,28 +176,28 @@ PCS_Preferences::PCS_Preferences(wxWindow *parent)
 
 	// Collada options
 	pConfig->SetPath(_T("/collada_options"));
-	pConfig->Read("export_helpers", &itemp, 1); // default to on
+	pConfig->Read(_("export_helpers"), &itemp, 1); // default to on
 	if (itemp == 1)
 		this->helpers->SetValue(true);
 	else
 		this->helpers->SetValue(false);
 
-	pConfig->Read("export_properties_as_helpers", &itemp, 0); // default to off
+	pConfig->Read(_("export_properties_as_helpers"), &itemp, 0); // default to off
 	if (itemp == 1)
 		this->props_as_helpers->SetValue(true);
 	else
 		this->props_as_helpers->SetValue(false);
-	pConfig->Read("mirror_x", &itemp, 0); // default to off
+	pConfig->Read(_("mirror_x"), &itemp, 0); // default to off
 	if (itemp == 1)
 		this->mirror_x->SetValue(true);
 	else
 		this->mirror_x->SetValue(false);
-	pConfig->Read("mirror_y", &itemp, 0); // default to off
+	pConfig->Read(_("mirror_y"), &itemp, 0); // default to off
 	if (itemp == 1)
 		this->mirror_y->SetValue(true);
 	else
 		this->mirror_y->SetValue(false);
-	pConfig->Read("mirror_z", &itemp, 0); // default to off
+	pConfig->Read(_("mirror_z"), &itemp, 0); // default to off
 	if (itemp == 1)
 		this->mirror_z->SetValue(true);
 	else
@@ -216,7 +213,7 @@ PCS_Preferences::PCS_Preferences(wxWindow *parent)
 
 void PCS_Preferences::OnOK(wxCommandEvent &event)
 {
-	if (tpath->GetValue() != ""){
+	if (tpath->GetValue() != _("")){
 		//if there was something the user 
 		bool added = false;
 		for(unsigned int i = 0; i<texture_paths->GetCount(); i++){
@@ -226,7 +223,7 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 				break;
 			}
 		}
-		if(!added && wxMessageBox(wxString::Format("Did You Want to Add '%s'?", tpath->GetValue()), "Unsaved Changes", wxYES_NO) == wxYES){
+		if(!added && wxMessageBox(wxString::Format(_("Did You Want to Add '%s'?"), tpath->GetValue().c_str()), _("Unsaved Changes"), wxYES_NO) == wxYES){
 			texture_paths->Append(tpath->GetValue());
 		}
 
@@ -240,90 +237,87 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 
 	
 	// clear current info
-	int num_paths = pConfig->Read("numpaths", 0l);
-	char cstr[18];
+	int num_paths = pConfig->Read(_("numpaths"), 0l);
 	for (i = 0; i < num_paths; i++)
 	{
-		sprintf(cstr, "path%d", i);
-		pConfig->DeleteEntry(cstr);
+		pConfig->DeleteEntry(wxString::Format(_("path%d"), i));
 	}
 
 	// set the new info
-	pConfig->Write("numpaths", (int)texture_paths->GetCount());
+	pConfig->Write(_("numpaths"), (int)texture_paths->GetCount());
 	for (i = 0; i < (int)texture_paths->GetCount(); i++)
 	{
-		sprintf(cstr, "path%d", i);
-		pConfig->Write(cstr, texture_paths->GetString(i));
+		pConfig->Write(wxString::Format(_("path%d"), i), texture_paths->GetString(i));
 	}
 	pConfig->Flush();
 
-	pConfig->Write("temp_path", temp_path->GetValue());
+	pConfig->Write(_("temp_path"), temp_path->GetValue());
 
 	wxColour col;
 	col = amb_col->GetBackgroundColour();
 	pConfig->SetPath(_T("/gr_options/ambient/"));
-	pConfig->Write("R", (byte)col.Red());
-	pConfig->Write("G", (byte)col.Green());
-	pConfig->Write("B", (byte)col.Blue());
+	pConfig->Write(_("R"), (byte)col.Red());
+	pConfig->Write(_("G"), (byte)col.Green());
+	pConfig->Write(_("B"), (byte)col.Blue());
 	col = def_col->GetBackgroundColour();
 	pConfig->SetPath(_T("/gr_options/diffuse/"));
-	pConfig->Write("R", (byte)col.Red());
-	pConfig->Write("G", (byte)col.Green());
-	pConfig->Write("B", (byte)col.Blue());
+	pConfig->Write(_("R"), (byte)col.Red());
+	pConfig->Write(_("G"), (byte)col.Green());
+	pConfig->Write(_("B"), (byte)col.Blue());
 
 	
 	pConfig->SetPath(_T("/gr_options/"));
 	if (this->vbos->IsChecked())
-		pConfig->Write("use_vertex_buffer_objects", 1);
+		pConfig->Write(_("use_vertex_buffer_objects"), 1);
 	else
-		pConfig->Write("use_vertex_buffer_objects", 0);
+		pConfig->Write(_("use_vertex_buffer_objects"), 0);
 
 
 	// -------- Save the COB Scaling factor -------- 
 
 	pConfig->SetPath(_T("/convoptions/"));
-	if (cob_scale->GetValue() != "")
+	if (cob_scale->GetValue() != _(""))
 	{
-		pConfig->Write("cobscale", cob_scale->GetValue());
+		pConfig->Write(_("cobscale"), cob_scale->GetValue());
 	}
 
 	if (this->geo_filter->IsChecked())
-		pConfig->Write("use_geometry_filter", 1);
+		pConfig->Write(_("use_geometry_filter"), 1);
 	else
-		pConfig->Write("use_geometry_filter", 0);
+		pConfig->Write(_("use_geometry_filter"), 0);
 
 	// -------- Save Collada options -------- 
 	pConfig->SetPath(_T("/collada_options/"));
 	if (this->helpers->IsChecked())
-		pConfig->Write("export_helpers", 1);
+		pConfig->Write(_("export_helpers"), 1);
 	else
-		pConfig->Write("export_helpers", 0);
+		pConfig->Write(_("export_helpers"), 0);
 
 	if (this->props_as_helpers->IsChecked())
-		pConfig->Write("export_properties_as_helpers", 1);
+		pConfig->Write(_("export_properties_as_helpers"), 1);
 	else
-		pConfig->Write("export_properties_as_helpers", 0);
+		pConfig->Write(_("export_properties_as_helpers"), 0);
 
 	if (this->mirror_x->IsChecked())
-		pConfig->Write("mirror_x", 1);
+		pConfig->Write(_("mirror_x"), 1);
 	else
-		pConfig->Write("mirror_x", 0);
+		pConfig->Write(_("mirror_x"), 0);
 
 	if (this->mirror_y->IsChecked())
-		pConfig->Write("mirror_y", 1);
+		pConfig->Write(_("mirror_y"), 1);
 	else
-		pConfig->Write("mirror_y", 0);
+		pConfig->Write(_("mirror_y"), 0);
 
 	if (this->mirror_z->IsChecked())
-		pConfig->Write("mirror_z", 1);
+		pConfig->Write(_("mirror_z"), 1);
 	else
-		pConfig->Write("mirror_z", 0);
+		pConfig->Write(_("mirror_z"), 0);
 
 
 
 	pConfig->Flush();
 	// -------- Flush to Disk -------- 
-	wxFileOutputStream cfg_out(get_root_path()+wxString("\\pcs2.ini"));
+	wxFileOutputStream cfg_out(get_root_path()+wxString(_("\\pcs2.ini")));
 //	wxMessageBox(wxString::Format("saveing config to \"%s\"",get_root_path()+wxString("\\pcs2.ini"));
 	((wxFileConfig*)pConfig)->Save(cfg_out);
 
@@ -342,7 +336,7 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 
 void PCS_Preferences::onAdd(wxCommandEvent &event)
 {
-	if (tpath->GetValue() != "")
+	if (tpath->GetValue() != _(""))
 	{
 		texture_paths->Append(tpath->GetValue());
 		texture_paths->SetSelection(texture_paths->GetCount()-1);
@@ -353,17 +347,17 @@ void PCS_Preferences::onAdd(wxCommandEvent &event)
 
 void PCS_Preferences::onEdit(wxCommandEvent &event)
 {
-	if ((curEdit = texture_paths->GetSelection()) != wxNOT_FOUND && tpath->GetValue() != "")
+	if ((curEdit = texture_paths->GetSelection()) != wxNOT_FOUND && tpath->GetValue() != _(""))
 	{
 		texture_paths->SetString(curEdit, tpath->GetValue());
 	}
 }
 
 void PCS_Preferences::onSelection(wxCommandEvent &event){
-	if (curEdit != -1 && tpath->GetValue() != "")
+	if (curEdit != -1 && tpath->GetValue() != _(""))
 	{
 		texture_paths->SetString(curEdit, tpath->GetValue());
-		tpath->ChangeValue("");
+		tpath->ChangeValue(_(""));
 		curEdit = -1;
 	}
 	if (texture_paths->GetSelection() != wxNOT_FOUND)
@@ -380,7 +374,7 @@ void PCS_Preferences::onDelete(wxCommandEvent &event)
 	if (texture_paths->GetSelection() != wxNOT_FOUND)
 	{
 		texture_paths->Delete(texture_paths->GetSelection());
-		tpath->ChangeValue("");
+		tpath->ChangeValue(_(""));
 	}
 }
 
@@ -388,7 +382,7 @@ void PCS_Preferences::onDelete(wxCommandEvent &event)
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 void PCS_Preferences::onBrowse(wxCommandEvent &event){
-	wxString dir = wxDirSelector("Select New Texture Path", tpath->GetValue());
+	wxString dir = wxDirSelector(_("Select New Texture Path"), tpath->GetValue());
 	if(!dir.empty()){
 		texture_paths->Append(dir);
 		texture_paths->SetSelection(texture_paths->GetCount()-1);
@@ -412,7 +406,7 @@ void PCS_Preferences::on_color_op(wxCommandEvent &event){
 }
 
 void PCS_Preferences::on_temp(wxCommandEvent &event){
-	wxString dir = wxDirSelector("Select New Texture Path", tpath->GetValue());
+	wxString dir = wxDirSelector(_("Select New Texture Path"), tpath->GetValue());
 	if(!dir.empty()){
 		temp_path->ChangeValue(dir);
 	}

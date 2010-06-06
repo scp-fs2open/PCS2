@@ -216,7 +216,14 @@
 #include "AsyncProgress.h"
 
 //ogl error probe
-#define ERROR_CHECK {GLenum err = glGetError();if(err != GL_NO_ERROR){wxString fileline(wxString::Format("%s (%d)", _(__FILE__), __LINE__));wxMessageBox(wxString("Warning OGL reported \"") + gluErrorString(err) + "\" at " + fileline + "\n please report this issue", "OpenGL Error");}}
+#define ERROR_CHECK {GLenum err = glGetError();\
+	if(err != GL_NO_ERROR){\
+		wxString fileline(wxString::Format(_("%s (%d)"), _(__FILE__), __LINE__));\
+		wxMessageBox(wxString(_("Warning OGL reported \"")) +\
+				wxString(reinterpret_cast<const char*>(gluErrorString(err)), wxConvUTF8) +\
+			   	_("\" at ") + fileline + _("\n please report this issue"), _("OpenGL Error"));\
+	}\
+}
 
 
 // forward dec

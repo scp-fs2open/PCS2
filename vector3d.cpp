@@ -116,7 +116,7 @@ vector3d CrossProduct(const vector3d &one, const vector3d &two)
 					float(double(one.x)*double(two.y)-double(two.x)*double(one.y))); 
 } 
 
-float dot(vector3d&A, vector3d&B){
+float dot(const vector3d& A, const vector3d& B){
 	return A.x*B.x+A.y*B.y+A.z*B.z;
 }
 
@@ -366,7 +366,7 @@ float Abs(float n)
 	return n;
 }
 
-void ExpandBoundingBoxes(vector3d &max, vector3d &min, vector3d &cur)
+void ExpandBoundingBoxes(vector3d &max, vector3d &min, const vector3d &cur)
 {
 	if (cur.x > max.x)
 			max.x = cur.x;
@@ -384,27 +384,27 @@ void ExpandBoundingBoxes(vector3d &max, vector3d &min, vector3d &cur)
 
 }
 
-float FindObjectRadius(vector3d &max, vector3d &min, vector3d &center)
+float FindObjectRadius(const vector3d &max, const vector3d &min, const vector3d &center)
 {
 	vector3d temp_vector;
 		// Set Radius
-	if (abs(max.x-center.x) >
-		abs(center.x-min.x))
-		temp_vector.x = abs(max.x-center.x);
+	if (fabs(max.x-center.x) >
+		fabs(center.x-min.x))
+		temp_vector.x = fabs(max.x-center.x);
 	else
-		temp_vector.x = abs(center.x-min.x);
+		temp_vector.x = fabs(center.x-min.x);
 	
-	if (abs(max.y-center.y) >
-		abs(center.y-min.y))
-		temp_vector.y = abs(max.y-center.y);
+	if (fabs(max.y-center.y) >
+		fabs(center.y-min.y))
+		temp_vector.y = fabs(max.y-center.y);
 	else
-		temp_vector.y = abs(center.y-min.y);
+		temp_vector.y = fabs(center.y-min.y);
 	
-	if (abs(max.z-center.z) >
-		abs(center.z-min.z))
-		temp_vector.z = abs(max.z-center.z);
+	if (fabs(max.z-center.z) >
+		fabs(center.z-min.z))
+		temp_vector.z = fabs(max.z-center.z);
 	else
-		temp_vector.z = abs(center.z-min.z);
+		temp_vector.z = fabs(center.z-min.z);
 	return Magnitude(temp_vector);
 }
 
@@ -413,7 +413,7 @@ float FindObjectRadius(vector3d &max, vector3d &min, vector3d &center)
 //returns distance of p from the line defined as starting at lp and 
 //going in the direction of ln, is negitive if the point is behind 
 //the start of the line
-float point_line_distance(vector3d&p, vector3d&lp, vector3d&ln)
+float point_line_distance(const vector3d& p, const vector3d& lp, vector3d& ln)
 {
 
 	ln = MakeUnitVector(ln);
@@ -442,9 +442,9 @@ vector3d plane_line_intersect(vector3d plane_pt, vector3d plane_norm, vector3d l
 		if(success)*success = false;
 		return vector3d(0,0,0);
 	}
-		if(success)*success = true;
-
-	return line_pt+line_norm*dot(plane_norm,w)/d;
+	if(success)*success = true;
+	vector3d temp(line_norm);
+	return line_pt + temp * (dot(plane_norm,w)/d);
 }
 
 //returns the closest point on the given line

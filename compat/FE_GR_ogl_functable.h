@@ -61,7 +61,7 @@
 #define xglGetProcAddress
 #endif
 
-//#define USE_SDL
+#define USE_SDL
 #if defined(USE_SDL)
 #include <SDL/SDL.h>
 
@@ -71,7 +71,8 @@
 
 #define GetGLFunc SDL_GL_GetProcAddress
 #endif // defined(USE_SDL)
-#include "GLee.h"
+//#include "GLee.h"
+#include "../GLee.h"
 
 //#include <GL/gl.h>
 //#include <GL/glext.h>
@@ -102,7 +103,7 @@
 struct op_gl_funcs
 {
 	void LoadFunctionTable(); // sets the pointers
-	bool IsExtensionSupported( char* szTargetExtension );
+	bool IsExtensionSupported( const char* szTargetExtension );
 
 	// ************************************* GL extensions ************************************* 
 	bool SupportVBO;

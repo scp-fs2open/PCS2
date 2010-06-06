@@ -139,11 +139,23 @@
 #pragma warning(disable: 4786)
 
 #include "pcs_file.h"
-#include "COBHAndler.h"
+#include "COBHandler.h"
 #include "compat/sleep.h"
 #include <cmath>
 #include <sstream>
 #include "matrix.h"
+
+#ifdef UNIX
+// XXX: hack
+#define _stricmp strcmp
+#define _strnicmp strncmp
+inline char* _strlwr(char* s) {
+	char* start = s;
+	while (*s++ = tolower(*s));
+	return start;
+}
+#endif
+
 using namespace std;
 
 vector3d COBtoStandard(const vector3d &cobvec)
@@ -347,7 +359,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 			temp_index_list = GroupPolymodels(InputFile, ShldIndex);
 			
 			insig.faces.resize(0);
-			insig.offset = COBtoStandard(InputFile.GetGroup(i).local_axis.center) * scaler;
+			insig.offset = COBtoStandard(InputFile.GetGroup(i).local_axis.center);
+			insig.offset = insig.offset * scaler;
 			for (j = 0; j < temp_index_list.size(); j++)
 			{
 				pmtemp = &InputFile.GetPolymodel(temp_index_list[j]);
@@ -502,7 +515,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 			TurretCount++;
 		}
 
-		tempobj.geometric_center = COBtoStandard(temp_group->local_axis.center) * scaler;
+		tempobj.geometric_center = COBtoStandard(temp_group->local_axis.center);
+		tempobj.geometric_center = tempobj.geometric_center * scaler;
 
 		for (j = 0; j < (unsigned)InputFile.Light_Count(); j++)
 		{	// check for a light definine the center of this object
@@ -511,7 +525,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 			if (strtmp == std::string("center_") + tempobj.name ||
 				strtmp == std::string("c_") + tempobj.name )
 			{
-				tempobj.geometric_center = COBtoStandard(InputFile.GetLight(j).local_axis.center) * scaler;
+				tempobj.geometric_center = COBtoStandard(InputFile.GetLight(j).local_axis.center);
+				tempobj.geometric_center = tempobj.geometric_center * scaler;
 			}
 		}
 		// i need the geometric center determined first
@@ -796,7 +811,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 				strtmp.c_str(), strtmp.length()))
 			{
 				
-				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center) * scaler;
+				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center);
+				temp_vertex = temp_vertex * scaler;
 				temp_vertex = temp_vertex - subobjects[turrets[i].sobj_parent].geometric_center;
 				turrets[i].fire_points.resize(turrets[i].fire_points.size()+1);
 				turrets[i].fire_points[turrets[i].fire_points.size()-1]=temp_vertex;
@@ -868,7 +884,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 				strtmp.c_str(), strtmp.length()))
 			{
 				
-				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center) * scaler;
+				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center);
+				temp_vertex = temp_vertex * scaler;
 				thrusters[i].points.resize(thrusters[i].points.size()+1);
 				// default Radius of 20.0 and unit vector in the rear direction default asignments
 				thrusters[i].points[thrusters[i].points.size()-1] = pcs_thrust_glow(temp_vertex, MakeVector(0.0, 0.0, -1.0), 20.0);
@@ -887,7 +904,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 			strtmp2 = strtmp.substr(5);
 			strtmp2 = std::string("$") + strtmp2;
 
-			temp_vertex = COBtoStandard(InputFile.GetLight(i).local_axis.center) * scaler;
+			temp_vertex = COBtoStandard(InputFile.GetLight(i).local_axis.center);
+			temp_vertex = temp_vertex * scaler;
 
 			temp_spec.name = strtmp2;
 			temp_spec.point = temp_vertex;
@@ -972,7 +990,7 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 	for (i = 0; i < ai_paths.size(); i++)
 	{
 	
-		sprintf(CStringTemp, "Path%02d-%02d-", (i+1), ai_paths[i].verts.size());
+		sprintf(CStringTemp, "Path%02d-%02d-", (i+1), (int)ai_paths[i].verts.size());
 		strtmp = CStringTemp;
 	
 		for (j = 0; j < (unsigned)InputFile.Light_Count(); j++)
@@ -994,7 +1012,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 						break;
 				}
 
-				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center) * scaler;
+				temp_vertex = COBtoStandard(InputFile.GetLight(j).local_axis.center);
+				temp_vertex = temp_vertex * scaler;
 
 				l = atoi(strtmp3.c_str())-1;
 				ai_paths[i].verts[l].pos = temp_vertex;
@@ -1272,7 +1291,8 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	
 		for (i = 0; i < (unsigned)pol_temp.num_verticies; i++)
 		{
-			pol_temp.verts[i] = StandardToCOB(points[i])/scaler;
+			pol_temp.verts[i] = StandardToCOB(points[i]);
+			pol_temp.verts[i] = pol_temp.verts[i] / scaler;
 		}
 
 		pol_temp.num_faces_or_holes = this->shield_mesh.size();
@@ -1355,7 +1375,8 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	
 		for (j = 0; j < (unsigned)pol_temp.num_verticies; j++)
 		{
-			pol_temp.verts[j] = StandardToCOB(points[j])/scaler;
+			pol_temp.verts[j] = StandardToCOB(points[j]);
+			pol_temp.verts[j] = pol_temp.verts[j] / scaler;
 		}
 
 		pol_temp.num_faces_or_holes = this->insignia[i].faces.size();
@@ -1401,7 +1422,7 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 
 	for (i = 0; i < this->subobjects.size(); i++)
 	{
-		sprintf(CStringTemp, "Processing Object [%02d/%02d]", (i+1), this->subobjects.size());
+		sprintf(CStringTemp, "Processing Object [%02d/%02d]", (i+1), (int)this->subobjects.size());
 		progress->incrementWithMessage(CStringTemp);
 		if (i == this->LOD(0))
 		{
@@ -1465,7 +1486,8 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	
 		for (j = 0; j < (unsigned)pol_temp.num_verticies; j++)
 		{
-			pol_temp.verts[j] = StandardToCOB(points[j]+this->get_model_offset(i))/scaler;
+			pol_temp.verts[j] = StandardToCOB(points[j]+this->get_model_offset(i));
+			pol_temp.verts[j] = pol_temp.verts[j] / scaler;
 		}
 
 		pol_temp.num_faces_or_holes = this->subobjects[i].polygons.size();
@@ -1532,8 +1554,9 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 		for (j = 0; j < this->turrets[i].fire_points.size(); j++)
 		{
 			sprintf(CStringTemp, "Turret%02d-Fp%02d", (i+1), j);
+			vector3d tmp_vector(this->get_model_offset(this->turrets[i].sobj_par_phys)+this->turrets[i].fire_points[j]);
 			lght_temp = MakeLight(CStringTemp, object_grou_chunkids[this->turrets[i].sobj_par_phys], 
-						ChunkID++, (this->get_model_offset(this->turrets[i].sobj_par_phys)+this->turrets[i].fire_points[j])/scaler, def_matrix);
+						ChunkID++, (tmp_vector)/scaler, def_matrix);
 			OutFile.Add_Lght(lght_temp);
 		}
 		
@@ -1571,7 +1594,7 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	{
 		for (j = 0; j < this->ai_paths[i].verts.size(); j++)
 		{
-			sprintf(CStringTemp, "Path%02d-%02d-%02d", (i+1), this->ai_paths[i].verts.size(), (j+1));
+			sprintf(CStringTemp, "Path%02d-%02d-%02d", (i+1), (int)this->ai_paths[i].verts.size(), (j+1));
 
 		lght_temp = MakeLight(CStringTemp, object_grou_chunkids[this->LOD(0)], 
 					ChunkID++, this->ai_paths[i].verts[j].pos/scaler, def_matrix);

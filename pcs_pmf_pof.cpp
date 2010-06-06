@@ -315,8 +315,8 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 	int idx = GetModelInfoCount();
 	char cstrtmp[256];
-	std::string strtmp = PCS2_VERSION;
-	sprintf(cstrtmp, "PMFSaveToPOF: Compiled on %s with %s\nmax BSP depth was %d\nmost polys in a single node was %d\nTotal Compile time was %dms, tree generation time was %dms", strtmp.c_str(), PCS2_COMP_VERSION, PCS_Model::BSP_MAX_DEPTH,PCS_Model::BSP_NODE_POLYS, time.ToLong(), PCS_Model::BSP_TREE_TIME.ToLong());
+	wxString strtmp = PCS2_VERSION;
+	sprintf(cstrtmp, "PMFSaveToPOF: Compiled on %s with %s\nmax BSP depth was %d\nmost polys in a single node was %d\nTotal Compile time was %ldms, tree generation time was %ldms", std::string(strtmp.mb_str()).c_str(), std::string(PCS2_COMP_VERSION.mb_str()).c_str(), PCS_Model::BSP_MAX_DEPTH,PCS_Model::BSP_NODE_POLYS, time.ToLong(), PCS_Model::BSP_TREE_TIME.ToLong());
 	
 	bool found = false;
 	for (i = 0; i < model_info.size() && !found; i++)
@@ -760,7 +760,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 	{
 		if ( //strstr(model_info[i].c_str(), "BSPGEN") || // Volition's Compiler - caching revoked 2008-02-11 by Kazan because cannot gaurantee that tagged models actually game from V's compiler
 			//strstr(model_info[i].c_str(), "POF-CS Compiler v1.3.4") ||  // removed PCS1 from recognized cacheable list 2008-01-10 - Kazan
-			strstr(model_info[i].c_str(), PCS2_COMP_VERSION))
+			strstr(model_info[i].c_str(), PCS2_COMP_VERSION.mb_str()))
 		{
 			can_bsp_cache = true;
 			break;

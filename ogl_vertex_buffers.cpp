@@ -16,13 +16,14 @@ void PCS_Model::make_vertex_buffers(){
 	}
 }
 
+struct OGL_vert{
+	vector3d pos;
+	vector3d norm;
+	float u,v;
+};
+
 //set's up a specific vertex buffer
 void pcs_sobj::make_vertex_buffer(int tid){
-	struct OGL_vert{
-		vector3d pos;
-		vector3d norm;
-		float u,v;
-	};
 
 	std::vector<OGL_vert> tri;
 	std::vector<vector3d> line;

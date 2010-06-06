@@ -218,7 +218,12 @@ public:
 	}
 
 };
-class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};DECLARE_EVENT_TABLE();};
+class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};
+	//XXX: hack!
+#ifndef UNIX
+	DECLARE_EVENT_TABLE();
+#endif
+};
 class normal_disp : public _normal_ctrl<wxStaticText>{public:normal_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 

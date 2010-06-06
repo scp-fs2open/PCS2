@@ -187,6 +187,7 @@
 #include <GL/glu.h>
 #include <fstream>
 #include <wx/wfstream.h>
+#include <cfloat>
 
 #include "geo_sphere.h"
 
@@ -198,7 +199,7 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 //*******************************************************************************
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
- : wxGLCanvas(parent, id, pos, sz, 0, "GLCanvas", attriblist), model(ship),mainpanel(main),
+ : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), model(ship),mainpanel(main),
 				gr_debug(NULL),position(0,0,0), rotation(0,0,0), kShiftdown(false), FreezeRender(false), IsRendering(false), omni_selected_list(-1), omni_selected_item(-1),previus_focus(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false)
 {
 	free_axis[0]=true;
@@ -211,9 +212,9 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 	this->SetCurrent();
 	// === === === Init GL === === === 
 	// Initialize OpenGL function table
-	vendor = (char*)glGetString(GL_VENDOR);
-	renderer = (char*)glGetString(GL_RENDERER);
-	version = (char*)glGetString(GL_VERSION);
+	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
+	renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
+	version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
 	/*std::string extensions = (char*)glGetString(GL_EXTENSIONS);
 	GLFunctions.LoadFunctionTable();*/
 
@@ -327,7 +328,7 @@ void wxGL_PMFCanvas::Reinit()
 	int itemp;
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/gr_options/"));
-	pConfig->Read("use_vertex_buffer_objects", &itemp, 0); // default to off
+	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 	UseVBOs = (itemp == 1);
 	if (model.GetSOBJCount())
 	{
@@ -352,16 +353,14 @@ void wxGL_PMFCanvas::reload_textures(){
 	
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/tpaths/"));
-	int num_paths = pConfig->Read("numpaths", 0l);
-	char cstr[16];
+	int num_paths = pConfig->Read(_("numpaths"), 0l);
 	wxString strs;
 	paths.resize(num_paths);
 
 	for (int i = 0; i < num_paths; i++)
 	{
-		sprintf(cstr, "path%d", i);
-		pConfig->Read(cstr, &strs);
-		paths[i] = strs.c_str();
+		pConfig->Read(wxString::Format(_("path%d"), i), &strs);
+		paths[i] = std::string(strs.mb_str());
 	}
 
 	mainpanel->UseThreadedProgBar = false; // wxProgressDialog calls Yield! recursive yield calls = FREEZE
@@ -629,10 +628,13 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 			glColor4ubv( (GLubyte*)col.col);
 
 			glVertex3fv((GLfloat *)&(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model)));
-			if(omni.flags & OMNIPOINT_COMMON_NORMAL)
-				glVertex3fv((GLfloat *)&(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model)+omni.point[i][0].norm*omni.point[i][0].rad*2.5f));
-			else
-				glVertex3fv((GLfloat *)&(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model)+omni.point[i][j].norm*omni.point[i][0].rad*2.5f));
+			if(omni.flags & OMNIPOINT_COMMON_NORMAL) {
+				vector3d temp(omni.point[i][0].norm * omni.point[i][0].rad);
+				glVertex3fv((GLfloat *)&(omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + temp * 2.5f));
+			} else {
+				vector3d temp(omni.point[i][j].norm * omni.point[i][0].rad);
+				glVertex3fv((GLfloat *)&(omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + temp * 2.5f));
+			}
 		}
 	}
 
@@ -808,7 +810,8 @@ void wxGL_PMFCanvas::ray_pick(vector3d point, vector3d norm){
 	}
 	if(idx1 >-1 && idx2 >-1){
 		set_selected_omni_points(idx1, idx2);
-		GetEventHandler()->ProcessEvent(wxCommandEvent(OMNIPOINT_RAY_PICKED, GetId()));
+		wxCommandEvent commandEvent(OMNIPOINT_RAY_PICKED, GetId());
+		GetEventHandler()->ProcessEvent(commandEvent);
 		Render();
 	}
 }
