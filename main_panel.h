@@ -65,6 +65,7 @@
 #include "pcs2_CIDs.h"
 #include "model_editor_ctrl.h"
 #include <wx/progdlg.h>
+#include <wx/thread.h>
 
 
 
@@ -170,6 +171,11 @@ class main_panel
 		//when I'm setting a selection to what the editor want's it to be
 
 		wxProgressDialog *threaded_prog_bar;
+		wxMutex threaded_prog_bar_mutex; // Protects the next three fields.
+		bool should_delete_threaded_prog_bar;
+		bool threaded_prog_bar_writer;
+		int threaded_prog_bar_readers;
+
 		bool UseThreadedProgBar;
 
 	
