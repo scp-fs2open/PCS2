@@ -4,14 +4,14 @@
 
 
 BEGIN_EVENT_TABLE(combo, wxComboBox)
-	EVT_SET_FOCUS(do_focus)
+	EVT_SET_FOCUS(combo::do_focus)
 	EVT_COMBOBOX(wxID_ANY,combo::do_selected)
 END_EVENT_TABLE()
 
 void combo::do_focus(wxFocusEvent&ev){
 	wxCommandEvent event(COMBO_CLICKED, GetId());
 
-	ProcessCommand(event);
+	this->Command(event);
 	ev.Skip(true);
 }
 

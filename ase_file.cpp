@@ -48,6 +48,7 @@
  */
 
 #include "ase_file.h"
+#include <climits>
 #include <map>
 #include <fstream>
 #include <stack>

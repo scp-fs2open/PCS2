@@ -21,9 +21,9 @@ class chunk_color_ctrl :
 protected:
 		wxButton *unselected_btn, *selected_list, *selected_item;
 public:
-		std::string path;
+		wxString path;
 	
-	chunk_color_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, std::string Path, int Flags=0, wxString title1 = "Unselected", wxString title2 = "Selected List", wxString title3 = "Selected Item");
+	chunk_color_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString Path, int Flags=0, wxString title1 = _("Unselected"), wxString title2 = _("Selected List"), wxString title3 = _("Selected Item"));
 public:
 	virtual ~chunk_color_ctrl(void){};
 
@@ -32,7 +32,7 @@ public:
 	void set_value(const color_options&O);
 
 	void set_btn(wxButton*btn, color col);
-	void chunk_color_ctrl::set_btn(wxButton*btn, wxColour col);
+	void set_btn(wxButton*btn, wxColour col);
 
 	void on_color(wxCommandEvent &event);
 

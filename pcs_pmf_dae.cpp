@@ -1,11 +1,4 @@
-#include "pcs2.h"
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include "pcs_file.h"
-#include "BSPHandler.h"
-#include <dae.h>
-#include <dom/domCOLLADA.h>
 #include "DAEHandler.h"
 
 pcs_sobj *process_subobj(daeElement* element);

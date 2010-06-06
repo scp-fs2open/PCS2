@@ -108,7 +108,13 @@ int VolitionPackfileReader::FindFileWild(std::string pattern, int start)
 	
 	for (int i = start+1; i < HeaderData.direntries; i++)
 	{
+#ifdef UNIX
+#define _strlwr(s) (s)
+#endif
 		if (wildcmp(_strlwr((char*)pattern.c_str()), _strlwr(Files[i].filename)))
+#ifdef UNIX
+#undef _strlwr
+#endif
 			return i;
 	}
 

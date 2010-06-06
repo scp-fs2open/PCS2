@@ -19,7 +19,7 @@ BEGIN_EVENT_TABLE (path_array_ctrl,resizeable_array_ctrl<pcs_path>)
 	EVT_COMMAND(wxID_ANY, ARRAY_NEW, path_array_ctrl::on_new)
 END_EVENT_TABLE()
 
-BEGIN_EVENT_TABLE (PATH_ctrl,editor_ctrl<std::vector<pcs_path>>)
+BEGIN_EVENT_TABLE (PATH_ctrl,editor_ctrl<std::vector<pcs_path> >)
 	EVT_BUTTON(PATH_AUTO_GEN,PATH_ctrl::on_auto_gen)
 END_EVENT_TABLE()
 
@@ -41,13 +41,13 @@ BEGIN_EVENT_TABLE (normal_ctrl,vector_ctrl)
 END_EVENT_TABLE()
 
 
-color WPNT_ctrl<GUN>::selected_item = color(255,192,192);
-color WPNT_ctrl<GUN>::selected_list = color(128,64,64);
-color WPNT_ctrl<GUN>::unselected = color(64,64,64);
+template<> color WPNT_ctrl<GUN>::selected_item = color(255,192,192);
+template<> color WPNT_ctrl<GUN>::selected_list = color(128,64,64);
+template<> color WPNT_ctrl<GUN>::unselected = color(64,64,64);
 
-color WPNT_ctrl<MISSILE>::selected_item = color(255,192,192);
-color WPNT_ctrl<MISSILE>::selected_list = color(128,64,64);
-color WPNT_ctrl<MISSILE>::unselected = color(64,64,64);
+template<> color WPNT_ctrl<MISSILE>::selected_item = color(255,192,192);
+template<> color WPNT_ctrl<MISSILE>::selected_list = color(128,64,64);
+template<> color WPNT_ctrl<MISSILE>::unselected = color(64,64,64);
 
 color TGUN_ctrl::selected_item = color(255,128,255);
 color TGUN_ctrl::selected_list = color(128,92,128);

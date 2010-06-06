@@ -69,6 +69,15 @@ size_t geo_sphere::add_if_not_present(vector3d&vec){
 	return gspoints.size()-1;
 }
 
+size_t geo_sphere::add_if_not_present(vector3d vec){
+	for(unsigned int i = 0; i<gspoints.size(); i++){
+		if(gspoints[i]==vec)
+			return i;
+	}
+	gspoints.push_back(vec);
+	return gspoints.size()-1;
+}
+
 
 //will add points along exsisting edges and make new faces from them
 void geo_sphere::subdivide_geosphere(int res){

@@ -265,7 +265,7 @@ void FileList::GetList(const std::string &dir, const std::string &filter)
 		{
 			dname = curfile->d_name;
 			std::transform(dname.begin(), dname.end(), dname.begin(), tolower);
-			if (wildcmp((char*)lfilter.c_str(), (char*)dname.c_str()))
+			if (wildcmp(lfilter.c_str(), dname.c_str()))
 			{
 				if (numFiles >= files.size())
 					files.resize(files.size()*2);
@@ -294,7 +294,7 @@ size_t FileList::wild_search(std::string search, size_t start) const
 	for (size_t i = start+1; i < files.size(); i++)
 	{
 		temp = strLower(files[i]);
-		if (wildcmp((char*)search.c_str(), (char*)temp.c_str()))
+		if (wildcmp(search.c_str(), temp.c_str()))
 			return i;
 	}
 	return -1; //invalid
@@ -406,9 +406,9 @@ size_t Expand(std::string str, char c,  std::vector<std::string> &StrArray)
 // Shamelessly borrowed from http://www.codeproject.com/string/wildcmp.asp
 //****************************************************************************
 
-size_t wildcmp(char *wild, char *string) {
-   char *cp = NULL;
-   char *mp = NULL;
+size_t wildcmp(const char *wild, const char *string) {
+   const char *cp = NULL;
+   const char *mp = NULL;
 
 	while ((*string) && (*wild != '*')) {
 		if ((*wild != *string) && (*wild != '?')) {

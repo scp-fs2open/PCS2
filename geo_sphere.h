@@ -51,6 +51,7 @@ class geo_sphere{
 	//adds the vector to the gspoints if it isn't there, 
 	//returns the location were it was added or found
 	size_t add_if_not_present(vector3d&vec);
+	size_t add_if_not_present(vector3d vec);
 
 	std::vector<int>gs_sphere_start;
 	//for a sphere of resolution R the tris for it start at 

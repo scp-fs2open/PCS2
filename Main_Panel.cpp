@@ -1286,7 +1286,6 @@ void main_panel::parents_first(int i, std::vector<wxTreeItemId>&model_nodes){
 	path.resize(1);
 	path[0] = i;
 	wxTreeItemId parent = tree_id.SOBJ_ID;
-	char ibuf[16];
 	if(model.SOBJ(i).parent_sobj != -1){
 			if(i < model.SOBJ(i).parent_sobj){
 				parents_first(model.SOBJ(i).parent_sobj, model_nodes);
@@ -1295,7 +1294,7 @@ void main_panel::parents_first(int i, std::vector<wxTreeItemId>&model_nodes){
 	}
 	wxString label(model.SOBJ(i).name.c_str(), wxConvUTF8);
 	label += _(" (");
-	label += _itoa(i, ibuf, 10);
+	label += itoa(i);
 	label += _(")");
 	model_nodes[i] = navigation_panel->AppendItem(parent, label, TREE_UNSEL, TREE_SEL, new tree_node_id(SOBJ, path, true));
 	navigation_panel->SetItemImage(model_nodes[i], TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
@@ -1351,10 +1350,9 @@ void main_panel::rebuild_tree(){
 			}
 			parent = model_nodes[model.SOBJ(i).parent_sobj];
 		}
-		char ibuf[16];
 		wxString label(model.SOBJ(i).name.c_str(), wxConvUTF8);
 		label += _(" (");
-		label += _itoa(i, ibuf, 10);
+		label += itoa(i);
 		label += _(")");
 		model_nodes[i] = navigation_panel->AppendItem(parent, label, TREE_UNSEL, TREE_SEL, new tree_node_id(SOBJ, path, true));
 		navigation_panel->SetItemImage(model_nodes[i], TREE_UNSEL_OP, wxTreeItemIcon_Expanded);

@@ -1,15 +1,10 @@
+#if LOGGING_DAE
 #include <iostream>
-#include <fstream>
-
-#include <memory.h>
-#include "POFHandler.h"
-#include "BSPHandler.h"
-#include <cstring>
-#include <fstream>
-#include <sstream>
-#include <map>
+#endif
 #include <dae.h>
 #include <dom/domCOLLADA.h>
+
+#include <map>
 #include "pcs_file.h"
 #include "vector3d.h"
 #include "DAEDataStructs.h"

@@ -138,7 +138,7 @@ class FileList
 bool PlatformNormalize(std::string &normpath, const std::string &path, const std::string root = "");
 
 // really only used in the non-windows version, but it's useful
-size_t wildcmp(char *wild, char *string);
+size_t wildcmp(const char *wild, const char *string);
 
 // could be useful
 size_t getFilesize(std::string filename);
