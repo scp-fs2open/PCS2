@@ -179,6 +179,8 @@ public:
 
 	virtual bool Destroy();
 
+	void startRender();
+
 	void SetCurOp(std::string op) { if(pstatus)pstatus->SetStatusText(wxString(op.c_str(), wxConvUTF8), 0); }
 	void SetCurProg(int perc) { if(pgauge)pgauge->SetValue(perc); } 
 

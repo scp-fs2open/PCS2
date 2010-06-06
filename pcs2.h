@@ -416,6 +416,8 @@ class PCS2_MainWindow : public wxFrame
 
 		 // puts a title "" will result in "PCS2_VERSION (__DATE__ __TIME__)" a filename will result in "Filename - PCS2_VERSION (__DATE__ __TIME__)"
 		 void putTitle(wxString filename);
+
+		 void startRender();
 };
 
 

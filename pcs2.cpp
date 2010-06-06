@@ -561,6 +561,7 @@ bool PCS2_App::OnInit()
 
 	myframe->Show(TRUE);	
 	SetTopWindow(myframe);
+	myframe->startRender();
 
 
 	return true;
@@ -607,6 +608,10 @@ PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, _("POF Constructor Suite 
 
 
 	putTitle(_(""));
+}
+
+void PCS2_MainWindow::startRender() {
+	mypanel->startRender();
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
