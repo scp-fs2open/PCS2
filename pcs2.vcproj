@@ -754,6 +754,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\op_stack.cpp"
+						>
+					</File>
+					<File
 						RelativePath=".\op_stack.h"
 						>
 					</File>
