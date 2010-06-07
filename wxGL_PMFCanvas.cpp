@@ -859,14 +859,14 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 		mainpanel->control_panel->push_undo();
 	}
 
-	if(!event.Leaving()){
-		if(this != FindFocus()){
-			previus_focus = FindFocus();
-			SetFocus();
-		}
-	}else{
-		if(previus_focus)previus_focus->SetFocus();
-	}
+	//if(!event.Leaving()){
+	//	if(this != FindFocus()){
+	//		previus_focus = FindFocus();
+	//		SetFocus();
+	//	}
+	//}else{
+	//	if(previus_focus)previus_focus->SetFocus();
+	//}
 
 	if (!model.GetSOBJCount())
 	{
