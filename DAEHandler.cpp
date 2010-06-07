@@ -63,7 +63,9 @@ DAEHandler::~DAEHandler() {
 int DAEHandler::populate(void) {
 	daeURI uri(dae);
 	string temp;
-	progress->setTarget(120);
+	progress->setTarget(200);
+	progress->setMessage("Opening and Reading DAE");
+	progress->Notify();
 	num_textures = 0;
 
 	daeTArray< daeSmartRef<daeElement> > helpers = root->getDescendant("visual_scene")->getChildren();
@@ -81,8 +83,7 @@ int DAEHandler::populate(void) {
 #endif
 		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
 			name = helpers[i]->getAttribute("name");
-			progress->setMessage("Processing " + name);
-			progress->SetProgress(progress->getProgress() + 1);
+			progress->incrementWithMessage("Processing " + name);
 			if (strnicmp(name.c_str(), "subsystem", strlen("subsystem")) == 0) {
 				subsystem_handler(helpers[i]);
 			} else if (strnicmp(name.c_str(), "shield", strlen("shield")) == 0) {
@@ -149,47 +150,51 @@ int DAEHandler::populate(void) {
 		}
 
 	}
-	progress->SetProgress(115);
+	progress->setTarget(203 + subobjs.size() + specials.size() + docks.size() + lods.size() + missiles.size() + 3);
+	progress->SetProgress(203);
 
 	vector<pcs_sobj> final_subobjs(subobjs.size());
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
-		progress->setMessage("Finalising " + subobjs[i]->name);
+		progress->incrementWithMessage("Finalising " + subobjs[i]->name);
 		final_subobjs[i] = *subobjs[i];
 		delete subobjs[i];
 	}
 	model->set_subobjects(final_subobjs);
 	for (unsigned int i = 0; i < specials.size(); i++) {
-		progress->setMessage("Finalising " + specials[i]->name);
+		progress->incrementWithMessage("Finalising " + specials[i]->name);
 		model->AddSpecial(specials[i]);
 		delete specials[i];
 	}
 	for (unsigned int i = 0; i < docks.size(); i++) {
-		progress->setMessage("Finalising " + docks[i]->properties);
+		progress->incrementWithMessage("Finalising " + docks[i]->properties);
 		model->AddDocking(docks[i]);
 		delete docks[i];
 	}
 	// why no set_lods?
 	model->SetNumLODs(lods.size());
 	for (unsigned int i = 0; i < lods.size(); i++) {
+		progress->incrementWithMessage("Finalising LOD " + i);
 		model->LOD(i) = lods[i];
 	}
 	model->set_eyes(eyes);
 	int num_guns = guns.size();
 	guns.resize(guns.size() + missiles.size());
 	for (unsigned int i = 0; i < missiles.size(); i++) {
+		progress->incrementWithMessage("Finalising gun " + i);
 		guns[i + num_guns] = missiles[i];
 	}
 	model->set_weapons(guns);
 	// Don't put this before subobject handling...
+	progress->incrementWithMessage("Setting radius");
 	model->SetMaxRadius(radius);
+	progress->incrementWithMessage("Setting bounding box");
 	model->SetMinBounding(min_bounding_box);
 	model->SetMaxBounding(max_bounding_box);
 
 	// Perpetuating a shonky way of calculating mass...
+	progress->incrementWithMessage("Setting mass");
 	model->SetMass((model->GetMaxBounding().x - model->GetMinBounding().x) * (model->GetMaxBounding().y - model->GetMinBounding().y) * (model->GetMaxBounding().z - model->GetMinBounding().z));
 
-
-	progress->SetProgress(120);
 	return 0;
 
 }
@@ -208,7 +213,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 		return;
 	}
 	texture_mapping = get_texture_mappings(geom);
-	progress->setMessage("Processing " + element->getAttribute("name"));
+	progress->incrementWithMessage("Processing " + element->getAttribute("name"));
 
 	string temp = doc;
 	daeURI uri(dae);
@@ -1316,66 +1321,44 @@ DAESaver::DAESaver(string name, PCS_Model *model, int helpers, int props_as_help
 
 int DAESaver::save(void) {
 	if (export_helpers) {
-		progress->setTarget(23);
+		progress->setTarget(subobjs.size() + 15);
 	} else {
-		progress->setTarget(11);
+		progress->setTarget(subobjs.size() + 4);
 	}
 		
+	progress->incrementWithMessage( "Adding header");
 	add_header();
-	progress->SetProgress(progress->getProgress() + 1);
-	progress->setMessage( "Adding textures");
+	progress->incrementWithMessage( "Adding textures");
 	add_textures();
-	progress->SetProgress(progress->getProgress() + 1);
-	//*log << "done textures" << endl;
-	progress->setMessage( "Adding geometry");
+	progress->incrementWithMessage( "Adding geometry");
 	add_geom();
-	progress->SetProgress(progress->getProgress() + 10);
-	//*log << "done geometry" << endl;
 	if (export_helpers) {
-		progress->setMessage( "Adding specials");
+		progress->incrementWithMessage( "Adding specials");
 		add_subsystems();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done subsystems" << endl;
-		progress->setMessage( "Adding turrets");
+		progress->incrementWithMessage( "Adding turrets");
 		add_turret_fps();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done turrets" << endl;
-		progress->setMessage( "Adding dockpoints");
+		progress->incrementWithMessage( "Adding dockpoints");
 		add_docks();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done docks" << endl;
-		progress->setMessage( "Adding thrusters");
+		progress->incrementWithMessage( "Adding thrusters");
 		add_thrusters();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done thrusters" << endl;
-		progress->setMessage( "Adding gunpoints");
+		progress->incrementWithMessage( "Adding gunpoints");
 		add_guns();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done gungs" << endl;
-		progress->setMessage( "Adding eyepoints");
+		progress->incrementWithMessage( "Adding eyepoints");
 		add_eyes();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done eyes" << endl;
-		progress->setMessage( "Adding shield");
+		progress->incrementWithMessage( "Adding shield");
 		add_shield();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done shield" << endl;
-		progress->setMessage( "Adding paths");
+		progress->incrementWithMessage( "Adding paths");
 		add_paths();
-		progress->SetProgress(progress->getProgress() + 1);
-		progress->setMessage( "Adding glowpoints");
+		progress->incrementWithMessage( "Adding glowpoints");
 		add_glows();
-		progress->SetProgress(progress->getProgress() + 1);
-		progress->setMessage( "Adding insignia");
+		progress->incrementWithMessage( "Adding insignia");
 		add_insignia();
-		progress->SetProgress(progress->getProgress() + 1);
-		progress->setMessage( "Adding moment of inertia");
+		progress->incrementWithMessage( "Adding moment of inertia");
 		add_moment_of_inertia();
-		progress->SetProgress(progress->getProgress() + 1);
-		//*log << "done paths" << endl;
 	}
 
 
+	progress->incrementWithMessage( "Saving DAE");
 	dae.writeAll();
 	return 0;
 }
@@ -1490,11 +1473,13 @@ void DAESaver::get_subobj(int idx,string *name) {
 	daeElement *translate = subobj->add("translate");
 	translate->setCharData(write_vector3d(model->SOBJ(idx).offset).c_str());
 	if (name) {
+		progress->incrementWithMessage("Adding " + *name);
 		subobj->setAttribute("id",name->c_str());
 		subobj->setAttribute("name",name->c_str());
 	} else {
 		subobj->setAttribute("id",model->SOBJ(idx).name.c_str());
 		subobj->setAttribute("name",model->SOBJ(idx).name.c_str());
+		progress->incrementWithMessage("Adding " + model->SOBJ(idx).name);
 	}
 	//*log << "exporting " << subobj->getAttribute("id").c_str() << endl;
 	
