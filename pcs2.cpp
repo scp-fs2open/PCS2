@@ -670,6 +670,7 @@ void PCS2_MainWindow::save_progbar_start(wxAsyncProgressStartEvt &event)
 		} else {
 			threaded_prog_bar->Update(0, _("Starting File Save"));
 		}
+		should_delete_threaded_prog_bar = false;
 		threaded_prog_bar->SetSize(300,125);
 		threaded_prog_bar->ShowModal();
 		threaded_prog_bar_readers--;
