@@ -954,25 +954,22 @@ void main_panel::open_progbar_start(wxAsyncProgressStartEvt &event)
 	glcanvas->FreezeRender = true;
 	if (UseThreadedProgBar)
 	{
-		bool can_access = false;
-		{
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			if (threaded_prog_bar_readers > 0) {
-			} else {
-				threaded_prog_bar_writer = true;
-				can_access = true;
-			}
-		}
-		if (can_access) {
+		threaded_prog_bar_readers++;
+		if (threaded_prog_bar == NULL) {
 			threaded_prog_bar = new wxProgressDialog(_("Opening File"), _("Starting File Load")); 
-			{
-				wxMutexLocker locker(threaded_prog_bar_mutex);
-				threaded_prog_bar_writer = false;
-			}
-			threaded_prog_bar->SetSize(300,125);
-			threaded_prog_bar->ShowModal();
+		} else {
+			threaded_prog_bar->Update(0, _("Starting File Load"));
+			threaded_prog_bar->Show();
 		}
-}
+		threaded_prog_bar->SetSize(300,125);
+		threaded_prog_bar->ShowModal();
+		threaded_prog_bar_readers--;
+		if (threaded_prog_bar_readers == 0 && should_delete_threaded_prog_bar) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
+			should_delete_threaded_prog_bar = false;
+		}
+	}
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -984,26 +981,13 @@ void main_panel::open_progbar_update(wxAsyncProgressUpdateEvt &event)
 	pgauge->SetValue(percent);
 	if (UseThreadedProgBar && threaded_prog_bar != NULL)
 	{
-		bool can_access = false;
-		{
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			if (!threaded_prog_bar_writer) {
-				threaded_prog_bar_readers++;
-				can_access = true;
-			}
-		}
-		if (can_access && threaded_prog_bar != NULL) {
-			threaded_prog_bar->Update(percent, wxString(event.getMessage().c_str(), wxConvUTF8));
-		}
-		if (can_access) {
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			threaded_prog_bar_readers--;
-
-			if (threaded_prog_bar_readers == 0 && should_delete_threaded_prog_bar) {
-				delete threaded_prog_bar;
-				threaded_prog_bar = NULL;
-				should_delete_threaded_prog_bar = false;
-			}
+		threaded_prog_bar_readers++;
+		threaded_prog_bar->Update(percent, wxString(event.getMessage().c_str(), wxConvUTF8));
+		threaded_prog_bar_readers--;
+		if (threaded_prog_bar_readers == 0 && should_delete_threaded_prog_bar) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
+			should_delete_threaded_prog_bar = false;
 		}
 	}
 }
@@ -1014,24 +998,11 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 {
 	if (threaded_prog_bar != NULL)
 	{
-		bool can_access = false;
-		{
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			if (threaded_prog_bar_readers > 0) {
-				should_delete_threaded_prog_bar = true;
-			} else {
-				threaded_prog_bar_writer = true;
-				can_access = true;
-			}
-		}
-		if (can_access) {
-			if (threaded_prog_bar != NULL) {
-				delete threaded_prog_bar;
-				threaded_prog_bar = NULL;
-			}
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			threaded_prog_bar_writer = false;
+		if (threaded_prog_bar_readers == 0) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
 		} else {
+			should_delete_threaded_prog_bar = true;
 			// Can't delete it now so let's hide it at least.
 			threaded_prog_bar->Hide();
 		}
@@ -1098,24 +1069,11 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 {
 	if (threaded_prog_bar != NULL)
 	{
-		bool can_access = false;
-		{
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			if (threaded_prog_bar_readers > 0) {
-				should_delete_threaded_prog_bar = true;
-			} else {
-				threaded_prog_bar_writer = true;
-				can_access = true;
-			}
-		}
-		if (can_access) {
-			if (threaded_prog_bar != NULL) {
-				delete threaded_prog_bar;
-				threaded_prog_bar = NULL;
-			}
-			wxMutexLocker locker(threaded_prog_bar_mutex);
-			threaded_prog_bar_writer = false;
+		if (threaded_prog_bar_readers == 0) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
 		} else {
+			should_delete_threaded_prog_bar = true;
 			// Can't delete it now so let's hide it at least.
 			threaded_prog_bar->Hide();
 		}
