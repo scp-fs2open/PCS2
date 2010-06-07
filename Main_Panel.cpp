@@ -164,7 +164,7 @@
 
 //ShellExecute(NULL, _T("open"), <filename that you want to open>, NULL, NULL, SW_SHOWNORMAL);
 main_panel::main_panel(wxFrame* parent)
-:control_panel(NULL),wxPanel(parent,-1,wxPoint(0,0)),pstatus(parent->GetStatusBar()),myParent(parent),pgauge(NULL),dragged_id(NULL),rebuilding_tree(false),internal_selection(false)
+:control_panel(NULL),wxPanel(parent,-1,wxPoint(0,0)),pstatus(parent->GetStatusBar()),myParent(parent),pgauge(NULL),dragged_id(NULL),rebuilding_tree(false),internal_selection(false), threaded_prog_bar_readers(0), should_delete_threaded_prog_bar(false)
 {
 	gprog = NULL;
 	
@@ -959,7 +959,6 @@ void main_panel::open_progbar_start(wxAsyncProgressStartEvt &event)
 			threaded_prog_bar = new wxProgressDialog(_("Opening File"), _("Starting File Load")); 
 		} else {
 			threaded_prog_bar->Update(0, _("Starting File Load"));
-			threaded_prog_bar->Show();
 		}
 		threaded_prog_bar->SetSize(300,125);
 		threaded_prog_bar->ShowModal();

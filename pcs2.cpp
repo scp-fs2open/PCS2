@@ -323,6 +323,7 @@
 #include <wx/image.h>
 #include <GL/glu.h>
 #include <fstream>
+#include <algorithm>
 #include <wx/wfstream.h>
 #include "pcs2_filethread.h"
 #include <wx/progdlg.h>
@@ -588,7 +589,7 @@ IMPLEMENT_APP(PCS2_App)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, _("POF Constructor Suite 2"), wxDefaultPosition, wxSize(600,400)),mypanel(NULL)
+PCS2_MainWindow::PCS2_MainWindow() : wxFrame(NULL, -1, _("POF Constructor Suite 2"), wxDefaultPosition, wxSize(600,400)),mypanel(NULL), threaded_prog_bar(NULL), threaded_prog_bar_readers(0), should_delete_threaded_prog_bar(false)
 {
 	wxGridSizer*sizer = new wxGridSizer(1,1,0,0);
 	wxBitmap pcsicon((xpms::pcsico));
@@ -663,9 +664,20 @@ void PCS2_MainWindow::save_progbar_start(wxAsyncProgressStartEvt &event)
 {
 	if (UseThreadedProgBar)
 	{
-		threaded_prog_bar = new wxProgressDialog(_("Saving File"), _("Starting File Save")); 
+		threaded_prog_bar_readers++;
+		if (threaded_prog_bar == NULL) {
+			threaded_prog_bar = new wxProgressDialog(_("Saving File"), _("Starting File Save")); 
+		} else {
+			threaded_prog_bar->Update(0, _("Starting File Save"));
+		}
 		threaded_prog_bar->SetSize(300,125);
 		threaded_prog_bar->ShowModal();
+		threaded_prog_bar_readers--;
+		if (threaded_prog_bar_readers == 0 && should_delete_threaded_prog_bar) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
+			should_delete_threaded_prog_bar = false;
+		}
 	}
 }
 
@@ -673,13 +685,25 @@ void PCS2_MainWindow::save_progbar_start(wxAsyncProgressStartEvt &event)
 
 void PCS2_MainWindow::save_progbar_update(wxAsyncProgressUpdateEvt &event)
 {
-	if (threaded_prog_bar != NULL)
+#ifdef _WINDEF_
+#undef min
+#undef max
+#endif
+	int percent = std::min(std::max((int)event.getPercent(), 0), 100);
+	mypanel->pstatus->SetStatusText(wxString(event.getMessage().c_str(), wxConvUTF8), 0);
+	mypanel->pgauge->SetValue(percent);
+	if (UseThreadedProgBar && threaded_prog_bar != NULL)
 	{
-		threaded_prog_bar->Update(int(event.getPercent()), wxString(event.getMessage().c_str(), wxConvUTF8));
+		threaded_prog_bar_readers++;
+		threaded_prog_bar->Update(percent, wxString(event.getMessage().c_str(), wxConvUTF8));
+		threaded_prog_bar_readers--;
+		if (threaded_prog_bar_readers == 0 && should_delete_threaded_prog_bar) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
+			should_delete_threaded_prog_bar = false;
+		}
 	}
 
-	mypanel->pstatus->SetStatusText(wxString(event.getMessage().c_str(), wxConvUTF8), 0);
-	mypanel->pgauge->SetValue(int(event.getPercent()));
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
@@ -687,8 +711,14 @@ void PCS2_MainWindow::save_progbar_end(wxAsyncProgressEndEvt &event)
 {
 	if (threaded_prog_bar != NULL)
 	{
-		delete threaded_prog_bar;
-		threaded_prog_bar = NULL;
+		if (threaded_prog_bar_readers == 0) {
+			delete threaded_prog_bar;
+			threaded_prog_bar = NULL;
+		} else {
+			should_delete_threaded_prog_bar = true;
+			// Can't delete it now so let's hide it at least.
+			threaded_prog_bar->Hide();
+		}
 	}
 	mypanel->pstatus->SetStatusText(_("Idle"), 0);
 	mypanel->pgauge->SetValue(0);
