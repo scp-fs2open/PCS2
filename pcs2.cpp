@@ -338,14 +338,6 @@
 std::vector<file_context> model_files;
 int current_model_file;
 
-#ifdef PUBLIC_RELEASE
-wxString BUILD_TYPE = _("Stable");
-wxString BUILD_VER = _("2.0");
-#else
-wxString BUILD_TYPE = _("Alpha");
-wxString BUILD_VER = _("2.1");
-#endif
-
 wxString PCS2_COMP_VERSION = _("PCS 2.0 Compiler Version 2 Final");
 
 wxString PCS2_SUPPORTED_FORMATS = _("All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae");
