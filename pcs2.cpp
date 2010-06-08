@@ -474,10 +474,8 @@ bool PCS2_App::OnInit()
 	// show the splash screen
 
 	wxBitmap bitmap(xpms::SplashPixmap);
-	const wxPoint& pos = wxDefaultPosition;
-	const wxSize& size = wxDefaultSize;
 
-	splash = new wxSplashScreen(bitmap, wxSPLASH_CENTRE_ON_SCREEN, 0, NULL, -1, pos, size, wxSIMPLE_BORDER|wxFRAME_NO_TASKBAR);
+	wxSplashScreen *splash = new wxSplashScreen(bitmap, wxSPLASH_CENTRE_ON_SCREEN, 0, NULL, -1, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER|wxFRAME_NO_TASKBAR);
 #endif
 
 	// Setup the Config stuff
@@ -555,16 +553,15 @@ bool PCS2_App::OnInit()
 
 	if(argc > 1)
 		myframe->load_file(argv[1], true);
-#if !defined(NO_SPLASHSCREEN)
-	wxSleep(1);
-	if (splash)
-		delete splash;
-#endif
-
 	myframe->Show(TRUE);	
 	SetTopWindow(myframe);
 	myframe->startRender();
 
+#if !defined(NO_SPLASHSCREEN)
+	wxMilliSleep(500);
+	if (splash)
+		delete splash;
+#endif
 
 	return true;
 }
