@@ -179,24 +179,24 @@ public:
 			bsp_render_box->SetValue(model.draw_bsp);
 
 			vector3d size = data.bounding_box_max_point - data.bounding_box_min_point;
-			sobj_info->set_value(std::string(wxString::Format(
-				_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\nBoundingbox Min:  %0.2f, %0.2f, %0.2f\nBoundingbox Max:  %0.2f, %0.2f, %0.2f\nH: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  %s\n"),
-					
+
+			wxString info(wxString::Format(_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\nBoundingbox Min:  %0.2f, %0.2f, %0.2f\nBoundingbox Max:  %0.2f, %0.2f, %0.2f\n"),
 				data.polygons.size(), 
 				model.get_child_subobj_poly_count(sobj_num), 
 				data.polygons.size() + model.get_child_subobj_poly_count(sobj_num), 
 				data.bounding_box_min_point.x,data.bounding_box_min_point.y,data.bounding_box_min_point.z, 
-				data.bounding_box_max_point.x,data.bounding_box_max_point.y,data.bounding_box_max_point.z, 
+				data.bounding_box_max_point.x,data.bounding_box_max_point.y,data.bounding_box_max_point.z));
+			info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  "),
 				abs(size.y), abs(size.x), abs(size.z),
-				data.radius, 
-				(
-					(data.parent_sobj>-1)?
-						wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8).c_str()
-						:_("*NONE*")
-				)
-					).mb_str())
-				);
+				data.radius);
+			if (data.parent_sobj > -1) {
+				info += wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8);
+			} else {
+				info += _("*NONE*");
 			}
+			info += _("\n");
+			sobj_info->set_value(std::string(info.mb_str()));
+		}
 	}
 
 	//applies the data in the control to the model
