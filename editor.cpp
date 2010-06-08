@@ -36,12 +36,9 @@ BEGIN_EVENT_TABLE (SOBJ_ctrl,editor_ctrl<pcs_sobj>)
 	EVT_CHECKBOX(BSP_DRAW,SOBJ_ctrl::on_BSP_render_change)
 END_EVENT_TABLE()
 
-//XXX: hack
-#ifndef UNIX
-BEGIN_EVENT_TABLE (normal_ctrl,vector_ctrl)
+BEGIN_EVENT_TABLE (normal_ctrl,_normal_ctrl<text_ctrl>)
 	EVT_BUTTON(NORM_NORMALIZE,normal_ctrl::on_normalize)
 END_EVENT_TABLE()
-#endif
 
 
 template<> color WPNT_ctrl<GUN>::selected_item = color(255,192,192);

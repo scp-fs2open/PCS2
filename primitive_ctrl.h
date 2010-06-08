@@ -7,8 +7,16 @@
 #include "suggest.xpm"
 
 
+inline wxString get_wx_string(wxStaticText* ctrl) {
+	return ctrl->GetLabel();
+}
+
+inline wxString get_wx_string(text_ctrl* ctrl) {
+	return ctrl->GetValue();
+}
+
 inline std::string get_string(text_ctrl*tc){
-	return std::string(tc->GetValue().mb_str());
+	return std::string(get_wx_string(tc).mb_str());
 }
 inline void set_string(text_ctrl*tc, const wxString&s){
 	tc->ChangeValue(s);
@@ -18,7 +26,7 @@ inline void set_string(text_ctrl*tc, const std::string&s){
 }
 
 inline std::string get_string(wxStaticText*st){
-	return std::string(st->GetLabel().mb_str());
+	return std::string(get_wx_string(st).mb_str());
 }
 inline void set_string(wxStaticText*st, const wxString&s){
 	st->SetLabel(s);
@@ -171,7 +179,7 @@ class _vector_ctrl
 public:
 	//the main accessors, gets/sets the value in the text box
 	virtual vector3d get_value(){
-		wxString s = this->text_box->GetLabel();
+		wxString s = get_wx_string(this->text_box);
 		if(s.Length()<1)return vector3d(0,0,0);
 
 		float x = (float)atof(s.mb_str());
@@ -196,6 +204,7 @@ public:
 		set_value(vector3d(0,0,0));
 	}
 };
+
 class vector_ctrl : public _vector_ctrl<text_ctrl>{public:vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
 class vector_disp : public _vector_ctrl<wxStaticText>{public:vector_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
@@ -218,12 +227,7 @@ public:
 	}
 
 };
-class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};
-	//XXX: hack!
-#ifndef UNIX
-	DECLARE_EVENT_TABLE();
-#endif
-};
+class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};DECLARE_EVENT_TABLE();};
 class normal_disp : public _normal_ctrl<wxStaticText>{public:normal_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 
