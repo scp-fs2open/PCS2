@@ -1481,20 +1481,18 @@ void DAESaver::get_subobj(int idx,string *name) {
 		subobj->setAttribute("name",model->SOBJ(idx).name.c_str());
 		progress->incrementWithMessage("Adding " + model->SOBJ(idx).name);
 	}
-	//*log << "exporting " << subobj->getAttribute("id").c_str() << endl;
 	
 	// split up polies by texture...
 	vector<vector<pcs_polygon*> > polies;
 	vector<daeElement*> poly_groups;
 	polies.resize(num_textures + 1);
-	unsigned int *counters = new unsigned int[num_textures + 1];
-	memset(counters, 0, (num_textures + 1) * sizeof(int));
+	vector<int> counters;
+	counters.resize(num_textures + 1, 0);
 	for (int i = 0; i <= num_textures; i++) {
 		polies[i].resize(VECTOR_INITIAL_SIZE);
 	}
 	for (unsigned int i = 0; i < model->SOBJ(idx).polygons.size(); i++) {
-		//*log << model->SOBJ(idx).polygons[i].texture_id << endl;
-		if (model->SOBJ(idx).polygons[i].texture_id < num_textures) {// who put in untextured polygons?
+		if (model->SOBJ(idx).polygons[i].texture_id < num_textures && model->SOBJ(idx).polygons[i].texture_id >= 0) {
 			if (counters[model->SOBJ(idx).polygons[i].texture_id] >= polies[model->SOBJ(idx).polygons[i].texture_id].size()) {
 				polies[model->SOBJ(idx).polygons[i].texture_id].resize(polies[model->SOBJ(idx).polygons[i].texture_id].size() * VECTOR_GROWTH_FACTOR);
 			}
@@ -1513,7 +1511,6 @@ void DAESaver::get_subobj(int idx,string *name) {
 			polies[i].resize(counters[i]);
 		}
 	}
-	delete[] counters;
 	daeElement *current_group;
 	daeElement *temp;
 	stringstream group_name;
