@@ -255,8 +255,8 @@ void FileList::GetList(const std::string &dir, const std::string &filter)
 	mydir = opendir(dir.c_str());
 
 	dirent *curfile;
-	std::string lfilter;
-    std::transform(filter.begin(), filter.end(), lfilter.begin(), tolower);
+	std::string lfilter(filter.size(), '\0');
+	std::transform(filter.begin(), filter.end(), lfilter.begin(), tolower);
 	std::string dname;
 	if (mydir)
 	{
