@@ -1531,8 +1531,9 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 				sizes[j] = polies[i][j]->verts.size();
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					if (vert_map.find(polies[i][j]->verts[k].point) == vert_map.end()) {
-						vert_map[polies[i][j]->verts[k].point] = vert_map.size();
-						if (vert.size() < vert_idx + 2) {
+						int offset = vert_map.size();
+						vert_map[polies[i][j]->verts[k].point] = offset;
+						if (vert.size() <= vert_idx + 2) {
 							vert.resize(vert.size() * VECTOR_GROWTH_FACTOR);
 						}
 						vert[vert_idx] = -(polies[i][j]->verts[k].point.x);
@@ -1542,8 +1543,9 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 					}
 					//vert_idx = vert_map[polies[i][j]->verts[k].point];
 					if (norm_map.find(polies[i][j]->verts[k].norm) == norm_map.end()) {
-						norm_map[polies[i][j]->verts[k].norm] = norm_map.size();
-						if (norm.size() < norm_idx + 2) {
+						int offset = norm_map.size();
+						norm_map[polies[i][j]->verts[k].norm] = offset;
+						if (norm.size() <= norm_idx + 2) {
 							norm.resize(norm.size() * VECTOR_GROWTH_FACTOR);
 						}
 						norm[norm_idx] = -(polies[i][j]->verts[k].norm.x);
@@ -1555,8 +1557,9 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 					//norm_idx = norm_map[polies[i][j]->verts[k].norm];
 					// A bit shonky, but screw adding another comparator
 					if (uv_map.find(vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)) == uv_map.end()) {
-						uv_map[vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)] = uv_map.size();
-						if (uv.size() < uv_idx + 1) {
+						int offset = uv_map.size();
+						uv_map[vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)] = offset;
+						if (uv.size() <= uv_idx + 1) {
 							uv.resize(uv.size() * VECTOR_GROWTH_FACTOR);
 						}
 						uv[uv_idx] = polies[i][j]->verts[k].u;
