@@ -277,6 +277,11 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 		}
 	}
 
+	if (texture_mapping) {
+		delete texture_mapping;
+		texture_mapping = NULL;
+	}
+
 
 	this->subobjs.push_back(subobj);
 	int current_sobj_id = this->subobjs.size() - 1;
@@ -336,7 +341,7 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 	string temp;
 	daeURI uri(dae);
 
-	vector<int> (*refs);
+	vector<int> refs;
 	DAEInputs inputs(element,doc,&dae);
 	int poly_offset = subobj->polygons.size();
 	bool triangles = false;
@@ -351,7 +356,7 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 
 	daeElement *ref_element = element->getChild("p");
 	if (ref_element != NULL) {
-		refs = parse_int_array(ref_element->getCharData().c_str());
+		parse_int_array(ref_element->getCharData().c_str(), &refs);
 	}
 
 
@@ -359,38 +364,32 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 	int num_polies = atoi(element->getAttribute("count").c_str());
 
 	subobj->polygons.resize(num_polies + poly_offset);
-	vector<int> *counts = NULL;
+	vector<int> counts;
 	if (!triangles) {
-		counts = parse_int_array(vcount->getCharData().c_str(),num_polies);
+		parse_int_array(vcount->getCharData().c_str(), &counts, num_polies);
 	}
-	int count;
 
 	int position = 0;
 
 	// add each polygon
 	for (int j = poly_offset; j < num_polies + poly_offset; j++) {
-		if (triangles) {
-			count = 3;
-		} else {
-			count = (*counts)[j - poly_offset];
-		}
-		subobj->polygons[j].verts.resize(count);
+		subobj->polygons[j].verts.resize(triangles ? 3 : counts[j - poly_offset]);
 
 		for (int k = subobj->polygons[j].verts.size() - 1; k >= 0; k--) {
-			subobj->polygons[j].verts[k].point = fix_axes(vector3d((*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
+			subobj->polygons[j].verts[k].point = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
 
 			process_vector3d(subobj->polygons[j].verts[k].point,subobj);
 			subobj->polygons[j].centeroid += subobj->polygons[j].verts[k].point;
 			if (inputs.norm.is_valid()) {
-				subobj->polygons[j].verts[k].norm = fix_axes(vector3d((*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
+				subobj->polygons[j].verts[k].norm = fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
 			} else {
 				subobj->polygons[j].verts[k].norm = vector3d(0,0,0);
 			}
 			subobj->polygons[j].norm += subobj->polygons[j].verts[k].norm;
 			if (inputs.uv.is_valid()) {
-				subobj->polygons[j].verts[k].u = (*inputs.uv.values())[(*refs)[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
+				subobj->polygons[j].verts[k].u = (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
 				// upside down textures...
-				subobj->polygons[j].verts[k].v = 1.0f - (*inputs.uv.values())[(*refs)[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
+				subobj->polygons[j].verts[k].v = 1.0f - (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
 			} else {
 				subobj->polygons[j].verts[k].u = 0.0f;
 				subobj->polygons[j].verts[k].v = 0.0f;
@@ -405,10 +404,6 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 		subobj->polygons[j].norm = MakeUnitVector(subobj->polygons[j].norm);
 		subobj->polygons[j].centeroid = subobj->polygons[j].centeroid / subobj->polygons[j].verts.size();
 		subobj->polygons[j].texture_id = texture_id;
-	}
-	delete refs;
-	if (counts != NULL) {
-		delete counts;
 	}
 }
 
@@ -773,7 +768,7 @@ void DAEHandler::shield_handler(daeElement *helper) {
 	
 	daeTArray< daeSmartRef<daeElement> > poly_bits = mesh->getChildren();
 
-	vector<int> (*refs);
+	vector<int> refs;
 
 	DAEInputs inputs(mesh,doc,&dae);
 	if (!inputs.pos.is_valid()) {
@@ -787,7 +782,7 @@ void DAEHandler::shield_handler(daeElement *helper) {
 
 	daeElement *ref_element = mesh->getDescendant("p");
 	if (ref_element != NULL) {
-		refs = parse_int_array(ref_element->getCharData().c_str());
+		parse_int_array(ref_element->getCharData().c_str(), &refs);
 	}
 
 	int num_polies = atoi(mesh->getAttribute("count").c_str());
@@ -798,8 +793,8 @@ void DAEHandler::shield_handler(daeElement *helper) {
 	for (int j = 0; j < num_polies; j++) {
 		shield_bit->face_normal = vector3d(0,0,0);
 		for (int k = 2; k >= 0; k--) {
-			shield_bit->corners[k] = fix_axes(vector3d((*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
-			shield_bit->face_normal += fix_axes(vector3d((*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(*inputs.norm.values())[(*refs)[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
+			shield_bit->corners[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
+			shield_bit->face_normal += fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
 
 			position += inputs.max_offset;
 		}
@@ -807,7 +802,6 @@ void DAEHandler::shield_handler(daeElement *helper) {
 		model->AddShldTri(shield_bit);
 	}
 	delete(shield_bit);
-	delete refs;
 }
 
 void DAEHandler::process_insignia(daeElement *element) {
@@ -833,13 +827,13 @@ void DAEHandler::process_insignia(daeElement *element) {
 	
 	daeTArray< daeSmartRef<daeElement> > poly_bits = mesh->getChildren();
 
-	vector<int> *refs = NULL;
+	vector<int> refs;
 	DAEInputs inputs(mesh,doc,&dae);
 
 
 	daeElement *ref_element = mesh->getDescendant("p");
 	if (ref_element != NULL) {
-		refs = parse_int_array(ref_element->getCharData().c_str());
+		parse_int_array(ref_element->getCharData().c_str(), &refs);
 	}
 	if (!inputs.pos.is_valid()) {
 		wxMessageBox(wxT("Positions not found for insignia"));
@@ -858,14 +852,11 @@ void DAEHandler::process_insignia(daeElement *element) {
 	// add each polygon
 	for (int j = 0; j < num_polies; j++) {
 		for (int k = 2; k >= 0; k--) {
-			insignia.faces[j].verts[k] = fix_axes(vector3d((*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (*inputs.pos.values())[(*refs)[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
-			insignia.faces[j].u[k] = (*inputs.uv.values())[(*refs)[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
-			insignia.faces[j].v[k] = 1.0f - (*inputs.uv.values())[(*refs)[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
+			insignia.faces[j].verts[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
+			insignia.faces[j].u[k] = (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
+			insignia.faces[j].v[k] = 1.0f - (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
 			position += inputs.max_offset;
 		}
-	}
-	if (refs != NULL) {
-		delete refs;
 	}
 	model->AddInsignia(&insignia);
 }
@@ -886,12 +877,11 @@ void DAEHandler::process_moment_of_inertia(daeElement *element) {
 	}
 }
 
-vector<int> *parse_int_array(const char* chars, unsigned int count) {
-	vector<int> *result;
+void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count) {
 	if (count != -1) {
-		result = new vector<int>(count);
+		result->resize(count);
 	} else {
-		result = new vector<int>(VECTOR_INITIAL_SIZE);
+		result->resize(VECTOR_INITIAL_SIZE);
 	}
 	stringstream in(chars);
 	int temp;
@@ -912,8 +902,6 @@ vector<int> *parse_int_array(const char* chars, unsigned int count) {
 	if (i != result->size()) {
 		result->resize(i);
 	}
-	
-	return result;
 }
 
 vector<float> *parse_float_array(const char* chars, unsigned int count) {
@@ -1053,11 +1041,12 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 }
 
 DAEInput::DAEInput(daeURI uri) {
+	value = NULL;
+	valid = false;
 	daeElement *element = uri.getElement();
 	string next_uri = uri.getAuthority();
 	next_uri += uri.getPath();
 	if (element == NULL) {
-		valid = false;
 		return;
 	}
 	daeElement *next = element->getChild("input");
@@ -1065,25 +1054,22 @@ DAEInput::DAEInput(daeURI uri) {
 
 		next_uri += next->getAttribute("source").c_str();
 		uri.setURI(next_uri.c_str());
-		DAEInput *other = new DAEInput(uri);
-		if (!other->is_valid()) {
-			valid = false;
+		DAEInput other(uri);
+		if (!other.is_valid()) {
 			return;
 		}
-		x = other->x;
-		y = other->y;
-		z = other->z;
-		strides = other->strides;
-		value = other->value;
+		x = other.x;
+		y = other.y;
+		z = other.z;
+		strides = other.strides;
+		value = other.value;
 	} else {
 		next = element->getChild("technique_common");
 		if (next == NULL) {
-			valid = false;
 			return;
 		}
 		next = next->getChild("accessor");
 		if (next == NULL) {
-			valid = false;
 			return;
 		}
 		strides = atoi(next->getAttribute("stride").c_str());
@@ -1130,7 +1116,6 @@ DAEInput::DAEInput(daeURI uri) {
 		uri.setURI(next_uri.c_str());
 		next = uri.getElement();
 		if (next == NULL) {
-			valid = false;
 			return;
 		}
 		if (next->hasAttribute("count")) {
@@ -1151,9 +1136,9 @@ int DAEInput::stride() {
 	return strides;
 }
 
-vector<float> *DAEInput::values() {
+const vector<float> &DAEInput::values() {
 	assert(valid);
-	return value;
+	return *value;
 }
 
 int DAEInput::x_offset() {
@@ -2008,10 +1993,7 @@ void DAESaver::add_glows() {
 void DAESaver::add_insignia() {
 	map<vector3d,int,bool(*)(vector3d,vector3d)> vert_map(vector3d_comparator),uv_map(vector3d_comparator);
 	int vert_idx = 0,uv_idx = 0;
-	int *counts = new int[model->GetLODCount()];
-	for (int i = 0; i < model->GetLODCount(); i++) {
-		counts[i] = 1;
-	}
+	vector<int>counts(model->GetLODCount(), 1);
 
 	pcs_insig insignia;
 	stringstream name;

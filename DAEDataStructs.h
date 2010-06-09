@@ -9,13 +9,19 @@ class DAEInput {
 
 		DAEInput() {
 			valid = false;
+			value = NULL;
 		}
 
 		DAEInput(daeURI uri);
+		void destroy() {
+			if (value) {
+				delete value;
+			}
+		}
 		int x_offset();
 		int y_offset();
 		int z_offset();
-		std::vector<float> *values();
+		const std::vector<float> &values();
 		int stride();
 		bool is_valid();
 		int u_offset();
@@ -29,6 +35,11 @@ class DAEInput {
 class DAEInputs {
 public:
 	DAEInputs(daeElement *element, std::string doc, DAE *dae);
+	virtual ~DAEInputs() {
+		pos.destroy();
+		norm.destroy();
+		uv.destroy();
+	}
 	int max_offset;
 	int pos_offset;
 	int norm_offset;
@@ -38,7 +49,7 @@ public:
 };
 
 // parses ints into a vector
-std::vector<int> *parse_int_array(const char* chars, unsigned int count = -1);
+void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count = -1);
 
 // parses floats into a vector
 std::vector<float> *parse_float_array(const char* chars, unsigned int count = -1);
