@@ -1875,7 +1875,8 @@ void DAESaver::add_shield() {
 	for (int i = 0; i < model->GetShldTriCount(); i++) {
 		tri = model->ShldTri(i);
 		if (norm_map.find(tri.face_normal) == norm_map.end()) {
-			norm_map[tri.face_normal] = norm_map.size();
+			int offset = norm_map.size();
+			norm_map[tri.face_normal] = offset;
 			norm.push_back(-tri.face_normal.x);
 			norm.push_back(tri.face_normal.z);
 			norm.push_back(tri.face_normal.y);
@@ -1884,7 +1885,8 @@ void DAESaver::add_shield() {
 
 		for (int j = 2; j >= 0; j--) {
 			if (vert_map.find(tri.corners[j]) == vert_map.end()) {
-				vert_map[tri.corners[j]] = vert_map.size();
+				int offset = vert_map.size();
+				vert_map[tri.corners[j]] = offset;
 				vert.push_back(-tri.corners[j].x);
 				vert.push_back(tri.corners[j].z);
 				vert.push_back(tri.corners[j].y);
@@ -2028,14 +2030,16 @@ void DAESaver::add_insignia() {
 			face = insignia.faces[i];
 			for (int j = 2; j >= 0; j--) {
 				if (vert_map.find(face.verts[j]) == vert_map.end()) {
-					vert_map[face.verts[j]] = vert_map.size();
+					int offset = vert_map.size();
+					vert_map[face.verts[j]] = offset;
 					vert.push_back(-face.verts[j].x);
 					vert.push_back(face.verts[j].z);
 					vert.push_back(face.verts[j].y);
 				}
 				vert_idx = vert_map[face.verts[j]];
 				if (uv_map.find(vector3d(face.u[j],face.v[j],0)) == uv_map.end()) {
-					uv_map[vector3d(face.u[j],face.v[j],0)] = uv_map.size();
+					int offset = uv_map.size();
+					uv_map[vector3d(face.u[j],face.v[j],0)] = offset;
 					uv.push_back(face.u[j]);
 					uv.push_back(1.0 - face.v[j]);
 				}
