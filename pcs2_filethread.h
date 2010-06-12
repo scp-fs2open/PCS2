@@ -79,15 +79,18 @@ class wxPCS2OpenThread : public wxThread
 		PCS_Model* model;
 		AsyncProgress* progress;
 		std::string target_file;
+		bool owns_progress;
 
 	public:
-		wxPCS2OpenThread(PCS_Model* ship, std::string filename, AsyncProgress* _progress);
+		wxPCS2OpenThread(PCS_Model* ship, std::string filename, AsyncProgress* _progress, bool _owns_progress = true);
 
 		virtual void *Entry();
 
 		virtual void OnExit()
 		{
-			delete progress;
+			if (owns_progress) {
+				delete progress;
+			}
 		}
 };
 

@@ -261,8 +261,8 @@ void *wxPCS2SaveThread::Entry()
 
 //********************************************************************
 
-wxPCS2OpenThread::wxPCS2OpenThread(PCS_Model* ship, std::string filename, AsyncProgress* _progress) 
-	: model(ship), progress(_progress)
+wxPCS2OpenThread::wxPCS2OpenThread(PCS_Model* ship, std::string filename, AsyncProgress* _progress, bool _owns_progress) 
+	: model(ship), progress(_progress), owns_progress(_owns_progress)
 {
 	target_file = filename;
 }
