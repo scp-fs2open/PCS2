@@ -803,7 +803,6 @@ bool main_panel::LoadImportModel(std::string filename, PCS_Model*import_model)
 {
 	AsyncProgress* prog_messenger(new wxAsyncProgress(this, OPEN_IMPORT_PROGRESS_MESSAGER));
 
-	model.Reset();
 	wxPCS2OpenThread *thread = new wxPCS2OpenThread(import_model, filename, prog_messenger, false);
 
 	thread->Create();
