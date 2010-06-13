@@ -250,7 +250,7 @@ main_panel::main_panel(wxFrame* parent)
 	IL->Add(dr_unsel);
 	IL->Add(dr_sel_op);
 	IL->Add(dr_unsel_op);
-	navigation_panel->SetImageList(IL);
+	navigation_panel->AssignImageList(IL);
 
 
 		//the second spliter, the gl canvas on the left the control panel on the right
