@@ -55,7 +55,7 @@
  *
  */
 
- #include "wxPCSPref.h"
+#include "wxPCSPref.h"
 #include "pcs2_CIDs.h"
 #include "pcs2.h"
 #include <wx/config.h>
@@ -63,6 +63,7 @@
 #include <wx/fileconf.h>
 #include <wx/wfstream.h>
 #include <wx/colordlg.h>
+#include <wx/stdpaths.h>
 #include "color_options_dlg.h"
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -85,10 +86,6 @@ PCS_Preferences::PCS_Preferences(wxWindow *parent)
 	// ------
 	cob_scale_text = new wxStaticText(this, -1,_("COB Scaling Factor"), wxPoint(5, 200));
 	cob_scale = new wxTextCtrl(this, PCS2_PREF_CSFTXT, _(""), wxPoint(25, 215), wxSize(50, 20));
-	
-	temp_path_title = new wxStaticText(this, -1,_("Temporary Dir"), wxPoint(5, 150));
-	temp_path = new wxTextCtrl(this, PCS2_PREF_TMPD_TXT, _(""), wxPoint(60, 165), wxSize(375, 20));
-	tbrowse = new wxButton(this, PCS2_PREF_TMPD_BTN, _("Browse"),	wxPoint(5, 165), wxSize(50, 20));
 
 	geo_filter = new wxCheckBox(this, PCS2_PREF_CKBX_GFILT, _("Use Geometry Filter"), wxPoint(130, 200));
 	vbos = new wxCheckBox(this, PCS2_PREF_CKBX_VBO, _("Use OpenGL VBOs (if able)"), wxPoint(250, 200));;
@@ -130,10 +127,6 @@ PCS_Preferences::PCS_Preferences(wxWindow *parent)
 	}
 	texture_paths->InsertItems(num_paths, strs, 0);
 	delete[] strs;
-
-	wxString temp;
-	pConfig->Read(_("temp_path"), &temp, get_temp_path());
-	temp_path->ChangeValue(temp);
 
 	pConfig->SetPath(_T("/convoptions/"));
 	double d;
@@ -251,8 +244,6 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 	}
 	pConfig->Flush();
 
-	pConfig->Write(_("temp_path"), temp_path->GetValue());
-
 	wxColour col;
 	col = amb_col->GetBackgroundColour();
 	pConfig->SetPath(_T("/gr_options/ambient/"));
@@ -317,7 +308,7 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 
 	pConfig->Flush();
 	// -------- Flush to Disk -------- 
-	wxFileOutputStream cfg_out(get_root_path()+wxString(_("\\pcs2.ini")));
+	wxFileOutputStream cfg_out(wxStandardPaths::Get().GetUserConfigDir()+wxString(CONFIG_FILE));
 //	wxMessageBox(wxString::Format("saveing config to \"%s\"",get_root_path()+wxString("\\pcs2.ini"));
 	((wxFileConfig*)pConfig)->Save(cfg_out);
 
@@ -405,13 +396,6 @@ void PCS_Preferences::on_color_op(wxCommandEvent &event){
 	color_options_dlg(this);
 }
 
-void PCS_Preferences::on_temp(wxCommandEvent &event){
-	wxString dir = wxDirSelector(_("Select New Texture Path"), tpath->GetValue());
-	if(!dir.empty()){
-		temp_path->ChangeValue(dir);
-	}
-}
-
 BEGIN_EVENT_TABLE(PCS_Preferences, wxDialog)
 	EVT_BUTTON(PCS2_PREF_TADD, PCS_Preferences::onAdd)
 	EVT_LISTBOX(PCS2_PREF_LBOX, PCS_Preferences::onSelection)
@@ -422,5 +406,4 @@ BEGIN_EVENT_TABLE(PCS_Preferences, wxDialog)
 	EVT_BUTTON(PCS2_PREF_DEF_COL_BTN, PCS_Preferences::on_color)
 	EVT_BUTTON(PCS2_PREF_AMB_COL_BTN, PCS_Preferences::on_color)
 	EVT_BUTTON(PCS2_PREF_COL_OP_BTN, PCS_Preferences::on_color_op)
-	EVT_BUTTON(PCS2_PREF_TMPD_BTN, PCS_Preferences::on_temp)
 END_EVENT_TABLE()

@@ -58,9 +58,9 @@ class PCS_Preferences : public wxDialog
 
 	private:
 		wxListBox *texture_paths;
-		wxStaticText *tpath_txt, *cob_scale_text, *temp_path_title, *dae_flip_axes;
-		wxButton *tadd, *tdele, *tbrowse, *col_ops, *ok, *cancel, *tempbrowse;
-		wxTextCtrl *tpath, *cob_scale, *temp_path;
+		wxStaticText *tpath_txt, *cob_scale_text, *dae_flip_axes;
+		wxButton *tadd, *tdele, *tbrowse, *col_ops, *ok, *cancel;
+		wxTextCtrl *tpath, *cob_scale;
 		wxCheckBox *geo_filter, *vbos;
 
 		// Collada options
@@ -83,8 +83,6 @@ class PCS_Preferences : public wxDialog
 		virtual void on_color(wxCommandEvent &event);
 
 		virtual void on_color_op(wxCommandEvent &event);
-
-		virtual void on_temp(wxCommandEvent &event);
 };	
 
 

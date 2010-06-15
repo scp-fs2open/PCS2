@@ -1154,41 +1154,20 @@ void main_panel::open_texture_externaly(wxString filename){
 	if(filename == _(""))
 		return;
 
+	wxString file(filename);
 	if(filename.Contains(_(".vp:"))){
 		//if the texture is in a VP we need to extract it to the temp directory
 		//and open it from there
 		wxString vp_file = filename.BeforeLast(':');
-		wxString file = filename.AfterLast(':');
-		filename = get_temp_path()+'\\'+file;
+		file = filename.AfterLast(':');
+
+		filename = wxFileName::CreateTempFileName(_(""));
 		VolitionPackfileReader::ReadFromVP(std::string(vp_file.mb_str()), std::string(file.mb_str()), std::string(filename.mb_str()));
 	}
 
-/*
-	wxFileType*file_type = wxTheMimeTypesManager->GetFileTypeFromExtension(filename.AfterLast('.'));
-
-
+	wxFileType*file_type = wxTheMimeTypesManager->GetFileTypeFromExtension(file.AfterLast('.'));
 	wxString open_cmd = file_type->GetOpenCommand(filename);
-	int start = 0;
-	int end = 0;
-	//remove everything not in quotes
-	while((end > -1) && (end = open_cmd.find('\"',start+1))){
-		open_cmd.Remove(start, end-start);
-		if(start<open_cmd.length())
-			start = open_cmd.find('\"',start+1);
-	}
-	open_cmd.Replace("\""," ");
-*/
-#pragma message ("***********************************************************")
-#pragma message ("******MEGAHACK win32 specific, need a better solution******")
-#pragma message ("***********************************************************")
-	//oh my god! I just effing give up, you win widgets! I won't use 
-	//wxFileTypes to call GetOpenComand, cause it's just too fucking 
-	//hard for you to not give me some DDE bullshit rather than a 
-	//simple proper open comand line
-
-	wxExecute( _("rundll32 SHELL32.DLL,ShellExec_RunDLL ") + filename, wxEXEC_ASYNC );
-
-
+	wxExecute(open_cmd, wxEXEC_ASYNC);
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

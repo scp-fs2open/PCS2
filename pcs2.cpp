@@ -328,6 +328,8 @@
 #include "pcs2_filethread.h"
 #include <wx/progdlg.h>
 #include <wx/splash.h>
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
 
 #include "main_panel.h"
 
@@ -444,12 +446,6 @@ bool PCS2_App::OnInit()
 
 	myframe = NULL;
 
-	if(argc > 0){
-		Root_path = argv[0];
-		Root_path = Root_path.BeforeLast('\\');
-	}else{
-		Root_path = wxGetCwd();
-	}
 	// Iinitialize OpenIL
 	ilInit();
 	iluInit();
@@ -472,7 +468,7 @@ bool PCS2_App::OnInit()
 
 	// Setup the Config stuff
 	wxFile cfg_file; //("pcs2.ini", wxFile::read);
-	wxString cfgFilename = Root_path + wxString(_("\\pcs2.ini"));
+	wxString cfgFilename = wxStandardPaths::Get().GetUserConfigDir() + CONFIG_FILE;
 	if (!cfg_file.Exists(cfgFilename))
 	{
 		
@@ -527,14 +523,6 @@ bool PCS2_App::OnInit()
 		wxFileConfig *fConfig = new wxFileConfig(config_file);
 		wxConfigBase::Set(fConfig);
 	}
-	wxConfigBase::Get()->SetPath(_T("/tpaths/"));
-	wxConfigBase::Get()->Read(_("temp_path"), &temp_path, Root_path + _("\\temp"));
-
-	if (!wxDirExists(temp_path))
-		wxMkdir(temp_path);//just in case it isn't there
-
-
-	
 	
 	set_editor_colors();//init editor colors
 

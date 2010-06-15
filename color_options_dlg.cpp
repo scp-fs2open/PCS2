@@ -5,6 +5,7 @@
 #include <wx/fileconf.h>
 #include <wx/wfstream.h>
 #include <wx/colordlg.h>
+#include <wx/stdpaths.h>
 #include "chunk_editors.h"
 
 //some global nastyness
@@ -220,7 +221,7 @@ void color_options_dlg::on_ok(wxCommandEvent &event){
 	set_editor_colors();
 
 	// -------- Flush to Disk -------- 
-	wxFileOutputStream cfg_out(get_root_path()+wxString(_("\\pcs2.ini")));
+	wxFileOutputStream cfg_out(wxStandardPaths::Get().GetUserConfigDir()+wxString(CONFIG_FILE));
 	((wxFileConfig*)con)->Save(cfg_out);
 
 	event.Skip();

@@ -224,12 +224,20 @@
 #include <wx/confbase.h>
 #include <wx/fileconf.h>
 #include <wx/progdlg.h>
+#include <wx/filename.h>
 
 #include "wxPCSPref.h"
 #include "pcs_file.h"
 #include "tex_ctrl.h"
 #include "main_panel.h"
 #include "wxGL_PMFCanvas.h"
+
+#ifdef UNIX
+#define CONFIG_FILE _("/.pcs2")
+#else
+#define CONFIG_FILE _("\\pcs2.ini")
+#endif
+
 /*#include "compat/FE_GR_ogl_functable.h"
 
 extern op_gl_funcs GLFunctions;*/
@@ -279,9 +287,6 @@ class PCS2_App : public wxApp
 	//makeing it the derived class allows us to use any public functions 
 	//of the derived class, and has no drawback that I can see.
 
-	wxString Root_path;
-	wxString temp_path;
-
 	public:
 		// -------------- Initialization Function --------------
 		virtual bool OnInit();
@@ -289,20 +294,9 @@ class PCS2_App : public wxApp
 
 		PCS2_MainWindow*get_main_window(){return myframe;};
 
-		wxString get_root_path(){return Root_path;}
-		wxString get_temp_path(){return temp_path;}
-
 };
 
 DECLARE_APP(PCS2_App)
-
-inline wxString get_root_path(){
-	return wxGetApp().get_root_path();
-}
-
-inline wxString get_temp_path(){
-	return wxGetApp().get_temp_path();
-}
 
 //a little useful utility function
 inline PCS2_MainWindow* get_main_window(){
