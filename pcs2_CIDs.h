@@ -144,14 +144,25 @@
 enum
 {
 	// ---------------------------- MainPanel/MainWindow/Renderer ---------------------------- 
-	// menu/toolbar	
-	PCS2_MFILE_NEW=wxID_HIGHEST,
-	PCS2_MFILE_OPEN,
-	PCS2_MFILE_SAVE,
-	PCS2_MFILE_SAVEAS,
-	PCS2_MFILE_CLOSE,
-	PCS2_MFILE_IMPORT,
-	PCS2_MFILE_QUIT,
+	// menu/toolbar
+	// Stock items:
+	// File menu.
+	PCS2_MFILE_NEW=wxID_NEW,
+	PCS2_MFILE_OPEN=wxID_OPEN,
+	PCS2_MFILE_SAVE=wxID_SAVE,
+	PCS2_MFILE_SAVEAS=wxID_SAVEAS,
+	PCS2_MFILE_CLOSE=wxID_CLOSE,
+	PCS2_MFILE_QUIT=wxID_EXIT,
+
+	// Edit menu tabs
+	PCS2_EDIT_UNDO=wxID_UNDO,
+	PCS2_EDIT_REDO=wxID_REDO,
+
+	// Options menu tabs
+	PCS2_MOPT_PREF=wxID_PREFERENCES,
+
+	// Without stock items:
+	PCS2_MFILE_IMPORT=wxID_HIGHEST,
 
 	
 	// open file tabs
@@ -176,12 +187,9 @@ enum
 	PCS2_MVIEW_RESET,
 
 	// Edit menu tabs
-	PCS2_EDIT_UNDO,
-	PCS2_EDIT_REDO,
 	PCS2_EDIT_GEOIMPORT,
 
 	// Options menu tabs
-	PCS2_MOPT_PREF,
 	PCS2_MOPT_GL_VERS,
 
 	//Data menu

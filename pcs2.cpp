@@ -749,15 +749,15 @@ void PCS2_MainWindow::InitMenu()
 	mymenu = new wxMenuBar();
 	// File menu
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MFILE_NEW, _("&New"), _("New file"));
-	m_pFileMenu->Append(PCS2_MFILE_OPEN, _("&Open"), _("Open file"));
-	m_pFileMenu->Append(PCS2_MFILE_SAVE, _("&Save"), _("Save file"));
-	//m_pFileMenu->Append(PCS2_MFILE_SAVEAS, "Save &As", "Save file as");
-	//m_pFileMenu->Append(PCS2_MFILE_CLOSE, "&Close", "Close File");
+	m_pFileMenu->Append(PCS2_MFILE_NEW);
+	m_pFileMenu->Append(PCS2_MFILE_OPEN);
+	m_pFileMenu->Append(PCS2_MFILE_SAVE);
+	//m_pFileMenu->Append(PCS2_MFILE_SAVEAS);
+	//m_pFileMenu->Append(PCS2_MFILE_CLOSE);
 	m_pFileMenu->AppendSeparator();
 	m_pFileMenu->Append(PCS2_MFILE_IMPORT, _("Global &Import"), _("Import All Non-Subobject Data From Another Model"));
 	m_pFileMenu->AppendSeparator();
-	m_pFileMenu->Append(PCS2_MFILE_QUIT, _("&Quit"), _("Quit"));
+	m_pFileMenu->Append(PCS2_MFILE_QUIT);
 	mymenu->Append(m_pFileMenu, _("&File"));
 
 	m_pFileMenu = new wxMenu();
@@ -779,7 +779,7 @@ void PCS2_MainWindow::InitMenu()
 	mymenu->Append(m_pFileMenu, _("&View"));
 
 	m_pFileMenu = new wxMenu();
-	m_pFileMenu->Append(PCS2_MOPT_PREF, _("&Preferences"), _("PCS2 Program Preferences"));
+	m_pFileMenu->Append(PCS2_MOPT_PREF, wxEmptyString, _("PCS2 Program Preferences"));
 	m_pFileMenu->Append(PCS2_MOPT_GL_VERS, _("&Query OpenGL"), _("Information about your Open GL Version"));
 	mymenu->Append(m_pFileMenu, _("&Options"));
 
