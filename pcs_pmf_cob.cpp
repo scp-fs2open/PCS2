@@ -146,9 +146,8 @@
 #include "matrix.h"
 
 #ifdef UNIX
-// XXX: hack
-#define _stricmp strcmp
-#define _strnicmp strncmp
+#define _stricmp strcasecmp
+#define _strnicmp strncasecmp
 inline char* _strlwr(char* s) {
 	char* start = s;
 	while (*s++ = tolower(*s));
