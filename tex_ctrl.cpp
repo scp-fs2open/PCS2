@@ -257,7 +257,7 @@ void TextureControl::LoadTextures(PCS_Model &pf, std::vector<std::string> &paths
 			{
 				if (paths[i].substr(0, 8) == "<appdir>")
 				{
-					paths[i] = std::string(get_root_path().c_str()) + paths[i].substr(8);
+					paths[i] = std::string(wxGetCwd().mb_str()) + paths[i].substr(8);
 				}
 			}
 #endif
