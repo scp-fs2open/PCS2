@@ -187,6 +187,7 @@
 #include <GL/glu.h>
 #include <fstream>
 #include <wx/wfstream.h>
+#include <wx/filename.h>
 #include <cfloat>
 
 #include "geo_sphere.h"
@@ -360,7 +361,9 @@ void wxGL_PMFCanvas::reload_textures(){
 	for (int i = 0; i < num_paths; i++)
 	{
 		pConfig->Read(wxString::Format(_("path%d"), i), &strs);
-		paths[i] = std::string(strs.mb_str());
+		wxFileName filename(strs);
+		filename.Normalize();
+		paths[i] = std::string(filename.GetFullPath().mb_str());
 	}
 
 	mainpanel->UseThreadedProgBar = false; // wxProgressDialog calls Yield! recursive yield calls = FREEZE
