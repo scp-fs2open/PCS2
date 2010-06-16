@@ -469,6 +469,18 @@ bool PCS2_App::OnInit()
 	// Setup the Config stuff
 	wxFile cfg_file; //("pcs2.ini", wxFile::read);
 	wxString cfgFilename = wxStandardPaths::Get().GetUserConfigDir() + CONFIG_FILE;
+
+	if (!cfg_file.Exists(cfgFilename))
+	{
+		// Try falling back to old pcs2.ini location first.
+		wxFileName oldCfgFilename = wxStandardPaths::Get().GetExecutablePath();
+		oldCfgFilename.SetFullName(CONFIG_FILE);
+		if (cfg_file.Exists(oldCfgFilename.GetFullPath()))
+		{
+			cfgFilename = oldCfgFilename.GetFullPath();
+		}
+	}
+
 	if (!cfg_file.Exists(cfgFilename))
 	{
 		
