@@ -1515,7 +1515,8 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 	daeElement *mesh = result->add("mesh");
 	vector<float> vert,norm,uv;
 	vector<int> ref, sizes;
-	map<vector3d,int,bool(*)(vector3d,vector3d)> vert_map(vector3d_comparator),norm_map(vector3d_comparator),uv_map(vector3d_comparator);
+	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
+	map<pair<float,float>,int,bool(*)(const pair<float,float>&, const pair<float,float>&)> uv_map(float_pair_comparator);
 	unsigned int vert_idx = 0, norm_idx = 0, uv_idx = 0;
 	vert.resize(VECTOR_INITIAL_SIZE);
 	norm.resize(VECTOR_INITIAL_SIZE);
@@ -1531,8 +1532,7 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 				sizes[j] = polies[i][j]->verts.size();
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					if (vert_map.find(polies[i][j]->verts[k].point) == vert_map.end()) {
-						int offset = vert_map.size();
-						vert_map[polies[i][j]->verts[k].point] = offset;
+						vert_map.insert(pair<vector3d,int>(polies[i][j]->verts[k].point, vert_map.size()));
 						if (vert.size() <= vert_idx + 2) {
 							vert.resize(vert.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1541,10 +1541,8 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 						vert[vert_idx + 2] = polies[i][j]->verts[k].point.y;
 						vert_idx += 3;
 					}
-					//vert_idx = vert_map[polies[i][j]->verts[k].point];
 					if (norm_map.find(polies[i][j]->verts[k].norm) == norm_map.end()) {
-						int offset = norm_map.size();
-						norm_map[polies[i][j]->verts[k].norm] = offset;
+						norm_map.insert(pair<vector3d,int>(polies[i][j]->verts[k].norm, norm_map.size()));
 						if (norm.size() <= norm_idx + 2) {
 							norm.resize(norm.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1554,11 +1552,8 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 						norm_idx += 3;
 
 					}
-					//norm_idx = norm_map[polies[i][j]->verts[k].norm];
-					// A bit shonky, but screw adding another comparator
-					if (uv_map.find(vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)) == uv_map.end()) {
-						int offset = uv_map.size();
-						uv_map[vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)] = offset;
+					if (uv_map.find(pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)) == uv_map.end()) {
+						uv_map.insert(pair<pair<float,float>,int>(pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v), uv_map.size()));
 						if (uv.size() <= uv_idx + 1) {
 							uv.resize(uv.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1566,11 +1561,7 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 						uv[uv_idx + 1] = 1.0f - polies[i][j]->verts[k].v;
 						uv_idx += 2;
 					}
-					//uv_idx = uv_map[vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)];
 					count += 3;
-					/*ref.push_back(vert_idx);
-					ref.push_back(norm_idx);
-					ref.push_back(uv_idx);*/
 				}
 			}
 			vert.resize(vert_idx);
@@ -1582,7 +1573,7 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					ref[count] = vert_map[polies[i][j]->verts[k].point];
 					ref[count + 1] = norm_map[polies[i][j]->verts[k].norm];
-					ref[count + 2] = uv_map[vector3d(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v,0)];
+					ref[count + 2] = uv_map[pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)];
 					count += 3;
 				}
 			}
@@ -1619,8 +1610,6 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 	add_accessor(uvs,name + "-uv-array",uv.size()/2,true);
 
 	return result;
-
-
 }
 
 void DAESaver::add_refs(daeElement *mesh, string name, vector<int> refs, vector<int> sizes, daeElement *node, int texture) {
@@ -1859,7 +1848,10 @@ void DAESaver::add_subsystems() {
 }
 
 void DAESaver::add_shield() {
-	map<vector3d,int,bool(*)(vector3d,vector3d)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
+	if (model->GetShldTriCount() == 0) {
+		return;
+	}
+	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
 	int vert_idx = 0,norm_idx = 0;
 	daeElement *element = scene->add("node");
 	element->setAttribute("id","shield");
@@ -1875,8 +1867,7 @@ void DAESaver::add_shield() {
 	for (int i = 0; i < model->GetShldTriCount(); i++) {
 		tri = model->ShldTri(i);
 		if (norm_map.find(tri.face_normal) == norm_map.end()) {
-			int offset = norm_map.size();
-			norm_map[tri.face_normal] = offset;
+			norm_map.insert(pair<vector3d,int>(tri.face_normal, norm_map.size()));
 			norm.push_back(-tri.face_normal.x);
 			norm.push_back(tri.face_normal.z);
 			norm.push_back(tri.face_normal.y);
@@ -1885,8 +1876,7 @@ void DAESaver::add_shield() {
 
 		for (int j = 2; j >= 0; j--) {
 			if (vert_map.find(tri.corners[j]) == vert_map.end()) {
-				int offset = vert_map.size();
-				vert_map[tri.corners[j]] = offset;
+				vert_map.insert(pair<vector3d,int>(tri.corners[j], vert_map.size()));
 				vert.push_back(-tri.corners[j].x);
 				vert.push_back(tri.corners[j].z);
 				vert.push_back(tri.corners[j].y);
@@ -1996,7 +1986,8 @@ void DAESaver::add_glows() {
 }
 
 void DAESaver::add_insignia() {
-	map<vector3d,int,bool(*)(vector3d,vector3d)> vert_map(vector3d_comparator),uv_map(vector3d_comparator);
+	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator);
+	map<pair<float,float>,int,bool(*)(const pair<float,float>&, const pair<float,float>&)> uv_map(float_pair_comparator);
 	int vert_idx = 0,uv_idx = 0;
 	vector<int>counts(model->GetLODCount(), 1);
 
@@ -2030,20 +2021,18 @@ void DAESaver::add_insignia() {
 			face = insignia.faces[i];
 			for (int j = 2; j >= 0; j--) {
 				if (vert_map.find(face.verts[j]) == vert_map.end()) {
-					int offset = vert_map.size();
-					vert_map[face.verts[j]] = offset;
+					vert_map.insert(pair<vector3d,int>(face.verts[j], vert_map.size()));
 					vert.push_back(-face.verts[j].x);
 					vert.push_back(face.verts[j].z);
 					vert.push_back(face.verts[j].y);
 				}
 				vert_idx = vert_map[face.verts[j]];
-				if (uv_map.find(vector3d(face.u[j],face.v[j],0)) == uv_map.end()) {
-					int offset = uv_map.size();
-					uv_map[vector3d(face.u[j],face.v[j],0)] = offset;
+				if (uv_map.find(pair<float,float>(face.u[j],face.v[j])) == uv_map.end()) {
+					uv_map.insert(pair<pair<float,float>,int>(pair<float,float>(face.u[j],face.v[j]), uv_map.size()));
 					uv.push_back(face.u[j]);
 					uv.push_back(1.0 - face.v[j]);
 				}
-				uv_idx = uv_map[vector3d(face.u[j],face.v[j],0)];
+				uv_idx = uv_map[pair<float,float>(face.u[j],face.v[j])];
 
 
 
@@ -2313,7 +2302,7 @@ void write_rotations(daeElement *element, vector3d rotation) {
 	z->setCharData(temp.str().c_str());
 }
 
-bool vector3d_comparator(vector3d a, vector3d b) {
+bool vector3d_comparator(const vector3d& a, const vector3d& b) {
 	if (a.x != b.x) {
 		return a.x < b.x;
 	}
@@ -2322,6 +2311,16 @@ bool vector3d_comparator(vector3d a, vector3d b) {
 	}
 	if (a.z != b.z) {
 		return a.z < b.z;
+	}
+	return false;
+}
+
+bool float_pair_comparator(const pair<float,float>& a, const pair<float,float>& b) {
+	if (a.first != b.first) {
+		return a.first < b.first;
+	}
+	if (a.second != b.second) {
+		return a.second < b.second;
 	}
 	return false;
 }
