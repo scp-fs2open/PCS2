@@ -389,6 +389,7 @@ void wxGL_PMFCanvas::Render()
 	IsRendering = true;
 	this->SetCurrent();
 
+	glEnable(GL_DEPTH_TEST);	// Enables Depth Testing
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
 
@@ -461,9 +462,9 @@ void wxGL_PMFCanvas::Render()
 		if(active_chunk == SHLD)
 			model.draw_shields();
 
-		draw_omnipoints();
-
 		glDisable(GL_LIGHTING);
+
+		draw_omnipoints();
 
 		if(draw_the_grid){
 			vector3d grid_point = acen;
