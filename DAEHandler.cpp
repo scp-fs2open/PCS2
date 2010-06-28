@@ -1726,10 +1726,11 @@ void DAESaver::add_thrusters() {
 	daeElement *translate;
 	stringstream name;
 	pcs_thruster *thruster;
-	daeElement *helper = NULL;
+	daeElement *helper;
 	string engine_name;
 	vector3d offset,scale_vec;
 	for (int i = 0; i < model->GetThrusterCount(); i++) {
+		helper = NULL;
 		thruster = &model->Thruster(i);
 		engine_name = thruster->properties;
 		if (engine_name.size() > 0 && strlen(engine_name.c_str()) > 0 && strstr(engine_name.c_str(),"$engine_subsystem=")) {
