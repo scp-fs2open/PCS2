@@ -50,10 +50,10 @@ MOI calc_under_tri(vector3d tri[3], int res){
 	memset(&ret, 0,sizeof(MOI));
 	if(norm.y == 0.0)return ret;
 
-	double xmin = minmax(tri, 0, true);
+	/*double xmin = minmax(tri, 0, true);
 	double xmax = minmax(tri, 0, false);
 	double ymin = minmax(tri, 1, true);
-	double ymax = minmax(tri, 1, false);
+	double ymax = minmax(tri, 1, false);*/
 	double zmin = minmax(tri, 2, true);
 	double zmax = minmax(tri, 2, false);
 

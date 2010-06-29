@@ -345,6 +345,12 @@ wxString PCS2_COMP_VERSION = _("PCS 2.0 Compiler Version 2 Final");
 wxString PCS2_SUPPORTED_FORMATS = _("All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae");
 //op_gl_funcs GLFunctions;
 
+//this is just iceing, 
+//and if there is a bug before it closes it's in the way
+#if defined(_DEBUG)
+#define NO_SPLASHSCREEN
+#endif
+
 //*******************************************************************************
 // XPM Resources
 //*******************************************************************************
@@ -377,14 +383,11 @@ namespace xpms
 #include "wireframe.xpm"
 #include "placeholder.xpm"
 #include "pcsico.xpm"
+#ifndef NO_SPLASHSCREEN
 #include "splash.xpm"
+#endif
 };
 
-//this is just iceing, 
-//and if there is a bug before it closes it's in the way
-#if defined(_DEBUG)
-#define NO_SPLASHSCREEN
-#endif
 // #WARNING# Make sure to deallocate this!
 wxConfig *config;
 

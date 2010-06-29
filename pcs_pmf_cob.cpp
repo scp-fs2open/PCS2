@@ -150,7 +150,7 @@
 #define _strnicmp strncasecmp
 inline char* _strlwr(char* s) {
 	char* start = s;
-	while (*s++ = tolower(*s));
+	for ( ; (*s = tolower(*s)); s++);
 	return start;
 }
 #endif
@@ -231,7 +231,7 @@ std::vector<unsigned int> FindContainingPolygons(pcs_sobj &obj, vector3d &point,
 	std::vector<unsigned int> containers;
 	for (unsigned int i = 0; i < obj.polygons.size(); i++)
 	{
-		if (i == exclude)
+		if (i == (unsigned)exclude)
 			continue; // skip
 		for (unsigned int j = 0; j < obj.polygons[i].verts.size(); j++)
 		{
@@ -566,7 +566,7 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 						 pmtemp->fhs[k].flags  != (F_HOLE | F_BACKCULL)))
 					{
 
-						if (MatNum != -1)
+						if (MatNum != (unsigned)-1)
 						{
 							tempobj.polygons[offset+k].texture_id = FindTexture(StripFileName(COBStringtoAPS(InputFile.GetMat1(MatNum).TexMap_Fname)));
 						}
@@ -608,7 +608,7 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 						tempobj.polygons[offset+k].norm = MakeUnitVector(FigureNormal(tempobj.polygons[offset+k].verts[0].point,
 							tempobj.polygons[offset+k].verts[1].point, tempobj.polygons[offset+k].verts[2].point));
 						
-						for (l = 0; l < tempobj.polygons[offset+k].verts.size() && MatNum != -1; l++)
+						for (l = 0; (unsigned)l < tempobj.polygons[offset+k].verts.size() && MatNum != (unsigned)-1; l++)
 						{
 							// setup faceting stuff - need to go back and smooth later
 							tempobj.polygons[offset+k].verts[l].norm = tempobj.polygons[offset+k].norm;
@@ -1238,7 +1238,6 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	progress->incrementWithMessage("Processing Shields");
 
 	pcs_shield_triangle shldtri;
-	int ShldIndex = -1;
 	vector3d temp_vertex;
 
 	i = this->LOD(0);
@@ -1423,7 +1422,7 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 	{
 		sprintf(CStringTemp, "Processing Object [%02d/%02d]", (i+1), (int)this->subobjects.size());
 		progress->incrementWithMessage(CStringTemp);
-		if (i == this->LOD(0))
+		if (i == (unsigned)this->LOD(0))
 		{
 			pol_temp = MakePoly(this->subobjects[i].name, RootChunk, ChunkID++, this->subobjects[i].geometric_center/scaler, def_matrix);
 			lght_temp = MakeLight(std::string("center_") + this->subobjects[i].name, RootChunk, ChunkID++, this->subobjects[i].geometric_center/scaler, def_matrix);
@@ -1533,7 +1532,7 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 
 		pol_temp.head.size = pol_temp.GetSize();
 		
-		if (i != this->LOD(0))
+		if (i != (unsigned)this->LOD(0))
 			OutFile.Add_Grou(grou_temp);
 
 		OutFile.Add_Lght(lght_temp);

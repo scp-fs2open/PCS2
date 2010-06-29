@@ -1054,7 +1054,7 @@ std::string StripFileName(std::string fullname)
 
 	char CString[256]; // 256 should be more than fine for a filename
 	int len = fullname.length();
-	int i, start, stop;
+	int i, start, stop = 0;
 	bool IsStartSet = false, IsStopSet = false;
 
 	memset(CString, 0, 256);

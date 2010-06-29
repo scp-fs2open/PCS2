@@ -174,7 +174,7 @@ namespace ase
 		vector3d scale_axis;
 		float scale_axis_angle;
 
-		transform_matrix() : scale(1.0f, 1.0f, 1.0f), tm_rotangle(0.0f), scale_axis_angle(0.0f) {}
+		transform_matrix() : tm_rotangle(0.0f), scale(1.0f, 1.0f, 1.0f), scale_axis_angle(0.0f) {}
 
 		void read(std::istream &in);
 		std::string write();

@@ -27,7 +27,7 @@ class model_editor_ctrl_base : public wxScrolledWindow
 
 	public:
 		model_editor_ctrl_base(wxWindow*parent, CHUNK Type)
-			:wxScrolledWindow(parent), chunk_type(Type), Ready(false)
+			:wxScrolledWindow(parent), Ready(false), chunk_type(Type)
 		{
 		}
 
@@ -198,7 +198,7 @@ public:
 	}
 
 	model_editor_ctrl(wxWindow*parent, PCS_Model &model, CHUNK Type)
-		:conrol_panel(NULL),model_editor_ctrl_base(parent, Type)
+		:model_editor_ctrl_base(parent, Type),conrol_panel(NULL)
 	{
 		base_panel = conrol_panel = new editor_type(this);
 		if(conrol_panel){
@@ -215,7 +215,7 @@ public:
 
 	//Special for sobj or anything that might need an additional int
 	model_editor_ctrl(wxWindow*parent, PCS_Model &model, CHUNK Type, int item)
-		:conrol_panel(NULL),model_editor_ctrl_base(parent, Type)
+		:model_editor_ctrl_base(parent, Type),conrol_panel(NULL)
 	{
 		base_panel = conrol_panel = new editor_type(this, item);
 		conrol_panel->recalc_size();

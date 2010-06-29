@@ -171,8 +171,8 @@ class main_panel
 		//when I'm setting a selection to what the editor want's it to be
 
 		wxProgressDialog *threaded_prog_bar;
-		bool should_delete_threaded_prog_bar;
 		int threaded_prog_bar_readers;
+		bool should_delete_threaded_prog_bar;
 
 		bool UseThreadedProgBar;
 

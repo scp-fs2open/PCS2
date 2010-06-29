@@ -324,8 +324,8 @@ class PCS2_MainWindow : public wxFrame
 //		wxPanel*central; //temporary
 				
 		wxProgressDialog *threaded_prog_bar;
-		bool should_delete_threaded_prog_bar;
 		int threaded_prog_bar_readers;
+		bool should_delete_threaded_prog_bar;
 		bool UseThreadedProgBar;
 
 		void InitMenu();

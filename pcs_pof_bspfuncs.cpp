@@ -678,7 +678,7 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 
 		for(int trys = 1; 
 				(
-				 (front_polys+back_polys) != contained.size() || 
+				 (unsigned)(front_polys+back_polys) != contained.size() || 
 				 abs(front_polys - back_polys) > 0.05f*(front_polys+back_polys)+1
 				) && trys <= max_trys; 
 			trys++)
@@ -704,12 +704,12 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 		if either the front or back list is zero
 		if either box is flat and unchanged
 		*/
-		if(	flat_box(fmin, fmax) && bmax == Max && bmin == Min || 
-			flat_box(bmin, bmax) && fmax == Max && fmin == Min){
+		if(	(flat_box(fmin, fmax) && bmax == Max && bmin == Min) || 
+			(flat_box(bmin, bmax) && fmax == Max && fmin == Min)){
 			delete node;
 			node = make_poly_list(fmax, fmin, polygons, contained);
 		}else{
-			if (Distance(fmax, Max) < 0.001f && Distance(fmin, Min) < 0.001f
+			if ((Distance(fmax, Max) < 0.001f && Distance(fmin, Min) < 0.001f)
 			||fabs(double(fmax.x-fmin.x)) < 0.0001 || fabs(double(fmax.y-fmin.y)) < 0.0001 || fabs(double(fmax.z-fmin.z)) < 0.0001)
 			{
 				//infinite split
@@ -718,7 +718,7 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 				node->front = GenerateTreeRecursion(fmax, fmin, polygons, contained);
 			}
 
-			if (Distance(bmax, Max) < 0.001f && Distance(bmin, Min) < 0.001f
+			if ((Distance(bmax, Max) < 0.001f && Distance(bmin, Min) < 0.001f)
 			||fabs(double(bmax.x-bmin.x)) < 0.0001 || fabs(double(bmax.y-bmin.y)) < 0.0001 || fabs(double(bmax.z-bmin.z)) < 0.0001)
 			{
 				//infinite split

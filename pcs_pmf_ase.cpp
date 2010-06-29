@@ -27,10 +27,10 @@
 #include "ase_file.h"
 
 extern std::string StripFileName(std::string fullname); // from COBHandler
+#if 0
 //****************************************************************************
 // Loader
 //****************************************************************************
-/*
 
 int PCS_Model::LoadFromASE(std::string filename, int &comp_target, int &comp_current, char *comp_msg_str, float scaler)
 {
@@ -104,4 +104,4 @@ int PCS_Model::SaveToASE(std::string filename, int &comp_target, int &comp_curre
 {
 	return 1;
 }
-*/
+#endif

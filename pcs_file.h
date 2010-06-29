@@ -309,7 +309,7 @@ class PCS_Model
 	public:
 		bobboau::matrix moi_recalculate(int Xres, int Yres);
 
-		PCS_Model() : header(), active_submodel(0), Wireframe(false), Textureless(false), can_bsp_cache(false), has_fullsmoothing_data(false), draw_bsp(false)
+		PCS_Model() : header(), can_bsp_cache(false), has_fullsmoothing_data(false), active_submodel(0), Wireframe(false), Textureless(false), draw_bsp(false)
 		{
 
 		}
@@ -459,7 +459,7 @@ class PCS_Model
 		void DelTextures(unsigned int idx);
 
 		void AddSOBJ(pcs_sobj *obj=NULL);
-		void DelSOBJ(unsigned int idx);
+		void DelSOBJ(int idx);
 		void SetObjectChanged(unsigned int idx);
 
 		void AddEye(pcs_eye_pos *eye=NULL);

@@ -982,7 +982,7 @@ void POF::Parse_Memory_HDR2(char *buffer)
 	localptr += sizeof(int);
 
 	// dunno how this happened.. but i've seen it on atleast one model (created by PCS1 :( ) -- kaz
-	if (header.num_cross_sections == 0xffffffff)
+	if (header.num_cross_sections == -1)
 		header.num_cross_sections = 0;
 
 	if (header.num_cross_sections > 0)

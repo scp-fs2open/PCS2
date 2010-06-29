@@ -188,7 +188,6 @@ bool ase_file::LoadFromFile(std::string &filename)
 		throw ase_exception(string("Could not open file ") + filename.c_str());
 
 	// ----------------------------------------------
-	int i = 0;
 	string sTemp, sTemp2;
 
 	in >> sTemp;

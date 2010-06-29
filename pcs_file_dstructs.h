@@ -318,7 +318,7 @@ struct pcs_special
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
-	pcs_special() : radius(0.0), properties("$special=subsystem"){}
+	pcs_special() : properties("$special=subsystem"), radius(0.0) {}
 };
 
 
@@ -406,7 +406,7 @@ struct pcs_thrust_glow
     vector3d norm;   // used to tell if behind glow
     float radius;
 
-	pcs_thrust_glow() : radius(0.0),norm(0,0,-1) {}
+	pcs_thrust_glow() : norm(0,0,-1), radius(0.0) {}
 	pcs_thrust_glow(vector3d apos, vector3d anorm, float arad) : pos(apos), norm(anorm), radius(arad) {}
 };
 

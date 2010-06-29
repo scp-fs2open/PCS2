@@ -164,7 +164,7 @@
 
 //ShellExecute(NULL, _T("open"), <filename that you want to open>, NULL, NULL, SW_SHOWNORMAL);
 main_panel::main_panel(wxFrame* parent)
-:control_panel(NULL),wxPanel(parent,-1,wxPoint(0,0)),pstatus(parent->GetStatusBar()),myParent(parent),pgauge(NULL),dragged_id(NULL),rebuilding_tree(false),internal_selection(false), threaded_prog_bar_readers(0), should_delete_threaded_prog_bar(false)
+:wxPanel(parent,-1,wxPoint(0,0)),dragged_id(NULL),control_panel(NULL),pstatus(parent->GetStatusBar()),myParent(parent),pgauge(NULL),rebuilding_tree(false),internal_selection(false), threaded_prog_bar_readers(0), should_delete_threaded_prog_bar(false)
 {
 	gprog = NULL;
 	
@@ -172,7 +172,6 @@ main_panel::main_panel(wxFrame* parent)
 	UseThreadedProgBar = true;
 	//+++++++++start status bar stuff
 	int x = parent->GetSize().x;
-	int y = parent->GetSize().y;
 	// size the statusbar fields
 	int widths[3];
 	isDestroyed = false;
@@ -718,8 +717,8 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 
 			//path import
 			if(path_import || 
-				wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$special=subsystem")) && 
-				wxMessageBox(_("The subobject you have imported seems like it might be a subsystem, \nwould you like to import the pertenent path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES)
+				(wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$special=subsystem")) && 
+				wxMessageBox(_("The subobject you have imported seems like it might be a subsystem, \nwould you like to import the pertenent path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES))
 			{
 				for( i = 0; i<import_model.GetPathCount(); i++){
 					if(wxString(import_model.Path(i).parent.c_str(), wxConvUTF8).Contains(wxString(import_model.SOBJ(imported_sobj).name.c_str(), wxConvUTF8))){
@@ -765,7 +764,6 @@ void main_panel::OnSize(wxSizeEvent& event)
 	if (isDestroyed) return; // for some reason we're crashing without this - Kaz
 
 	int x = event.GetSize().GetWidth();
-	int y = event.GetSize().GetHeight();
 
 
 	// size the statusbar fields

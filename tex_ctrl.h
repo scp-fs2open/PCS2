@@ -119,7 +119,7 @@ class TextureControl
 
 
 		size_t SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t &curvp, size_t searchpos=0);
-		size_t SearchAVP(std::string &vp, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t searchpos=0);
+		int SearchAVP(std::string &vp, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t searchpos=0);
 
 #if defined(_DEBUG) && defined(_ENABLE_TEXTUREPATH_DEBUG_)
 		GLuint LoadTexture(std::string texname,

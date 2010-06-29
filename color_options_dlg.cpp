@@ -145,21 +145,31 @@ color_options_dlg::color_options_dlg(wxWindow* parent)
 	if(!defaults_built)build_defaults();
 
 	int i = 0;
-	color_selector[i++] = new chunk_color_ctrl(this, 0,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 100,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 200,0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	color_selector[i] = new chunk_color_ctrl(this, 0,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 100,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 200,0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
 
-	color_selector[i++] = new chunk_color_ctrl(this, 0,  130, 90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 100,130, 90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 200,130, 90, 120, chunk_titles[i], chunk_paths[i]);
+	color_selector[i] = new chunk_color_ctrl(this, 0,  130, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 100,130, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 200,130, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
 
-	color_selector[i++] = new chunk_color_ctrl(this, 0,  260, 90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 100,260, 90, 120, chunk_titles[i], chunk_paths[i]);
-	color_selector[i++] = new chunk_color_ctrl(this, 200,260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	color_selector[i] = new chunk_color_ctrl(this, 0,  260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 100,260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
+	color_selector[i] = new chunk_color_ctrl(this, 200,260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
 
-	color_selector[i++] = new chunk_color_ctrl(this, 50,390, 90, 120, chunk_titles[i], chunk_paths[i]);
+	color_selector[i] = new chunk_color_ctrl(this, 50,390, 90, 120, chunk_titles[i], chunk_paths[i]);
+	i++;
 
-	color_selector[i++] = new chunk_color_ctrl(this, 150,390, 90, 120, chunk_titles[i], chunk_paths[i], 0, _("Subobjects"), _("Textures"), _("Shields"));
+	color_selector[i] = new chunk_color_ctrl(this, 150,390, 90, 120, chunk_titles[i], chunk_paths[i], 0, _("Subobjects"), _("Textures"), _("Shields"));
 
 	ok_btn = new wxButton(this, wxID_OK, _("OK"),				wxPoint(200, 520), wxSize(30, 20));
 	cancel_btn = new wxButton(this, wxID_CANCEL, _("Cancel"),	wxPoint(235, 520), wxSize(50, 20));

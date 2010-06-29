@@ -291,7 +291,7 @@ bool PCS_Model::split_poly(std::vector<pcs_polygon>&polys, int I, int i, int j){
 	//can't split a triangle
 	i==j ||
 	//can't split along one vert
-	j-i<2 || i==0 && j == polys[I].verts.size()-1){
+	j-i<2 || (i==0 && (unsigned)j == polys[I].verts.size()-1)){
 	//one of them would have fewer than 3 verts: degenerate
 		return false;
 		wxMessageBox(_("*ERROR*:bad split attempted! \n\nOH NOE NOT THAT!."), _("in an emergency, your seat cusion may be used as a flotation device"));
@@ -376,7 +376,7 @@ float full_angle(vector3d A, vector3d B, vector3d C, vector3d pln){
 	return ang;
 }
 
-void interconect_poly_on_verts(std::vector<pcs_polygon>&polys, int i, std::vector<int>&concaves, vector3d&pnorm){
+void interconect_poly_on_verts(std::vector<pcs_polygon>&polys, int i, std::vector<unsigned int>&concaves, vector3d&pnorm){
 	
 	pcs_polygon&poly = polys[i];
 	const unsigned int psize = polys[i].verts.size();
@@ -475,7 +475,7 @@ void interconect_poly_on_verts(std::vector<pcs_polygon>&polys, int i, std::vecto
 							if(concaves[s] == j || concaves[s] == (j+1)%psize || t == j || t == (j+1)%psize)
 								continue;
 							vector3d&jth = poly.verts[j].point;
-							vector3d&jthm1 = poly.verts[(j-1+poly.verts.size())%poly.verts.size()].point;
+							//vector3d&jthm1 = poly.verts[(j-1+poly.verts.size())%poly.verts.size()].point;
 							vector3d&jthp1 = poly.verts[(j+1)%poly.verts.size()].point;
 							if(!closest_line_pt(jth, jthp1, sth, tth))
 								break;
@@ -534,7 +534,7 @@ void PCS_Model::filter_polygon(std::vector<pcs_polygon>&polys, int i){
 
 		//go through and try to find 2 or more concave points
 
-		std::vector<int> concaves;
+		std::vector<unsigned int> concaves;
 
 		//make up a list of concave points
 		for(unsigned int j = 0; j<psize; j++){
@@ -566,10 +566,9 @@ void PCS_Model::filter_polygon(std::vector<pcs_polygon>&polys, int i){
 		}
 
 		pnorm = MakeUnitVector(pnorm);
-		std::vector<int>&nonplanar = concaves;//lets reuse this
+		std::vector<unsigned int>&nonplanar = concaves;//lets reuse this
 		nonplanar.resize(0);
 
-		float planar_test = 0.0001f;
 		//make up a list of nonplanar points
 		for(unsigned int j = 0; j<psize; j++){
 			if(dot(norms[j], pnorm)<=0.999f){
@@ -1299,7 +1298,7 @@ void PCS_Model::AddSOBJ(pcs_sobj *obj)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void PCS_Model::DelSOBJ(unsigned int idx)
+void PCS_Model::DelSOBJ(int idx)
 {
 	//we have to push down every reference to every subobject after this one
 	//and mark each reference to this one as -1 (none, or root) or just erase it, or reparent it
@@ -2034,8 +2033,8 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3,GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)NULL);
-		glNormalPointer(GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)(NULL + sizeof(vector3d)));
-		glTexCoordPointer(2, GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)(NULL + sizeof(vector3d)*2));
+		glNormalPointer(GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)((vector3d*)NULL + 1));
+		glTexCoordPointer(2, GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)((vector3d*)NULL + 2));
 
 		glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, light_one );
 		glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, light_zero );
@@ -2058,7 +2057,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 				//if we have a glow map add it to the lit first stage
 				glClientActiveTextureARB(GL_TEXTURE1);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				glTexCoordPointer(2, GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)(NULL + sizeof(vector3d)*2));
+				glTexCoordPointer(2, GL_FLOAT, subobjects[sobj].vertex_buffer[t].vertex_size, (void*)((vector3d*)NULL + 2));
 				glActiveTexture(GL_TEXTURE1);
 				glEnable(GL_TEXTURE_2D);
 			//	glBindBuffer(GL_ARRAY_BUFFER_ARB, subobjects[sobj].vertex_buffer[t].buffer);
@@ -2141,7 +2140,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 	glDisable(GL_LIGHTING);
 
 	ERROR_CHECK;
-	if(highlight_active_model && active_submodel == sobj || Wireframe){
+	if((highlight_active_model && active_submodel == sobj) || Wireframe){
 		if(!highlight_active_model || active_submodel != sobj)
 			glColor3ub( (GLubyte)255, (GLubyte)255, (GLubyte)255);
 		else

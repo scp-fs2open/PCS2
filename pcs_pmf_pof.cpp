@@ -596,7 +596,7 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 		{
 			for (k = 0; k < 3; k++)
 			{
-				while ((l = poffile.INST_Find_Vert(i, POFTranslate(insignia[i].faces[j].verts[k]))) == -1)
+				while ((l = poffile.INST_Find_Vert(i, POFTranslate(insignia[i].faces[j].verts[k]))) == (unsigned)-1)
 				{
 					poffile.INSG_Add_Insig_Vertex(i, POFTranslate(insignia[i].faces[j].verts[k]));
 				} 
@@ -1198,7 +1198,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 			{
 				temp.point = clean_list[i].verts[j].point;
 				l = FindInList(points_list, temp);
-				if (l == -1)
+				if (l == (unsigned)-1)
 				{
 					l = points_list.size();
 					points_list.resize(l+1);
@@ -1209,7 +1209,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 
 				k = FindInList(points_list[l].norms, clean_list[i].verts[j].norm);
 
-				if (k == -1)
+				if (k == (unsigned)-1)
 				{
 					k = points_list[l].norms.size();
 					points_list[l].norms.resize(k+1);

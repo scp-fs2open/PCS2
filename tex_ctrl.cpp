@@ -140,8 +140,6 @@
  *
  */
 
-#define ILUT_USE_OPENGL
-
 #include "tex_ctrl.h"
 #include "FileList.h"
 #include "VPReader.h"
@@ -367,7 +365,7 @@ void TextureControl::LoadTextures(PCS_Model &pf, std::vector<std::string> &paths
 //enum Texture_Type { TC_TEXTURE, TC_SHINEMAP, TC_GLOW }
 GLuint TextureControl::TextureTranslate(int texnum, Texture_Type type)
 {
-	if (texnum == 0xFFFFFFFF || (unsigned)texnum >= texturenames.size()) 
+	if (texnum == -1 || (unsigned)texnum >= texturenames.size()) 
 		return 0xFFFFFFFF;
 
 	switch (type)
@@ -403,7 +401,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 								   std::vector<FileList> &normal_lists)
 #endif
 {
-	unsigned int texId = 0xFFFFFFFF;
+	int texId = -1;
 
 	int num_exts = 7;
 	const char *extensions[] = { ".pcx", ".dds", ".jpg", ".png", ".tga", ".gif", ".bmp" };
@@ -415,7 +413,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 	ILinfo imginfo;
 	std::string fname, lcase;
 	ILenum img_type;
-	size_t filenum;
+	int filenum;
 	size_t curvp;
 
 	size_t size;
@@ -572,7 +570,7 @@ size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory,
 	if (directory[directory.length()-1] != '/')
 		directory += "/";
 #endif
-	size_t filenum;
+	int filenum;
 
 	for (size_t i = curvp; i < vp_list.Size(); i++)
 	{
@@ -592,10 +590,10 @@ size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory,
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-size_t TextureControl::SearchAVP(std::string &vp, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t searchpos)
+int TextureControl::SearchAVP(std::string &vp, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t searchpos)
 {
 	VolitionPackfileReader VPR(vp);
-	size_t fileno = VPR.FindFileWild(filename + ".*", (int)searchpos);
+	int fileno = VPR.FindFileWild(filename + ".*", (int)searchpos);
 	if (fileno != -1)
 	{
 		rfname = vp + ":" + VPR.GetInfo((int)fileno).filename;

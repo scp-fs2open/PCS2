@@ -200,8 +200,8 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 //*******************************************************************************
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
- : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), model(ship),mainpanel(main),
-				gr_debug(NULL),position(0,0,0), rotation(0,0,0), kShiftdown(false), FreezeRender(false), IsRendering(false), omni_selected_list(-1), omni_selected_item(-1),previus_focus(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false)
+ : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), 
+   	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(false), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
 {
 	free_axis[0]=true;
 	free_axis[1]=true;
@@ -432,7 +432,7 @@ void wxGL_PMFCanvas::Render()
 		GLfloat  diffuseLight[4]; diffuseLight[0] = diffuse_light[0]; diffuseLight[1] = diffuse_light[1]; diffuseLight[2] = diffuse_light[2]; diffuseLight[3] = diffuse_light[3];
 		GLfloat  specular[]={ 1.0f, 1.0f, 1.0f, 1.0f};
 		GLfloat lightPos[]={ 0.0f, radius+350.0f, (radius+350.0f), 1.0f};
-		GLfloat  specref[]= { 1.0f, 1.0f, 1.0f, 1.0f};
+		//GLfloat  specref[]= { 1.0f, 1.0f, 1.0f, 1.0f};
 
 		// Setup and enable light 0
 		glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLight);
@@ -528,15 +528,15 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3,GL_FLOAT, omni_point_buffer.vertex_size, (void*)NULL);
-		glNormalPointer(GL_FLOAT, omni_point_buffer.vertex_size, (void*)(NULL + sizeof(vector3d)));
+		glNormalPointer(GL_FLOAT, omni_point_buffer.vertex_size, (void*)((vector3d*)NULL + 1));
 	}
 
 	for(i = 0; i<omni.point.size(); i++){
 		for(j = 0; j<omni.point[i].size(); j++){
 			color col = omni.unselected;
-			if(i == omni_selected_list){
+			if(i == (unsigned)omni_selected_list){
 				col = omni.selected_list;
-				if(j == omni_selected_item)
+				if(j == (unsigned)omni_selected_item)
 					col = omni.selected_item;
 			}
 
@@ -607,12 +607,13 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 		glBegin(GL_LINE_STRIP);
 		for(j = 0; j<omni.point[i].size(); j++){
 			color col = omni.unselected;
-			if(i == omni_selected_list){
+			if(i == (unsigned)omni_selected_list){
 				col = omni.selected_item;
 			}
 			col = col * 4.0f;
 			glColor4ubv( (GLubyte*)col.col);
-			glVertex3fv((GLfloat *)&(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model)));
+			vector3d v(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model));
+			glVertex3fv((GLfloat *)&(v));
 		}
 		glEnd();
 	}
@@ -624,20 +625,23 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 	for(i = 0; i<omni.point.size(); i++){
 		for(j = 0; j<omni.point[i].size(); j++){
 			color col = omni.unselected;
-			if(i == omni_selected_list){
+			if(i == (unsigned)omni_selected_list){
 				col = omni.selected_list;
-				if(j == omni_selected_item)
+				if(j == (unsigned)omni_selected_item)
 					col = omni.selected_item;
 			}
 			glColor4ubv( (GLubyte*)col.col);
 
-			glVertex3fv((GLfloat *)&(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model)));
+			vector3d v(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model));
+			glVertex3fv((GLfloat *)&(v));
 			if(omni.flags & OMNIPOINT_COMMON_NORMAL) {
-				vector3d temp(omni.point[i][0].norm * omni.point[i][0].rad);
-				glVertex3fv((GLfloat *)&(omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + temp * 2.5f));
+				vector3d v(omni.point[i][0].norm * omni.point[i][0].rad);
+				v = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + v * 2.5f;
+				glVertex3fv((GLfloat *)&(v));
 			} else {
-				vector3d temp(omni.point[i][j].norm * omni.point[i][0].rad);
-				glVertex3fv((GLfloat *)&(omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + temp * 2.5f));
+				vector3d v(omni.point[i][j].norm * omni.point[i][0].rad);
+				v = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + v * 2.5f;
+				glVertex3fv((GLfloat *)&(v));
 			}
 		}
 	}
