@@ -48,18 +48,11 @@ matrix::matrix(float angle) {
 matrix::matrix(std::vector<float> *matrix) {
 	assert(matrix->size() >= 16);
 	int k = 0;
-	float norms[MATRIX_SIZE] = {};
 	for (int i = 0; i < MATRIX_SIZE; i++) {
 		for (int j = 0; j < MATRIX_SIZE; j++, k++) {
 			a2d[i][j] = (*matrix)[k];
-			norms[j] += (*matrix)[k] * (*matrix)[k];
 		}
 		k++;
-	}
-	for (int i = 0; i < MATRIX_SIZE; i++) {
-		for (int j = 0; j < MATRIX_SIZE; j++, k++) {
-			a2d[i][j] /= sqrt(norms[j]);
-		}
 	}
 }
 

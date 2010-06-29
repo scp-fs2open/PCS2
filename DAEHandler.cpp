@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <map>
 
-#pragma warning(disable: 4996)
-
 #define VECTOR_GROWTH_FACTOR 4
 #define VECTOR_INITIAL_SIZE 100
 
@@ -38,11 +36,11 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 			
 		} else if (strcmp(temp->getCharData().c_str(),"Y_UP") == 0) {
 			up_axis = 1;
-			back = vector3d(0,0,-1);
+			front = vector3d(0,0,1);
 			up = vector3d(0,1,0);
 		} else {
 			up_axis = 2;
-			back = vector3d(0,-1,0);
+			front = vector3d(0,1,0);
 			up = vector3d(0,0,1);
 		}
 	}
@@ -543,7 +541,7 @@ void DAEHandler::process_thrusters(daeElement *element,string name,matrix rotati
 	for (unsigned int i = 0; i < thrusters.getCount(); i++) {
 		if (strcmp(thrusters[i]->getTypeName(),"node") == 0) {
 			glow.pos = get_translation(thrusters[i], rotation_matrix) + offset;
-			glow.norm = MakeUnitVector(fix_axes(back,get_rotation(thrusters[i],rotation_matrix)));
+			glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thrusters[i],rotation_matrix)));
 			glow.radius = get_rotation(thrusters[i], rotation_matrix).scale();
 			thruster.points.push_back(glow);
 		}
@@ -649,7 +647,7 @@ void DAEHandler::process_glowpoints_properties(pcs_glow_array &glowbank) {
 		if (temp[0] == '$') {
 			glowbank.properties = temp;
 		} else {
-			int offset = temp.find_first_of("=");
+			size_t offset = temp.find_first_of("=");
 			if (offset != string::npos) {
 				int value = atoi(temp.substr(offset + 1).c_str());
 				if (stricmp(temp.substr(0, offset).c_str(), "type") == 0) {
@@ -878,7 +876,7 @@ void DAEHandler::process_moment_of_inertia(daeElement *element) {
 }
 
 void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count) {
-	if (count != -1) {
+	if (count != (unsigned)-1) {
 		result->resize(count);
 	} else {
 		result->resize(VECTOR_INITIAL_SIZE);
@@ -894,7 +892,7 @@ void parse_int_array(const char* chars, std::vector<int> *result, unsigned int c
 		(*result)[i] = temp;
 		i++;
 	}
-	if (i < count && count != -1) {
+	if (i < count && count != (unsigned)-1) {
 		stringstream error;
 		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
 		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
@@ -906,7 +904,7 @@ void parse_int_array(const char* chars, std::vector<int> *result, unsigned int c
 
 vector<float> *parse_float_array(const char* chars, unsigned int count) {
 	vector<float> *result;
-	if (count != -1) {
+	if (count != (unsigned)-1) {
 		result = new vector<float>(count);
 	} else {
 		result = new vector<float>(VECTOR_INITIAL_SIZE);
@@ -923,7 +921,7 @@ vector<float> *parse_float_array(const char* chars, unsigned int count) {
 		i++;
 	}
 	
-	if (i < count && count != -1) {
+	if (i < count && count != (unsigned)-1) {
 		stringstream error;
 		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
 		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
@@ -1350,7 +1348,7 @@ int DAESaver::save(void) {
 
 void DAESaver::add_header() {
 	daeElement* asset = root->add("asset");
-	daeElement* contributor = asset->add("contributor");
+	asset->add("contributor");
 	daeElement* created = asset->add("created");
 	daeElement* modified = asset->add("modified");
 	created->setCharData("2008-04-08T13:07:52");
@@ -1471,7 +1469,7 @@ void DAESaver::get_subobj(int idx,string *name) {
 	vector<vector<pcs_polygon*> > polies;
 	vector<daeElement*> poly_groups;
 	polies.resize(num_textures + 1);
-	vector<int> counters;
+	vector<unsigned int> counters;
 	counters.resize(num_textures + 1, 0);
 	for (int i = 0; i <= num_textures; i++) {
 		polies[i].resize(VECTOR_INITIAL_SIZE);
@@ -1662,7 +1660,6 @@ void DAESaver::add_refs(daeElement *mesh, string name, vector<int> refs, vector<
 
 void DAESaver::add_turret_fps() {
 	daeElement *element;
-	daeElement *translate;
 	stringstream name;
 	pcs_turret *turret;
 	daeElement *helper;
@@ -1683,17 +1680,13 @@ void DAESaver::add_turret_fps() {
 			element = helper->add("node");
 			element->setAttribute("id",name.str().c_str());
 			element->setAttribute("name",name.str().c_str());
-			translate = element->add("translate");
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(turret->fire_points[j]).c_str());
-			write_rotations(element,calculate_rotation(turret->turret_normal,vector3d(0,1,0)));
+			write_transform(element, turret->fire_points[j], turret->turret_normal, vector3d(0,1,0));
 		}
 	}
 }
 
 void DAESaver::add_docks() {
 	daeElement *element;
-	daeElement *translate;
 	daeElement *group;
 	stringstream name;
 	pcs_dock_point *dockpoint;
@@ -1713,17 +1706,13 @@ void DAESaver::add_docks() {
 			element = group->add("node");
 			element->setAttribute("id",name.str().c_str());
 			element->setAttribute("name",name.str().c_str());
-			translate = element->add("translate");
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(dockpoint->dockpoints[j].point).c_str());
-			write_rotations(element,calculate_rotation(dockpoint->dockpoints[j].norm,vector3d(0,1,0)));
+			write_transform(element,dockpoint->dockpoints[j].point,dockpoint->dockpoints[j].norm,vector3d(0,1,0));
 		}
 	}
 }
 
 void DAESaver::add_thrusters() {
 	daeElement *element;
-	daeElement *translate;
 	stringstream name;
 	pcs_thruster *thruster;
 	daeElement *helper;
@@ -1754,18 +1743,13 @@ void DAESaver::add_thrusters() {
 			element = helper->add("node");
 			element->setAttribute("id","thruster");
 			element->setAttribute("name","thruster");
-			translate = element->add("translate");
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(thruster->points[j].pos - offset,scale_vec).c_str());
-			write_rotations(element,calculate_rotation(thruster->points[j].norm,vector3d(0,0,1)));
-			add_scale(element,radius_to_scale(thruster->points[j].radius), scale_vec);
+			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), vector3d(0,0,1), thruster->points[j].radius);
 		}
 	}
 }
 
 void DAESaver::add_guns() {
 	daeElement *element;
-	daeElement *translate;
 	stringstream name;
 	pcs_slot *gunbank;
 	daeElement *group;
@@ -1799,17 +1783,13 @@ void DAESaver::add_guns() {
 			element = group->add("node");
 			element->setAttribute("id",name.str().c_str());
 			element->setAttribute("name",name.str().c_str());
-			translate = element->add("translate");
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(gunbank->muzzles[j].point).c_str());
-			write_rotations(element,calculate_rotation(gunbank->muzzles[j].norm,vector3d(0,1,0)));
+			write_transform(element,gunbank->muzzles[j].point,gunbank->muzzles[j].norm,vector3d(0,1,0));
 		}
 	}
 }
 
 void DAESaver::add_eyes() {
 	daeElement *element;
-	daeElement *translate;
 	stringstream name;
 	pcs_eye_pos *eye;
 	for (int i = 0; i < model->GetEyeCount(); i++) {
@@ -1819,10 +1799,7 @@ void DAESaver::add_eyes() {
 		element = scene->add("node");
 		element->setAttribute("id",name.str().c_str());
 		element->setAttribute("name",name.str().c_str());
-		translate = element->add("translate");
-		translate->setAttribute("sid","translate");
-		translate->setCharData(write_vector3d(eye->sobj_offset).c_str());
-		write_rotations(element,calculate_rotation(eye->normal,vector3d(0,1,0)));
+		write_transform(element,eye->sobj_offset,eye->normal,vector3d(0,1,0));
 	}
 }
 
@@ -2250,57 +2227,52 @@ string write_vector3d(vector3d vec,vector3d scale) {
 
 }
 
-vector3d calculate_rotation(vector3d vec, vector3d base) {
-	// just in case...
-	// base should be a standard basis vector anyway...
-	vec = MakeUnitVector(vec);
-	base = MakeUnitVector(base);
-	int rots = 0;
+void DAESaver::write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale) {
+	element = element->add("matrix");
+	element->setAttribute("sid","matrix");
+	int order[3] = {0, 2, 1};
+	vector3d one(MakeUnitVector(norm)), two(1,0,0), three;
+	if (fabs(dot(one, two)) > 0.9) {
+		two = vector3d(0,1,0);
+	}
+	two = MakeUnitVector(two - dot(one, two) * one);
+	three = CrossProduct(one, two);
+	const vector3d *columns[3];
 	if (base.x) {
-		vec = vector3d(vec.y,vec.z,vec.x);
-		base = vector3d(base.y,base.z,base.x);
-		rots++;
+		columns[0] = &one;
+		columns[1] = &two;
+		columns[2] = &three;
+	} else if (base.y) {
+		columns[1] = &one;
+		columns[0] = &two;
+		columns[2] = &three;
+	} else {
+		columns[2] = &one;
+		columns[1] = &two;
+		columns[0] = &three;
 	}
-	if (base.z) {
-		vec = vector3d(vec.y,vec.z,vec.x);
-		base = vector3d(base.y,base.z,base.x);
-		rots++;
-	}
-	vector3d angles(0.0f,0.0f,0.0f);
-
-	float length = sqrt(vec.x*vec.x + vec.z*vec.z);
-	angles.x = acos(vec.y);
-	if (fabs(vec.y) < 1) {
-		angles.y = asin(vec.x / length);
-		if (vec.z < 0) {
-			angles.y = M_PI - angles.y;
+	stringstream output;
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			float value = scale * (*columns[order[j]])[order[i]];
+			if (order[i] == 0) {
+				value = -value;
+			}
+			if (order[j] == 0) {
+				value = -value;
+			}
+			output << value;
+			output << " ";
 		}
+		if (order[i] == 0) {
+			output << -offset[order[i]];
+		} else {
+			output << offset[order[i]];
+		}
+		output << " ";
 	}
-	angles.y = -angles.y;
-	for (int i = 0; i < rots; i++) {
-		angles = vector3d(angles.z,angles.x,-angles.y);
-
-	}
-	return angles;
-}
-
-void write_rotations(daeElement *element, vector3d rotation) {
-	daeElement *x = element->add("rotate");
-	daeElement *y = element->add("rotate");
-	daeElement *z = element->add("rotate");
-	x->setAttribute("sid","rotateX");
-	y->setAttribute("sid","rotateY");
-	z->setAttribute("sid","rotateZ");
-	stringstream temp;
-	temp.str("");
-	temp << "1 0 0 " << ((double) rotation.x * 180 / M_PI);
-	x->setCharData(temp.str().c_str());
-	temp.str("");
-	temp << "0 1 0 " << ((double) rotation.z * 180 / M_PI);
-	y->setCharData(temp.str().c_str());
-	temp.str("");
-	temp << "0 0 1 " << ((double) rotation.y * 180 / M_PI);
-	z->setCharData(temp.str().c_str());
+	output << "0 0 0 1";
+	element->setCharData(output.str().c_str());
 }
 
 bool vector3d_comparator(const vector3d& a, const vector3d& b) {

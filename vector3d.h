@@ -107,6 +107,13 @@ struct vector3d {
 		static float error;
 		return error;//should not happen
 	}
+	float operator[](int i) const {
+		if(i%3 == 0)return x;
+		if(i%3 == 1)return y;
+		if(i%3 == 2)return z;
+		static float error;
+		return error;//should not happen
+	}
 };
 
 //return true if non NAN

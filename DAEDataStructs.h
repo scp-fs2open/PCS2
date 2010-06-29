@@ -72,10 +72,6 @@ void add_param(daeElement *accessor, std::string name);
 
 std::string strip_texture(std::string path);
 
-vector3d calculate_rotation(vector3d vec, vector3d base);
-
-void write_rotations(daeElement *element, vector3d rotation);
-
 bool vector3d_comparator(const vector3d& a, const vector3d& b);
 
 bool float_pair_comparator(const std::pair<float,float>& a, const std::pair<float,float>& b);

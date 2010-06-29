@@ -38,7 +38,7 @@ class DAEHandler
 		AsyncProgress *progress;
 
 		int up_axis;
-		vector3d back;
+		vector3d front;
 		vector3d up;
 		bool mirror_x;
 		bool mirror_y;
@@ -131,6 +131,7 @@ private:
 	void add_glows();
 	void add_insignia();
 	void add_moment_of_inertia();
+	static void write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale=1.0f);
 
 public:
 
