@@ -1743,7 +1743,7 @@ void DAESaver::add_thrusters() {
 			element = helper->add("node");
 			element->setAttribute("id","thruster");
 			element->setAttribute("name","thruster");
-			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), vector3d(0,0,1), thruster->points[j].radius);
+			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), vector3d(0,0,1), thruster->points[j].radius, scale_vec.x);
 		}
 	}
 }
@@ -2227,7 +2227,7 @@ string write_vector3d(vector3d vec,vector3d scale) {
 
 }
 
-void DAESaver::write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale) {
+void DAESaver::write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale, float external_scale) {
 	element = element->add("matrix");
 	element->setAttribute("sid","matrix");
 	int order[3] = {0, 2, 1};
@@ -2254,7 +2254,7 @@ void DAESaver::write_transform(daeElement *element, const vector3d& offset, cons
 	stringstream output;
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
-			float value = scale * (*columns[order[j]])[order[i]];
+			float value = scale * (*columns[order[j]])[order[i]] / external_scale;
 			if (order[i] == 0) {
 				value = -value;
 			}
@@ -2265,9 +2265,9 @@ void DAESaver::write_transform(daeElement *element, const vector3d& offset, cons
 			output << " ";
 		}
 		if (order[i] == 0) {
-			output << -offset[order[i]];
+			output << -offset[order[i]] / external_scale;
 		} else {
-			output << offset[order[i]];
+			output << offset[order[i]] / external_scale;
 		}
 		output << " ";
 	}
