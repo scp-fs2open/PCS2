@@ -1048,10 +1048,10 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		obj->geometric_center = POFTranslate(obj->geometric_center);
 
 		poffile.OBJ2_Get_BoundingMin(i, obj->bounding_box_min_point);
-		//obj->bounding_box_min_point = POFTranslate(obj->bounding_box_min_point); Not Required
 
 		poffile.OBJ2_Get_BoundingMax(i, obj->bounding_box_max_point);
-		//obj->bounding_box_max_point = POFTranslate(obj->bounding_box_max_point); Not Required
+
+		POFTranslateBoundingBoxes(obj->bounding_box_min_point, obj->bounding_box_max_point);
 
 		poffile.OBJ2_Get_Name(i, obj->name);
 		poffile.OBJ2_Get_Props(i, obj->properties);
@@ -1286,8 +1286,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 				ExpandBoundingBoxes(dst.bounding_box_max_point, dst.bounding_box_min_point,  src.polygons[i].verts[j].point);
 			}
 		}
-		dst.bounding_box_max_point = dst.bounding_box_max_point;
-		dst.bounding_box_min_point = dst.bounding_box_min_point;
+		POFTranslateBoundingBoxes(dst.bounding_box_min_point, dst.bounding_box_max_point);
 
 		dst.radius = FindObjectRadius(dst.bounding_box_max_point, dst.bounding_box_min_point, vector3d(0,0,0));
 	}

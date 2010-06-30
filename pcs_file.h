@@ -302,6 +302,12 @@ class PCS_Model
 
 		bool PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled);
 
+		inline void POFTranslateBoundingBoxes(vector3d& min, vector3d& max) {
+			float temp = -min.x;
+			min.x = -max.x;
+			max.x = temp;
+		}
+
 		bobboau::matrix moi_recalculate(float X, float Z, float xw, float zw);
 		bobboau::matrix moi_recalculate(float X, float Z, float xw, float zw, float Y, float dy);
 		bool moi_colide(std::vector<vector3d>&cpoints, float x, float z);
