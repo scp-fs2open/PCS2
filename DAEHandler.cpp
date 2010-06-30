@@ -11,6 +11,10 @@
 #ifdef UNIX
 #define strnicmp strncasecmp
 #define stricmp strcasecmp
+#else
+#define strnicmp _strnicmp
+#define stricmp _stricmp
+
 #endif
 
 using namespace std;
