@@ -1067,13 +1067,13 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		poffile.OBJ2_Get_MoveAxis(i, type); // -1 = none, 1 = X, 2 = Z, 3 = Y
 		switch (type)
 		{
-			case 1:
+			case 0:
 				obj->movement_axis = MV_X;
 				break;
-			case 2:
+			case 1:
 				obj->movement_axis = MV_Z;
 				break;
-			case 3:
+			case 2:
 				obj->movement_axis = MV_Y;
 				break;
 			default:
@@ -1153,13 +1153,13 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 	switch (src.movement_axis)
 	{
 		case MV_X:
-			dst.movement_axis = 1;
+			dst.movement_axis = 0;
 			break;
 		case MV_Z:
-			dst.movement_axis = 2;
+			dst.movement_axis = 1;
 			break;
 		case MV_Y:
-			dst.movement_axis = 3;
+			dst.movement_axis = 2;
 			break;
 		default:
 			dst.movement_axis = -1;
