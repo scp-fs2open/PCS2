@@ -201,7 +201,7 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
  : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), 
-   	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(false), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
+   	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
 {
 	free_axis[0]=true;
 	free_axis[1]=true;
@@ -376,6 +376,7 @@ void wxGL_PMFCanvas::reload_textures(){
 void wxGL_PMFCanvas::reset_view(){
 	position = vector3d(0,0,-(model.GetMaxRadius() * 1.5));
 	rotation = vector3d(-33,66,0);
+	glViewport(0, 0, (GLsizei)GetSize().GetWidth(), (GLsizei)GetSize().GetHeight());
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

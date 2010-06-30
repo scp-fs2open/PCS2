@@ -260,7 +260,6 @@ main_panel::main_panel(wxFrame* parent)
 		//the glcanvas
 		int attriblist[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 24, WX_GL_LEVEL, 0, 0 };
 		glcanvas = new wxGL_PMFCanvas(split2, this, PCS2_CTRL_GLCAN,wxPoint(0,0), wxSize(10,10), model, attriblist);
-		glcanvas->FreezeRender = true;
 
 		//the control panel
 		control_pane = new wxPanel(split2);
