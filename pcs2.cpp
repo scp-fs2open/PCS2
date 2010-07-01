@@ -629,6 +629,16 @@ void PCS2_MainWindow::load_file(wxString filename, bool skipProgdlg){
 		putTitle(filename);
 		mypanel->SignalModelChange(std::string(filename.mb_str()), skipProgdlg);
 		toolBar->ToggleTool(PCS2_TBCTRL_TEXTURED, true);
+
+		// Add the file to our file history.
+		wxFileName full_path(filename);
+		full_path.Normalize();
+		file_history.AddFileToHistory(full_path.GetFullPath());
+		// Save to our config file in case something horrible happens.
+		wxConfigBase::Get()->SetPath(_T("/history/"));
+		file_history.Save(*wxConfigBase::Get());
+		wxFileOutputStream cfg_out(wxStandardPaths::Get().GetUserConfigDir()+wxString(CONFIG_FILE));
+		((wxFileConfig*)wxConfigBase::Get())->Save(cfg_out);
 	}
 }
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -649,6 +659,13 @@ void PCS2_MainWindow::File_Menu_Open(wxCommandEvent &event)
 		return;
 
 	load_file(fdlg->GetPath());
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+void PCS2_MainWindow::File_Menu_History_Open(wxCommandEvent &event)
+{
+	load_file(file_history.GetHistoryFile(event.GetId() - file_history.GetBaseId()));
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -772,7 +789,14 @@ void PCS2_MainWindow::InitMenu()
 	m_pFileMenu->AppendSeparator();
 	m_pFileMenu->Append(PCS2_MFILE_IMPORT, _("Global &Import"), _("Import All Non-Subobject Data From Another Model"));
 	m_pFileMenu->AppendSeparator();
+	m_pFileHistoryMenu = new wxMenu();
+	file_history.UseMenu(m_pFileHistoryMenu);
+	wxConfigBase::Get()->SetPath(_T("/history/"));
+	file_history.Load(*wxConfigBase::Get());
+	m_pFileMenu->AppendSubMenu(m_pFileHistoryMenu, _("&Recent Files"));
+	m_pFileMenu->AppendSeparator();
 	m_pFileMenu->Append(PCS2_MFILE_QUIT);
+
 	mymenu->Append(m_pFileMenu, _("&File"));
 
 	m_pFileMenu = new wxMenu();
@@ -1469,6 +1493,7 @@ BEGIN_EVENT_TABLE(PCS2_MainWindow, wxFrame)
 	EVT_MENU(PCS2_MFILE_OPEN,		PCS2_MainWindow::File_Menu_Open)
 	EVT_MENU(PCS2_MFILE_SAVE,		PCS2_MainWindow::File_Menu_Save)
 	EVT_MENU(PCS2_MFILE_IMPORT,		PCS2_MainWindow::on_global_import)
+	EVT_MENU_RANGE(wxID_FILE1, wxID_FILE9,	PCS2_MainWindow::File_Menu_History_Open)
 
 	EVT_MENU(PCS2_TBCTRL_WIREFRAME, PCS2_MainWindow::Toolbar_OnWireframe)
 	EVT_MENU(PCS2_TBCTRL_SOLID,		PCS2_MainWindow::Toolbar_OnSolid)

@@ -225,6 +225,7 @@
 #include <wx/fileconf.h>
 #include <wx/progdlg.h>
 #include <wx/filename.h>
+#include <wx/docview.h>
 
 #include "wxPCSPref.h"
 #include "pcs_file.h"
@@ -318,6 +319,8 @@ class PCS2_MainWindow : public wxFrame
 		wxToolBar *toolBar;
 		wxMenuBar* mymenu;
 		wxMenu *m_pFileMenu, *m_pModelMenu;
+		wxMenu *m_pFileHistoryMenu;
+		wxFileHistory file_history;
 		
 		main_panel *mypanel;
 		std::string loaded_file;
@@ -345,6 +348,7 @@ class PCS2_MainWindow : public wxFrame
 		void File_Menu_Quit(wxCommandEvent &event) { Close(true); }
 		void File_Menu_Open(wxCommandEvent &event);
 		void File_Menu_Save(wxCommandEvent &event);
+		void File_Menu_History_Open(wxCommandEvent &event);
 		void on_global_import(wxCommandEvent &event);
 
 		void Options_Menu_Preferences(wxCommandEvent &event);
