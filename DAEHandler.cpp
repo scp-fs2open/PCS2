@@ -75,6 +75,7 @@ int DAEHandler::populate(void) {
 	vector<pcs_eye_pos> eyes;
 	vector<pcs_slot> guns, missiles;
 	string name;
+	map<string, int> detail, debris;
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
 #if LOGGING_DAE
 		*log << "Found " << helpers[i]->getTypeName();
@@ -95,24 +96,13 @@ int DAEHandler::populate(void) {
 			} else if (strnicmp(name.c_str(), "insigLOD", strlen("insigLOD")) == 0) {
 				process_insignia(helpers[i]);
 			} else if (strnicmp(name.c_str(), "debris", strlen("debris")) == 0) {
-				model->AddDebris(subobjs.size());
-				process_subobj(helpers[i], -1);
+				debris[name] = i;
 			} else if (strnicmp(name.c_str(), "dockpoint", strlen("dockpoint")) == 0) {
 				process_dockpoint(helpers[i]);
 			} else if (strnicmp(name.c_str(), "bay", strlen("bay")) == 0) {
 				process_path(helpers[i], "", matrix(), vector3d());
 			} else if (strnicmp(name.c_str(), "detail", strlen("detail")) == 0) {
-				unsigned int lod;
-				if (name.length() > strlen("detail")) {
-					lod = atoi(name.substr(strlen("detail"),1).c_str());
-					if (lod >= 0 && lod < 0xff) { //sanity check in case atoi gives us garbage...
-						if (lods.size() <= lod) {
-							lods.resize(lod + 1);
-						}
-						lods[lod] = subobjs.size();
-						process_subobj(helpers[i],-1);
-					}
-				}
+				detail[name] = i;
 			} else if (strnicmp(name.c_str(), "eyepoint", strlen("eyepoint")) == 0) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
@@ -152,7 +142,15 @@ int DAEHandler::populate(void) {
 		}
 
 	}
-	progress->setTarget(203 + subobjs.size() + specials.size() + docks.size() + lods.size() + missiles.size() + 3);
+	for (map<string, int>::iterator it = detail.begin(); it != detail.end(); ++it) {
+		model->AddLOD(subobjs.size());
+		process_subobj(helpers[it->second],-1);
+	}
+	for (map<string, int>::iterator it = debris.begin(); it != debris.end(); ++it) {
+		model->AddDebris(subobjs.size());
+		process_subobj(helpers[it->second], -1);
+	}
+	progress->setTarget(203 + subobjs.size() + specials.size() + docks.size() + missiles.size() + 3);
 	progress->SetProgress(203);
 
 	vector<pcs_sobj> final_subobjs(subobjs.size());
@@ -171,12 +169,6 @@ int DAEHandler::populate(void) {
 		progress->incrementWithMessage("Finalising " + docks[i]->properties);
 		model->AddDocking(docks[i]);
 		delete docks[i];
-	}
-	// why no set_lods?
-	model->SetNumLODs(lods.size());
-	for (unsigned int i = 0; i < lods.size(); i++) {
-		progress->incrementWithMessage("Finalising LOD " + i);
-		model->LOD(i) = lods[i];
 	}
 	model->set_eyes(eyes);
 	int num_guns = guns.size();
