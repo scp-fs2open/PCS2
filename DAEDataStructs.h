@@ -80,6 +80,6 @@ vector3d radius_to_scale(float radius);
 
 void add_scale(daeElement *element, vector3d scale, vector3d parent_scale = vector3d(1,1,1));
 
-std::map<std::string, std::string> *get_texture_mappings(daeElement *element);
+void add_texture_mappings(daeElement *element, std::map<std::string, std::string>* mapping);
 
 #endif

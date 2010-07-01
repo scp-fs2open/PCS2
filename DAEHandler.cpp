@@ -206,7 +206,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	// maybe getDescendent instead
 	// but other elements along the way...
 	daeElement *geom = element->getChild("instance_geometry");
-	map<string,string> *texture_mapping;
+	map<string,string> texture_mapping;
 
 	if (geom == NULL) {
 		stringstream gah;
@@ -214,7 +214,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 		wxMessageBox(wxString(gah.str().c_str(), wxConvUTF8));
 		return;
 	}
-	texture_mapping = get_texture_mappings(geom);
+	add_texture_mappings(geom, &texture_mapping);
 	progress->incrementWithMessage("Processing " + element->getAttribute("name"));
 
 	string temp = doc;
@@ -249,7 +249,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
 		// Add the polies to the subobj.
 		if (strcmp(poly_groups[i]->getTypeName(),"triangles") == 0 || strcmp(poly_groups[i]->getTypeName(),"polylist") == 0) {
-			process_poly_group(poly_groups[i],subobj,rotation_matrix, texture_mapping);
+			process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
 		}
 	}
 	uri.setURI((doc + "#" + element->getAttribute("id").c_str() + "-trans").c_str());
@@ -257,6 +257,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	if (trans != NULL) {
 		mesh = trans->getChild("instance_geometry");
 		if (mesh != NULL) {
+			add_texture_mappings(mesh, &texture_mapping);
 			temp = doc;
 			temp += mesh->getAttribute("url").c_str();
 #if LOGGING_DAE
@@ -271,19 +272,13 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 					for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
 						// Add the polies to the subobj.
 						if (strcmp(poly_groups[i]->getTypeName(),"triangles") == 0 || strcmp(poly_groups[i]->getTypeName(),"polylist") == 0) {
-							process_poly_group(poly_groups[i],subobj,rotation_matrix, texture_mapping);
+							process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
 						}
 					}
 				}
 			}
 		}
 	}
-
-	if (texture_mapping) {
-		delete texture_mapping;
-		texture_mapping = NULL;
-	}
-
 
 	this->subobjs.push_back(subobj);
 	int current_sobj_id = this->subobjs.size() - 1;
@@ -2313,26 +2308,22 @@ void add_scale(daeElement *element, vector3d scale, vector3d parent_scale) {
 	element->setCharData(write_vector3d(scale, parent_scale).c_str());
 }
 
-map<string, string> *get_texture_mappings(daeElement *element) {
-	map<string, string> *mapping;
+void add_texture_mappings(daeElement *element, map<string, string> *mapping) {
 	if (element == NULL) {
-		return NULL;
+		return;
 	}
 	element = element->getChild("bind_material");
 	if (element == NULL) {
-		return NULL;
+		return;
 	}
 	element = element->getChild("technique_common");
 	if (element == NULL) {
-		return NULL;
+		return;
 	}
-	mapping = new map<string,string>();
 	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
 	for (unsigned int i = 0; i < children.getCount(); i++) {
-		if (strcmp(children[i]->getTypeName(), "instance_material") == 0) {
+		if (strcmp(children[i]->getTypeName(), "instance_material") == 0 && mapping->find(children[i]->getAttribute("symbol")) == mapping->end()) {
 			mapping->insert(pair<string, string>(children[i]->getAttribute("symbol"), children[i]->getAttribute("target")));
 		}
 	}
-	return mapping;
-
 }
