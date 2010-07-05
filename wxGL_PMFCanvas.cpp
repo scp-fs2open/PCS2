@@ -209,7 +209,10 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 
 	ambient_light[0]=0.1f; ambient_light[1]=0.1f; ambient_light[2]=0.1f; ambient_light[3]=1.0f;
 	diffuse_light[0]=0.9f; diffuse_light[1]=0.9f; diffuse_light[2]=0.9f; diffuse_light[3]=1.0f;
+}
 
+void wxGL_PMFCanvas::Init() {
+	FreezeRender = false;
 	this->SetCurrent();
 	// === === === Init GL === === === 
 	// Initialize OpenGL function table
@@ -390,7 +393,6 @@ void wxGL_PMFCanvas::Render()
 	IsRendering = true;
 	this->SetCurrent();
 
-	glEnable(GL_DEPTH_TEST);	// Enables Depth Testing
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
 
@@ -463,9 +465,9 @@ void wxGL_PMFCanvas::Render()
 		if(active_chunk == SHLD)
 			model.draw_shields();
 
-		glDisable(GL_LIGHTING);
-
 		draw_omnipoints();
+
+		glDisable(GL_LIGHTING);
 
 		if(draw_the_grid){
 			vector3d grid_point = acen;

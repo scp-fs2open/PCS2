@@ -121,6 +121,7 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		void Render();
 		virtual void OnMouseEvt(wxMouseEvent& event);
 		void on_click(wxMouseEvent& event);
+		void Init();
 		void Reinit();
 		void reset_view();
 

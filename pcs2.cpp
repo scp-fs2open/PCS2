@@ -549,8 +549,8 @@ bool PCS2_App::OnInit()
 	if(argc > 1)
 		myframe->load_file(argv[1], true);
 	myframe->Show(TRUE);	
-	SetTopWindow(myframe);
 	myframe->startRender();
+	SetTopWindow(myframe);
 
 #if !defined(NO_SPLASHSCREEN)
 	wxMilliSleep(500);

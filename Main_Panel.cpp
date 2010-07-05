@@ -1821,5 +1821,5 @@ void main_panel::on_omnipoint_ray_picked(wxCommandEvent &event){
 }
 
 void main_panel::startRender() {
-	glcanvas->FreezeRender = false;
+	glcanvas->Init();
 }
