@@ -1667,6 +1667,13 @@ void PCS_Model::draw_shields(){
 	glDisable(GL_CULL_FACE);
 
 	glDepthMask(GL_FALSE);
+
+	float light_one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float light_zero[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	glMaterialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, light_zero );
+	glMaterialfv( GL_FRONT_AND_BACK, GL_SPECULAR, light_one );
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 65.0f );
+
 	glBegin(GL_TRIANGLES);
 	glColor4ubv( (GLubyte*)(get_SHLD_color()*0.25f).col);
 
