@@ -351,10 +351,10 @@ main_panel::main_panel(wxFrame* parent)
 	tree_id.TGUN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Turrets"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TGUN, path));
 	tree_id.PATH_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Paths"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PATH, path));
 	tree_id.EYE_ID  = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Eye Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(EYE, path));
+	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Insignia"), TREE_NOSEL, TREE_NOSEL, new tree_node_id(INSG, path));
 
 	path.resize(0);
 
-//	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Insignia"), TREE_NOSEL, TREE_NOSEL, new tree_node_id(INSG, path));
 	tree_id.SHLD_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Shield"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SHLD, path));
 	tree_id.ACEN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Auto-centering"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(ACEN, path));
 	tree_id.PINF_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Model Comments"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PINF, path));
@@ -392,8 +392,8 @@ main_panel::main_panel(wxFrame* parent)
 	navigation_panel->SetItemImage(tree_id.EYE_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.EYE_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
 
-//	navigation_panel->SetItemImage(tree_id.INSG_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
-//	navigation_panel->SetItemImage(tree_id.INSG_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
+	navigation_panel->SetItemImage(tree_id.INSG_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
+	navigation_panel->SetItemImage(tree_id.INSG_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
 
 	navigation_panel->SetItemImage(tree_id.SHLD_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.SHLD_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
@@ -1327,7 +1327,7 @@ void main_panel::rebuild_tree(){
 	kill_kids(navigation_panel, tree_id.TGUN_ID);
 	kill_kids(navigation_panel, tree_id.PATH_ID);
 	kill_kids(navigation_panel, tree_id.EYE_ID);
-//	kill_kids(navigation_panel, tree_id.INSG_ID);
+	kill_kids(navigation_panel, tree_id.INSG_ID);
 	kill_kids(navigation_panel, tree_id.SHLD_ID);
 	kill_kids(navigation_panel, tree_id.ACEN_ID);
 	kill_kids(navigation_panel, tree_id.PINF_ID);
@@ -1388,6 +1388,11 @@ void main_panel::rebuild_tree(){
 		if(model.Eye(i).sobj_number > -1 && model.Eye(i).sobj_number < model.GetSOBJCount())str = wxString(model.SOBJ(model.Eye(i).sobj_number).name.c_str(), wxConvUTF8);
 		if(str == _(""))str = wxString().Format(_("Eye %i"), i+1);
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.EYE_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(EYE, path));
+	}
+
+	for(i=0; i<model.GetInsigniaCount(); i++){
+		path[0] = i;
+		navigation_panel->AppendItem(tree_id.INSG_ID, wxString::Format(_("Insignia %d"), i+1), TREE_UNSEL, TREE_SEL, new tree_node_id(INSG, path));
 	}
 
 	path.resize(2);
@@ -1628,6 +1633,9 @@ void main_panel::on_tree_selection(wxTreeEvent& event){
 				break;
 			case SHLD:
 					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_shield_triangle>, SHLD_ctrl>						(control_pane, model, SHLD),1.0,wxEXPAND);
+				break;
+			case INSG:
+					control_sizer->Add(control_panel = new model_editor_ctrl<std::vector<pcs_insig>, INSG_ctrl>						(control_pane, model, INSG),1.0,wxEXPAND);
 				break;
 			default:
 					control_sizer->Add(control_panel = new model_editor_ctrl<header_data, header_ctrl>					(control_pane, model, HDR2),1.0,wxEXPAND);

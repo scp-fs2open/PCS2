@@ -1712,6 +1712,68 @@ void PCS_Model::draw_shields(){
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
+void PCS_Model::draw_insignia(){
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_BLEND);
+	
+	glBlendFunc(GL_ONE,GL_ONE);
+	glDisable(GL_CULL_FACE);
+
+	glDepthMask(GL_FALSE);
+	glBegin(GL_TRIANGLES);
+	glColor4ubv( (GLubyte*)(get_SHLD_color()*0.0f).col);
+
+	for (unsigned int i = 0; i < insignia.size(); i++)
+	{
+		pcs_insig& insig = insignia[i];
+		for (unsigned int j = 0; j < insig.faces.size(); j++) {
+			pcs_insig_face& face = insig.faces[j];
+			vector3d normal = CrossProduct(face.verts[2] - face.verts[1], face.verts[1] - face.verts[0]);
+			glNormal3fv((GLfloat *) &normal);
+			for (unsigned int k = 0; k < 3; k++)
+			{
+				vector3d offsetted(face.verts[k] + insig.offset);
+				glVertex3fv((GLfloat *) &offsetted);
+			}
+			normal = vector3d(-normal.x, -normal.y, -normal.z);
+			glNormal3fv((GLfloat *) &normal);
+			for (unsigned int k = 0; k < 3; k++)
+			{
+				vector3d offsetted(face.verts[k] + insig.offset);
+				glVertex3fv((GLfloat *) &offsetted);
+			}
+		}
+	}
+	glEnd();
+
+	glDisable(GL_BLEND);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glColor4ubv( (GLubyte*)get_SHLD_color().col);
+
+	for (unsigned int i = 0; i < insignia.size(); i++)
+	{
+		pcs_insig& insig = insignia[i];
+		for (unsigned int j = 0; j < insig.faces.size(); j++) {
+			glBegin(GL_LINE_STRIP);
+			pcs_insig_face& face = insig.faces[j];
+			for (unsigned int k = 0; k < 3; k++)
+			{
+				vector3d offsetted(face.verts[k] + insig.offset);
+				glVertex3fv((GLfloat *) &offsetted);
+			}
+			vector3d offsetted(face.verts[0] + insig.offset);
+			glVertex3fv((GLfloat *) &offsetted);
+			glEnd();
+		}
+	}
+	glDepthMask(GL_TRUE);
+
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
 void PCS_Model::Render(TextureControl &tc, bool use_vbos, bool highlight)
 {
 	if (header.detail_levels.size() < 1)

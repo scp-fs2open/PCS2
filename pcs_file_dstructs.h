@@ -457,6 +457,14 @@ struct pcs_insig_face
 	pcs_insig_face() { memset(this, 0, sizeof(pcs_insig_face)); }
 };
 
+inline bool operator==(const pcs_insig_face&t, const pcs_insig_face&o){
+	return t.verts == o.verts &&
+		t.u[0] == o.u[0] && t.v[0] == o.u[0] &&
+		t.u[1] == o.u[1] && t.v[1] == o.u[1] &&
+		t.u[2] == o.u[2] && t.v[2] == o.u[2];
+}
+
+
 struct pcs_insig
 {
 	int lod;
@@ -467,6 +475,11 @@ struct pcs_insig
 	void Write(std::ostream& out);
 	pcs_insig() : lod(0) {} 
 };
+
+inline bool operator==(const pcs_insig&t, const pcs_insig&o){
+	return t.lod == o.lod && t.offset == o.offset && t.faces == o.faces;
+}
+
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
