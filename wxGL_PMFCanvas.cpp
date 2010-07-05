@@ -465,6 +465,8 @@ void wxGL_PMFCanvas::Render()
 		if(active_chunk == SHLD)
 			model.draw_shields();
 
+		glDisable(GL_TEXTURE_2D);
+
 		draw_omnipoints();
 
 		glDisable(GL_LIGHTING);

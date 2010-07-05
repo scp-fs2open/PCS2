@@ -1991,6 +1991,7 @@ void PCS_Model::RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_v
 
 	// return to parents position
 	glTranslatef(-trans.x, -trans.y, -trans.z);
+	glActiveTexture(GL_TEXTURE0);
 
 }
 
