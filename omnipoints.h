@@ -14,6 +14,8 @@ it should be drawen as a path)*/
 #define OMNIPOINT_PATH					(1 << 2)//draw a line from one point to the next
 #define OMNIPOINT_COMMON_NORMAL			(1 << 3)//all points in a list should use the same normal (the first one)
 #define OMNIPOINT_DONT_DRAW				(1 << 4)//don't draw them
+#define OMNIPOINT_CLOSED_PATH			(1 << 5)//draw a line from one point to the next and from the last to the first
+#define OMNIPOINT_ANY_PATH				(OMNIPOINT_PATH | OMNIPOINT_CLOSED_PATH)
 
 struct omnipoint{
 	omnipoint():model(-1){};

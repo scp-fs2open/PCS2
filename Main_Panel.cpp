@@ -1390,12 +1390,19 @@ void main_panel::rebuild_tree(){
 		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.EYE_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(EYE, path));
 	}
 
+	path.resize(2);
+
 	for(i=0; i<model.GetInsigniaCount(); i++){
 		path[0] = i;
-		navigation_panel->AppendItem(tree_id.INSG_ID, wxString::Format(_("Insignia %d"), i+1), TREE_UNSEL, TREE_SEL, new tree_node_id(INSG, path));
+		path[1] = -1;
+		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.INSG_ID, wxString::Format(_("Insignia %d"), i+1), TREE_UNSEL, TREE_SEL, new tree_node_id(INSG, path));
+		navigation_panel->SetItemImage(parent, TREE_UNSEL_OP, wxTreeItemIcon_Expanded);
+		navigation_panel->SetItemImage(parent, TREE_SEL_OP, wxTreeItemIcon_SelectedExpanded);
+		for (unsigned int j = 0; j < model.get_insignia()[i].faces.size(); j++) {
+			path[1] = j;
+			navigation_panel->AppendItem(parent, wxString::Format(_("Face %d"), j+1), TREE_UNSEL, TREE_SEL, new tree_node_id(INSG, path));
+		}
 	}
-
-	path.resize(2);
 
 	int g = 0;//gun
 	int m = 0;//mis

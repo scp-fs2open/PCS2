@@ -1752,22 +1752,6 @@ void PCS_Model::draw_insignia(){
 	glDisable(GL_TEXTURE_2D);
 	glColor4ubv( (GLubyte*)get_SHLD_color().col);
 
-	for (unsigned int i = 0; i < insignia.size(); i++)
-	{
-		pcs_insig& insig = insignia[i];
-		for (unsigned int j = 0; j < insig.faces.size(); j++) {
-			glBegin(GL_LINE_STRIP);
-			pcs_insig_face& face = insig.faces[j];
-			for (unsigned int k = 0; k < 3; k++)
-			{
-				vector3d offsetted(face.verts[k] + insig.offset);
-				glVertex3fv((GLfloat *) &offsetted);
-			}
-			vector3d offsetted(face.verts[0] + insig.offset);
-			glVertex3fv((GLfloat *) &offsetted);
-			glEnd();
-		}
-	}
 	glDepthMask(GL_TRUE);
 
 }
