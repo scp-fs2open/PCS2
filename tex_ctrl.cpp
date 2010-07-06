@@ -532,6 +532,9 @@ GLuint TextureControl::LoadTexture(std::string texname,
 			if (load(img_type, buffer, (int)size))
 			{
 				iluGetImageInfo(&imginfo);
+#ifdef UNIX
+				iluFlipImage();
+#endif
 				sz = (imginfo.Width > imginfo.Height)?imginfo.Width:imginfo.Height;
 				iluScale(sz, sz, imginfo.Depth);
 				texId = ilutGLBindTexImage();
@@ -622,6 +625,9 @@ GLuint LoadFile(std::string Filename)
 	ilBindImage(ImgId);									// Bind Image Name to Be Current
 	if (load_image((char *const)Filename.c_str())) {				// Load the Bitmap and Check for Errors
 		iluGetImageInfo(&imginfo);
+#ifdef UNIX
+		iluFlipImage();
+#endif
 		sz = (imginfo.Width > imginfo.Height)?imginfo.Width:imginfo.Height;
 		iluScale(sz, sz, imginfo.Depth);
 
