@@ -458,10 +458,12 @@ struct pcs_insig_face
 };
 
 inline bool operator==(const pcs_insig_face&t, const pcs_insig_face&o){
-	return t.verts == o.verts &&
-		t.u[0] == o.u[0] && t.v[0] == o.u[0] &&
-		t.u[1] == o.u[1] && t.v[1] == o.u[1] &&
-		t.u[2] == o.u[2] && t.v[2] == o.u[2];
+	return t.verts[0] == o.verts[0] &&
+		t.verts[1] == o.verts[1] &&
+		t.verts[2] == o.verts[2] &&
+		t.u[0] == o.u[0] && t.v[0] == o.v[0] &&
+		t.u[1] == o.u[1] && t.v[1] == o.v[1] &&
+		t.u[2] == o.u[2] && t.v[2] == o.v[2];
 }
 
 
