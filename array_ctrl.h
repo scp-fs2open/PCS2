@@ -202,32 +202,35 @@ class resizeable_array_ctrl :
 	wxBitmapButton*new_btn;
 	wxBitmapButton*del_btn;
 	wxBitmapButton*cpy_btn;
+	bool user_resizeable;
 
 public:
 	//constructor, DOES _NOT_ take an array, they must be set after the 
 	//control is is constructed or you get virtual function problems
-	resizeable_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1)
-		:array_ctrl<type>(parent, x, y, w, h, Title, orient,ID,true)
+	resizeable_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1, bool user_resizeable=true)
+		:array_ctrl<type>(parent, x, y, w, h, Title, orient,ID,true), user_resizeable(user_resizeable)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
 		this->box = new wxStaticBoxSizer(wxVERTICAL, this,_("Select"));
 		//the combo box
 		this->array_list = new combo(this,ARRAY_SELECT,_(""),wxPoint(10,10),wxSize(64,30));
+		this->box->Add(this->array_list);
 		//sizer that holds the size display and the new/copy/delete buttons
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
 		this->array_size_box = new wxTextCtrl(this,-1,_("0"),wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE);
-		new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxPoint(26,0),wxSize(16,16));
-		cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxPoint(42,0),wxSize(16,16));
-		del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16));
-		new_btn->SetToolTip(_("New"));
-		cpy_btn->SetToolTip(_("Copy"));
-		del_btn->SetToolTip(_("Delete"));
-		//add the buttons'n stuff to the proper sizer
 		b->Add(this->array_size_box);
-		b->Add(new_btn);
-		b->Add(cpy_btn);
-		b->Add(del_btn);
-		this->box->Add(this->array_list);
+		if (user_resizeable) {
+			new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxPoint(26,0),wxSize(16,16));
+			cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxPoint(42,0),wxSize(16,16));
+			del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16));
+			new_btn->SetToolTip(_("New"));
+			cpy_btn->SetToolTip(_("Copy"));
+			del_btn->SetToolTip(_("Delete"));
+			//add the buttons'n stuff to the proper sizer
+			b->Add(new_btn);
+			b->Add(cpy_btn);
+			b->Add(del_btn);
+		}
 		this->box->Add(b);
 		//add all this to the editor
 		this->add_sizer(this->box);
@@ -242,7 +245,9 @@ public:
 		for(wxWindowListNode*child = children.GetFirst();child;child=child->GetNext()){
 			child->GetData()->Disable();
 		}
-		new_btn->Enable();
+		if (user_resizeable) {
+			new_btn->Enable();
+		}
 	}
 
 	//enable's everything
@@ -356,8 +361,8 @@ class type_array_ctrl
 protected:
 	type_control*ctrl;
 public:
-	type_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1)
-		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient,ID)
+	type_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable=true)
+		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient,ID, user_resizeable)
 	{
 		add_control(ctrl=new type_control(this,0,30,90,(subTitle==_(""))?20:40,subTitle),1,flags);
 	}
