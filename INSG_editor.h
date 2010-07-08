@@ -127,6 +127,49 @@ public:
 	}
 };
 
+class insignia_generator_ctrl :
+	public editor<pcs_insig_generator>
+{
+protected:
+	vector_ctrl*pos;
+	vector_ctrl*forward;
+	vector_ctrl*up;
+	float_ctrl*radius;
+
+public:
+	
+	insignia_generator_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_insig_generator>(parent,x,y,w,h, orient, Title)
+	{
+		add_control(pos =new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
+		add_control(forward =new vector_ctrl(this,0,0,60,40,_("Projection vector")),0,wxEXPAND );
+		add_control(up =new vector_ctrl(this,0,0,60,40,_("Up vector")),0,wxEXPAND );
+		add_control(radius =new float_ctrl(this,0,0,60,40,_("Length")),0,wxEXPAND );
+	};
+
+	virtual ~insignia_generator_ctrl(void){};
+
+	//set the control's value
+	void set_value(const pcs_insig_generator&t){
+		pos->set_value(t.pos);
+		forward->set_value(t.forward);
+		up->set_value(t.up);
+		radius->set_value(t.radius);
+		
+	}
+
+	//return's the control's value
+	pcs_insig_generator get_value(){
+		pcs_insig_generator generator;
+		generator.pos = pos->get_value();
+		generator.forward = forward->get_value();
+		generator.up = up->get_value();
+		generator.radius = radius->get_value();
+		return generator;
+	}
+};
+
+
 class insignia_ctrl :
 	public editor<pcs_insig>
 {
@@ -135,6 +178,8 @@ protected:
 	vector_ctrl*offset;
 	int_ctrl*lod;
 
+	insignia_generator_ctrl* generator;
+
 public:
 	
 	insignia_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
@@ -142,7 +187,8 @@ public:
 	{
 		add_control(lod =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
 		add_control(offset =new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
-		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,460,_("Faces"), _("")),0,wxEXPAND );
+		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,310,_("Faces"), _("")),0,wxEXPAND );
+		add_control(generator =new insignia_generator_ctrl(this,0,0,60,200,_("Projection")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_ctrl(void){};
@@ -152,6 +198,8 @@ public:
 		faces->set_value(t.faces);
 		offset->set_value(t.offset);
 		lod->set_value(t.lod);
+		generator->set_value(t.generator);
+		
 	}
 
 	//return's the control's value
@@ -160,6 +208,12 @@ public:
 		insignia.faces = faces->get_value();
 		insignia.offset = offset->get_value();
 		insignia.lod = lod->get_value();
+		insignia.generator = generator->get_value();
+		if (insignia.faces.size() == 0) {
+			generator->Show();
+		} else {
+			generator->Hide();
+		}
 		return insignia;
 	}
 
@@ -197,7 +251,7 @@ public:
 		:editor_ctrl<std::vector<pcs_insig> >(parent, _("Insignia"))
 	{
 		//add controls
-		add_control(insignia=new insignia_array_ctrl(this,0,0,60,460,_("Insignum"), _("")),0,wxEXPAND );
+		add_control(insignia=new insignia_array_ctrl(this,0,0,60,660,_(""), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called
@@ -236,28 +290,50 @@ public:
 
 	omnipoints get_omnipoints(){
 		omnipoints o;
-		//std::vector<pcs_insig> insignia = get_value();
-		//for(unsigned int i = 0; i<insignia.size(); i++){
 		if (insignia->get_index() != -1) {
 			pcs_insig insig = insignia->get_curent_value();
-			o.point.reserve(insig.faces.size());
-			for (unsigned int j = 0; j < insig.faces.size(); j++) {
-				pcs_insig_face face;
-				std::vector<omnipoint> points;
-				points.resize(NUM_VERTS);
-				for (unsigned int k = 0; k < NUM_VERTS; k++) {
-					points[k].pos = insig.faces[j].verts[k] + insig.offset;
-					points[k].model = -1;
-				}
-				o.point.push_back(points);
-			}
-			//}
-			o.flags = OMNIPOINT_CLOSED_PATH;
 			o.lod = insig.lod;
-			o.selected_item = selected_item;
-			o.selected_list = selected_list;
-			o.unselected = unselected;
-	}
+			if (insig.faces.size() > 0) {
+				o.point.reserve(insig.faces.size());
+				for (unsigned int j = 0; j < insig.faces.size(); j++) {
+					pcs_insig_face face;
+					std::vector<omnipoint> points;
+					points.resize(NUM_VERTS);
+					for (unsigned int k = 0; k < NUM_VERTS; k++) {
+						points[k].pos = insig.faces[j].verts[k] + insig.offset;
+						points[k].model = -1;
+					}
+					o.point.push_back(points);
+				}
+				o.flags = OMNIPOINT_CLOSED_PATH;
+			}else {
+				o.point.reserve(1);
+				if (insig.faces.size() == 0) {
+					pcs_insig_generator& generator = insig.generator;
+					if (generator.up != vector3d() && generator.forward != vector3d() && generator.radius > 0.0f) {
+						vector3d forward = MakeUnitVector(generator.forward);
+						vector3d up = MakeUnitVector(
+								generator.up - (dot(generator.up, forward) * forward));
+						vector3d right = CrossProduct(forward, up);
+						float radius = generator.radius / 2;
+						std::vector<omnipoint> points;
+						points.resize(4);
+						for (int i = 0; i < 4; i++) {
+							points[i].norm = forward * 10;
+						}
+						points[0].pos = generator.pos + (up * radius) - (right * radius);
+						points[1].pos = generator.pos + (up * radius) + (right * radius);
+						points[2].pos = generator.pos - (up * radius) + (right * radius);
+						points[3].pos = generator.pos - (up * radius) - (right * radius);
+						o.point.push_back(points);
+					}
+				}
+				o.flags = OMNIPOINT_CLOSED_PATH | OMNIPOINT_NORM;
+			}
+		}
+		o.selected_item = selected_item;
+		o.selected_list = selected_list;
+		o.unselected = unselected;
 		return o;
 	}
 
@@ -270,8 +346,15 @@ public:
 		for (int i = 0; i < insignia->get_index(); i++) {
 			list += data[i].faces.size();
 		}*/
-		list = insignia->get_child_control()->get_index();
-		item = -1;//points->get_index();
+		if (insignia->get_index() != -1) {
+			pcs_insig insig = insignia->get_curent_value();
+			if (insig.faces.size() > 0) {
+				list = insignia->get_child_control()->get_index();
+			} else {
+				list = 0;
+			}
+		}
+		item = -1;
 	}
 	void set_omnipoint_coords(int&list, int&item){
 		// TODO

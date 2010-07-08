@@ -466,6 +466,21 @@ inline bool operator==(const pcs_insig_face&t, const pcs_insig_face&o){
 		t.u[2] == o.u[2] && t.v[2] == o.v[2];
 }
 
+struct pcs_insig_generator
+{
+	vector3d pos;
+	vector3d forward;
+	vector3d up;
+	float radius;
+	int subdivision;
+	pcs_insig_generator() : radius(0.0f), subdivision(0) {}
+
+};
+
+inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
+	return t.pos == o.pos && t.forward == o.forward && t.up == o.up &&
+		t.radius == o.radius;
+}
 
 struct pcs_insig
 {
@@ -473,13 +488,15 @@ struct pcs_insig
 	vector3d offset; // offset from center of ship
 	std::vector<pcs_insig_face> faces;
 
+	pcs_insig_generator generator;
+
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 	pcs_insig() : lod(0) {} 
 };
 
 inline bool operator==(const pcs_insig&t, const pcs_insig&o){
-	return t.lod == o.lod && t.offset == o.offset && t.faces == o.faces;
+	return t.lod == o.lod && t.offset == o.offset && t.faces == o.faces && t.generator == o.generator;
 }
 
 

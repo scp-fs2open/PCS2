@@ -1760,6 +1760,39 @@ void PCS_Model::draw_insignia(int lod){
 				glEnd();
 				ERROR_CHECK;
 			}
+			if (insig.faces.size() == 0) {
+				pcs_insig_generator& generator = insig.generator;
+				if (generator.up != vector3d() && generator.forward != vector3d() && generator.radius > 0.0f) {
+					vector3d forward = MakeUnitVector(generator.forward);
+					vector3d up = MakeUnitVector(generator.up - (dot(generator.up, forward) * forward));
+					vector3d right = CrossProduct(forward, up);
+					float radius = generator.radius / 2;
+					vector3d pos;
+					glBegin(GL_POLYGON);
+					if (!Textureless) {
+						glTexCoord2f(0.0f, 0.0f);
+					}
+					pos = generator.pos + (up * radius) - (right * radius);
+					glVertex3fv((GLfloat *) &pos);
+					if (!Textureless) {
+						glTexCoord2f(1.0f, 0.0f);
+					}
+					pos = generator.pos + (up * radius) + (right * radius);
+					glVertex3fv((GLfloat *) &pos);
+					if (!Textureless) {
+						glTexCoord2f(1.0f, 1.0f);
+					}
+					pos = generator.pos - (up * radius) + (right * radius);
+					glVertex3fv((GLfloat *) &pos);
+					if (!Textureless) {
+						glTexCoord2f(0.0f, 1.0f);
+					}
+					pos = generator.pos - (up * radius) - (right * radius);
+					glVertex3fv((GLfloat *) &pos);
+					glEnd();
+					ERROR_CHECK;
+				}
+			}
 		}
 	}
 
