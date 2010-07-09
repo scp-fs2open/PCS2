@@ -474,7 +474,6 @@ struct pcs_insig_generator
 	float radius;
 	int subdivision;
 	pcs_insig_generator() : radius(0.0f), subdivision(0) {}
-
 };
 
 inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
@@ -492,6 +491,23 @@ struct pcs_insig
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
+	bool Generate(std::vector<pcs_polygon> polys);
+	static bool outside_viewport(const std::vector<vector3d>& verts);
+	static bool inside_polygon(const vector3d& v, const std::vector<vector3d>& verts);
+	static vector3d interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);
+	static inline int current(int i, int j, int subdivision) {
+		return i * (subdivision + 2) + j;
+	}
+	static inline int next(int i, int j, int subdivision) {
+		return i * (subdivision + 2) + j + 1;
+	}
+	static inline int below(int i, int j, int subdivision) {
+		return i * (subdivision + 2) + j + (subdivision + 2);
+	}
+	static inline int below_next(int i, int j, int subdivision) {
+		return i * (subdivision + 2) + j + (subdivision + 3);
+	}
+
 	pcs_insig() : lod(0) {} 
 };
 

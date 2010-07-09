@@ -36,7 +36,10 @@
  *
  */
 
+#include <cfloat>
+
 #include "pcs_file_dstructs.h"
+#include "matrix3d.h"
 
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -247,6 +250,146 @@ void pcs_insig::Write(std::ostream& out)
 	BFWrite(lod, int)
 	BFWrite(offset, vector3d)
 	BFWriteVector(faces)
+}
+
+bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
+{
+	if (!(generator.up != vector3d() && generator.forward != vector3d() && generator.radius > 0.0f)) {
+		return false;
+	}
+	vector3d forward = MakeUnitVector(generator.forward);
+	vector3d up = MakeUnitVector(
+			generator.up - (dot(generator.up, forward) * forward));
+	vector3d right = CrossProduct(forward, up);
+	float radius = generator.radius / 2;
+	std::vector<vector3d> points;
+	points.reserve((generator.subdivision + 1) * (generator.subdivision + 1));
+	for (int i = 0; i <= generator.subdivision + 1; i++) {
+		for (int j = 0; j <= generator.subdivision + 1; j++) {
+			points.push_back(vector3d(i * 2.0f / (generator.subdivision + 1) - 1, j * 2.0f / (generator.subdivision + 1) - 1, 0));
+		}
+	}
+	matrix transform(up, right, forward);
+	transform = transform * (1 / radius);
+
+	std::vector<std::vector<vector3d> > polys;
+	std::vector<vector3d> transformed;
+	std::vector<vector3d> zbuffer(points.size(), vector3d(0.0f, 0.0f, FLT_MAX));
+	for (std::vector<pcs_polygon>::const_iterator it = polygons.begin(); it != polygons.end(); ++it) {
+		if (dot(it->norm, forward) >= 0) {
+			continue;
+		}
+		transformed.clear();
+		for (std::vector<pcs_vertex>::const_iterator jt = it->verts.begin(); jt != it->verts.end(); ++jt) {
+			transformed.push_back(transform * (jt->point - generator.pos));
+		}
+		if (!outside_viewport(transformed)) {
+			polys.push_back(transformed);
+		}
+	}
+	for (std::vector<std::vector<vector3d> >::const_iterator it = polys.begin(); it != polys.end(); ++it) {
+		for (unsigned int i = 0; i < points.size(); i++) {
+			if (inside_polygon(points[i], *it)) {
+				vector3d result = interpolate_z(points[i], *it);
+				if (result.z < zbuffer[i].z) {
+					zbuffer[i] = result;
+				}
+			}
+		}
+	}
+	std::vector<vector3d> verts;
+	transform = transform.invert();
+	verts.reserve(points.size());
+	vector3d average;
+	for (unsigned int i = 0; i < points.size(); i++) {
+		verts.push_back(generator.pos + (transform * zbuffer[i]));
+		average += verts[i];
+	}
+	average = average * (1.0/verts.size());
+	// Move back by our fudge factor in the projection direction to avoid
+	// intersecting the mesh.
+	offset = average - (forward * 0.05);
+	for (unsigned int i = 0; i < verts.size(); i++) {
+		verts[i] = verts[i] - average;
+	}
+
+	pcs_insig_face face;
+	for (int i = 0; i < generator.subdivision + 1; i++) {
+		for (int j = 0; j < generator.subdivision + 1; j++) {
+			face.verts[0] = verts[current(i, j, generator.subdivision)];
+			face.verts[1] = verts[next(i, j, generator.subdivision)];
+			face.verts[2] = verts[below_next(i, j, generator.subdivision)];
+			face.u[0] = (points[current(i, j, generator.subdivision)].y + 1) / 2;
+			face.u[1] = (points[next(i, j, generator.subdivision)].y + 1) / 2;
+			face.u[2] = (points[below_next(i, j, generator.subdivision)].y + 1) / 2;
+			face.v[0] = 1 - (points[current(i, j, generator.subdivision)].x + 1) / 2;
+			face.v[1] = 1 - (points[next(i, j, generator.subdivision)].x + 1) / 2;
+			face.v[2] = 1 - (points[below_next(i, j, generator.subdivision)].x + 1) / 2;
+			faces.push_back(face);
+
+			face.verts[0] = verts[current(i, j, generator.subdivision)];
+			face.verts[1] = verts[below_next(i, j, generator.subdivision)];
+			face.verts[2] = verts[below(i, j, generator.subdivision)];
+			face.u[0] = (points[current(i, j, generator.subdivision)].y + 1) / 2;
+			face.u[1] = (points[below_next(i, j, generator.subdivision)].y + 1) / 2;
+			face.u[2] = (points[below(i, j, generator.subdivision)].y + 1) / 2;
+			face.v[0] = 1 - (points[current(i, j, generator.subdivision)].x + 1) / 2;
+			face.v[1] = 1 - (points[below_next(i, j, generator.subdivision)].x + 1) / 2;
+			face.v[2] = 1 - (points[below(i, j, generator.subdivision)].x + 1) / 2;
+			faces.push_back(face);
+		}
+	}
+
+	return true;
+}
+
+vector3d pcs_insig::interpolate_z(const vector3d& v, const std::vector<vector3d>& verts) {
+	if (verts.size() < 3) {
+		return vector3d();
+	}
+	matrix transform(verts[0], verts[1], verts[2]);
+	for (int i = 0; i < 3; i++) {
+		transform.a2d[i][2] = 1.0f;
+	}
+	transform = transform.invert();
+	vector3d z(verts[0].z, verts[1].z, verts[2].z);
+	z = transform * z;
+	return vector3d(v.x, v.y, dot(z, vector3d(v.x, v.y, 1)));
+}
+
+bool pcs_insig::inside_polygon(const vector3d& v, const std::vector<vector3d>& verts) {
+	bool result = false;
+	unsigned int i;
+	int j;
+	for (i = 0, j = verts.size() - 1; i < verts.size(); j = i++) {
+		if ((verts[i].y > v.y) != (verts[j].y > v.y) &&
+				(v.x < (verts[j].x-verts[i].x) * (v.y-verts[i].y) / (verts[j].y-verts[i].y) + verts[i].x)) {
+			result = !result;
+		}
+	}
+	return result;
+}
+
+bool pcs_insig::outside_viewport(const std::vector<vector3d>& verts) {
+	bool abovex(true), abovey(true), belowx(true), belowy(true), belowz(true);
+	for (std::vector<vector3d>::const_iterator it = verts.begin(); it != verts.end(); ++it) {
+		if (it->x >= -1.0f) {
+			belowx = false;
+		}
+		if (it->x <= 1.0f) {
+			abovex = false;
+		}
+		if (it->y >= -1.0f) {
+			belowy = false;
+		}
+		if (it->y <= 1.0f) {
+			abovey = false;
+		}
+		if (it->z >= 0.0f) {
+			belowz = false;
+		}
+	}
+	return abovex || abovey || belowx || belowy || belowz;
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-

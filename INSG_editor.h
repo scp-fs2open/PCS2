@@ -135,6 +135,7 @@ protected:
 	vector_ctrl*forward;
 	vector_ctrl*up;
 	float_ctrl*radius;
+	int_ctrl*subdivision;
 
 public:
 	
@@ -145,6 +146,7 @@ public:
 		add_control(forward =new vector_ctrl(this,0,0,60,40,_("Projection vector")),0,wxEXPAND );
 		add_control(up =new vector_ctrl(this,0,0,60,40,_("Up vector")),0,wxEXPAND );
 		add_control(radius =new float_ctrl(this,0,0,60,40,_("Length")),0,wxEXPAND );
+		add_control(subdivision =new int_ctrl(this,0,0,60,40,_("Subdivision")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_generator_ctrl(void){};
@@ -155,6 +157,7 @@ public:
 		forward->set_value(t.forward);
 		up->set_value(t.up);
 		radius->set_value(t.radius);
+		subdivision->set_value(t.subdivision);
 		
 	}
 
@@ -165,6 +168,7 @@ public:
 		generator.forward = forward->get_value();
 		generator.up = up->get_value();
 		generator.radius = radius->get_value();
+		generator.subdivision = subdivision->get_value();
 		return generator;
 	}
 };
@@ -179,6 +183,7 @@ protected:
 	int_ctrl*lod;
 
 	insignia_generator_ctrl* generator;
+	wxButton*project_btn;
 
 public:
 	
@@ -188,7 +193,8 @@ public:
 		add_control(lod =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
 		add_control(offset =new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
 		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,310,_("Faces"), _("")),0,wxEXPAND );
-		add_control(generator =new insignia_generator_ctrl(this,0,0,60,200,_("Projection")),0,wxEXPAND );
+		add_control(generator =new insignia_generator_ctrl(this,0,0,60,220,_("Projection")),0,wxEXPAND );
+		add_control(project_btn = new wxButton(this, INSG_PROJECT, _("Project")));
 	};
 
 	virtual ~insignia_ctrl(void){};
@@ -211,8 +217,10 @@ public:
 		insignia.generator = generator->get_value();
 		if (insignia.faces.size() == 0) {
 			generator->Show();
+			project_btn->Show();
 		} else {
 			generator->Hide();
+			project_btn->Hide();
 		}
 		return insignia;
 	}
@@ -223,6 +231,22 @@ public:
 
 	int get_index() {
 		return faces->get_index();
+	}
+
+	DECLARE_EVENT_TABLE();
+	void on_project(wxCommandEvent& event){
+		PCS_Model& model = get_main_window()->get_model();
+		pcs_insig insignia;
+		insignia.lod = lod->get_value();
+		insignia.generator = generator->get_value();
+		int sobj = model.LOD(insignia.lod);
+		if (insignia.Generate(model.SOBJ(sobj).polygons)) {
+			faces->set_value(insignia.faces);
+			offset->set_value(insignia.offset);
+			lod->set_value(insignia.lod);
+			generator->Hide();
+			project_btn->Hide();
+		}
 	}
 };
 
@@ -251,7 +275,7 @@ public:
 		:editor_ctrl<std::vector<pcs_insig> >(parent, _("Insignia"))
 	{
 		//add controls
-		add_control(insignia=new insignia_array_ctrl(this,0,0,60,660,_(""), _("")),0,wxEXPAND );
+		add_control(insignia=new insignia_array_ctrl(this,0,0,60,700,_(""), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

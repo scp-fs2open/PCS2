@@ -283,6 +283,7 @@ enum
 
 	PATH_AUTO_GEN,
 	WPN_CONVERGENCE,
+	INSG_PROJECT,
 
 	//convergence calculator
 	CHECK_X,
