@@ -154,22 +154,26 @@ public:
 		omnipoints o;
 		//std::vector<pcs_insig> insignia = get_value();
 		//for(unsigned int i = 0; i<insignia.size(); i++){
-		pcs_insig insig = insignia->get_curent_value();
-		o.point.reserve(insig.faces.size());
-		for (unsigned int j = 0; j < insig.faces.size(); j++) {
-			pcs_insig_face face;
-			std::vector<omnipoint> points;
-			points.resize(3);
-			for (unsigned int k = 0; k < 3; k++) {
-				points[k].pos = insig.faces[j].verts[k] + insig.offset;
+		if (insignia->get_index() != -1) {
+			pcs_insig insig = insignia->get_curent_value();
+			o.point.reserve(insig.faces.size());
+			for (unsigned int j = 0; j < insig.faces.size(); j++) {
+				pcs_insig_face face;
+				std::vector<omnipoint> points;
+				points.resize(3);
+				for (unsigned int k = 0; k < 3; k++) {
+					points[k].pos = insig.faces[j].verts[k] + insig.offset;
+					points[k].model = -1;
+				}
+				o.point.push_back(points);
 			}
-			o.point.push_back(points);
-		}
-		//}
-		o.flags = OMNIPOINT_CLOSED_PATH;
-		o.selected_item = selected_item;
-		o.selected_list = selected_list;
-		o.unselected = unselected;
+			//}
+			o.flags = OMNIPOINT_CLOSED_PATH;
+			o.lod = insig.lod;
+			o.selected_item = selected_item;
+			o.selected_list = selected_list;
+			o.unselected = unselected;
+	}
 		return o;
 	}
 

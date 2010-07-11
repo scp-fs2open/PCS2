@@ -457,6 +457,9 @@ void wxGL_PMFCanvas::Render()
 			model.set_active_texture(omni_selected_item);
 		else
 			model.set_active_texture(-1);
+		if (omni.lod > -1 && omni.lod < model.GetLODCount()) {
+			model.set_active_model(model.LOD(omni.lod));
+		}
 	
 		model.Render(tex_ctrl, UseVBOs, active_chunk == SOBJ);
 
@@ -466,7 +469,7 @@ void wxGL_PMFCanvas::Render()
 			model.draw_shields();
 
 		if(active_chunk == INSG)
-			model.draw_insignia();
+			model.draw_insignia(omni.lod);
 
 		glDisable(GL_TEXTURE_2D);
 

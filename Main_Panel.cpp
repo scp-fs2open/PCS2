@@ -351,7 +351,7 @@ main_panel::main_panel(wxFrame* parent)
 	tree_id.TGUN_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Turrets"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(TGUN, path));
 	tree_id.PATH_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Paths"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(PATH, path));
 	tree_id.EYE_ID  = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Eye Points"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(EYE, path));
-	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Insignia"), TREE_NOSEL, TREE_NOSEL, new tree_node_id(INSG, path));
+	tree_id.INSG_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("Insignia"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(INSG, path));
 
 	path.resize(0);
 

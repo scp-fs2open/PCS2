@@ -1712,43 +1712,58 @@ void PCS_Model::draw_shields(){
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void PCS_Model::draw_insignia(){
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_BLEND);
-	
-	glBlendFunc(GL_ONE,GL_ONE);
-	glDisable(GL_CULL_FACE);
+void PCS_Model::draw_insignia(int lod){
+	if (Wireframe) {
+		return;
+	}
+	glColor4f(1.0, 1.0, 1.0, 1.0); // clear any color
 
-	glDepthMask(GL_FALSE);
-	glBegin(GL_TRIANGLES);
-	glColor4ubv( (GLubyte*)(get_SHLD_color()*0.0f).col);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.01f);
+	glDisable(GL_CULL_FACE);
+	ERROR_CHECK;
+	if (!Textureless) {
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 1);
+		//for completness, set the first stage to multiply the base texture with light
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
+	} else {
+		glActiveTexture(GL_TEXTURE0);
+		glDisable(GL_TEXTURE_2D);
+	}
 
 	for (unsigned int i = 0; i < insignia.size(); i++)
 	{
 		pcs_insig& insig = insignia[i];
-		for (unsigned int j = 0; j < insig.faces.size(); j++) {
-			pcs_insig_face& face = insig.faces[j];
-			vector3d normal = CrossProduct(face.verts[2] - face.verts[1], face.verts[1] - face.verts[0]);
-			glNormal3fv((GLfloat *) &normal);
-			for (unsigned int k = 0; k < 3; k++)
-			{
-				vector3d offsetted(face.verts[k] + insig.offset);
-				glVertex3fv((GLfloat *) &offsetted);
-			}
-			normal = vector3d(-normal.x, -normal.y, -normal.z);
-			glNormal3fv((GLfloat *) &normal);
-			for (unsigned int k = 0; k < 3; k++)
-			{
-				vector3d offsetted(face.verts[k] + insig.offset);
-				glVertex3fv((GLfloat *) &offsetted);
+		if (lod == insig.lod) {
+			for (unsigned int j = 0; j < insig.faces.size(); j++) {
+				pcs_insig_face& face = insig.faces[j];
+				glBegin(GL_POLYGON);
+				for (unsigned int k = 0; k < 3; k++)
+				{
+					vector3d offsetted(face.verts[k] + insig.offset);
+					if (!Textureless) {
+						glTexCoord2f(face.u[k], face.v[k]);
+					}
+					glVertex3fv((GLfloat *) &offsetted);
+				}
+				glEnd();
+				ERROR_CHECK;
 			}
 		}
 	}
-	glEnd();
 
 	glDisable(GL_BLEND);
-	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glColor4ubv( (GLubyte*)get_SHLD_color().col);
 

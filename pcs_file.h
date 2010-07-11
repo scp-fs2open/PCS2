@@ -384,7 +384,7 @@ class PCS_Model
 		// Rendering
 		void Render(TextureControl &tc, bool use_vbos, bool highlight = false);
 		void draw_shields();
-		void draw_insignia();
+		void draw_insignia(int lod);
 
 
 		// Accessors
