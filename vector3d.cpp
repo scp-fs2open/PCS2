@@ -183,6 +183,12 @@ vector3d& operator+=(vector3d &one, const vector3d &two)
 	return one;
 }
 
+vector3d& operator-=(vector3d &one, const vector3d &two)
+{
+	one = one - two;
+	return one;
+}
+
 
 //****************************************************************************************************************
 
@@ -229,23 +235,23 @@ vector3d MakeUnitVector(const vector3d &vect)
 //****************************************************************************************************************
 
 
-bool operator>(vector3d &one, vector3d &two)
+bool operator>(const vector3d &one, const vector3d &two)
 {
 	return ((one.x >= two.x) && (one.y >= two.y) && (one.z >= two.z) && !(one == two));
 }
 
-bool operator<(vector3d &one, vector3d &two)
+bool operator<(const vector3d &one, const vector3d &two)
 {
 	return ((one.x <= two.x) && (one.y <= two.y) && (one.z <= two.z) && !(one == two));
 }
 
-bool operator>=(vector3d &one, vector3d &two)
+bool operator>=(const vector3d &one, const vector3d &two)
 {
 	return ((one.x >= two.x) && (one.y >= two.y) && (one.z >= two.z));
 }
 
 
-bool operator<=(vector3d &one, vector3d &two)
+bool operator<=(const vector3d &one, const vector3d &two)
 {
 	return ((one.x <= two.x) && (one.y <= two.y) && (one.z <= two.z));
 }
@@ -329,7 +335,7 @@ std::istream & operator >> ( std::istream & in, vector3d &vec)
 
 //****************************************************************************************************************
 
-vector3d operator *(float scalar, vector3d &v)
+vector3d operator *(float scalar, const vector3d &v)
 {
 	vector3d Ret;
 	Ret.x = scalar * v.x;
@@ -339,7 +345,7 @@ vector3d operator *(float scalar, vector3d &v)
 }
 
 //diferent parameter order
-vector3d operator *(vector3d &v,  float scalar)
+vector3d operator *(const vector3d &v,  float scalar)
 {
 	vector3d Ret;
 	Ret.x = scalar * v.x;
@@ -349,7 +355,7 @@ vector3d operator *(vector3d &v,  float scalar)
 }
 
 
-vector3d operator /(vector3d &v, float scalar)
+vector3d operator /(const vector3d &v, float scalar)
 {
 	vector3d Ret;
 	Ret.x = v.x / scalar;
