@@ -135,6 +135,7 @@ protected:
 	vector_ctrl*forward;
 	vector_ctrl*up;
 	float_ctrl*radius;
+	float_ctrl*distance;
 	int_ctrl*subdivision;
 
 public:
@@ -146,6 +147,7 @@ public:
 		add_control(forward =new vector_ctrl(this,0,0,60,40,_("Projection vector")),0,wxEXPAND );
 		add_control(up =new vector_ctrl(this,0,0,60,40,_("Up vector")),0,wxEXPAND );
 		add_control(radius =new float_ctrl(this,0,0,60,40,_("Length")),0,wxEXPAND );
+		add_control(distance =new float_ctrl(this,0,0,60,40,_("Back-off distance")),0,wxEXPAND );
 		add_control(subdivision =new int_ctrl(this,0,0,60,40,_("Subdivision")),0,wxEXPAND );
 	};
 
@@ -157,6 +159,7 @@ public:
 		forward->set_value(t.forward);
 		up->set_value(t.up);
 		radius->set_value(t.radius);
+		distance->set_value(t.distance);
 		subdivision->set_value(t.subdivision);
 		
 	}
@@ -168,6 +171,7 @@ public:
 		generator.forward = forward->get_value();
 		generator.up = up->get_value();
 		generator.radius = radius->get_value();
+		generator.distance = distance->get_value();
 		generator.subdivision = subdivision->get_value();
 		return generator;
 	}
@@ -193,7 +197,7 @@ public:
 		add_control(lod =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
 		add_control(offset =new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
 		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,310,_("Faces"), _("")),0,wxEXPAND );
-		add_control(generator =new insignia_generator_ctrl(this,0,0,60,220,_("Projection")),0,wxEXPAND );
+		add_control(generator =new insignia_generator_ctrl(this,0,0,60,260,_("Projection")),0,wxEXPAND );
 		add_control(project_btn = new wxButton(this, INSG_PROJECT, _("Project")));
 	};
 
@@ -275,7 +279,7 @@ public:
 		:editor_ctrl<std::vector<pcs_insig> >(parent, _("Insignia"))
 	{
 		//add controls
-		add_control(insignia=new insignia_array_ctrl(this,0,0,60,700,_(""), _("")),0,wxEXPAND );
+		add_control(insignia=new insignia_array_ctrl(this,0,0,60,750,_(""), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

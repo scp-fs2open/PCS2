@@ -37,6 +37,7 @@
  */
 
 #include <cfloat>
+#include <set>
 
 #include "pcs_file_dstructs.h"
 #include "matrix3d.h"
@@ -254,32 +255,23 @@ void pcs_insig::Write(std::ostream& out)
 
 bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
 {
-	if (!(generator.up != vector3d() && generator.forward != vector3d() && generator.radius > 0.0f)) {
+	if (!(generator.up != vector3d() && generator.forward != vector3d() &&
+				generator.radius > 0.0f && generator.subdivision > 0)) {
 		return false;
 	}
 	vector3d forward = MakeUnitVector(generator.forward);
 	vector3d up = MakeUnitVector(
 			generator.up - (dot(generator.up, forward) * forward));
 	vector3d right = CrossProduct(forward, up);
-	float radius = generator.radius / 2;
-	std::vector<vector3d> points;
-	points.reserve((generator.subdivision + 1) * (generator.subdivision + 1));
-	for (int i = 0; i <= generator.subdivision + 1; i++) {
-		for (int j = 0; j <= generator.subdivision + 1; j++) {
-			points.push_back(vector3d(i * 2.0f / (generator.subdivision + 1) - 1, j * 2.0f / (generator.subdivision + 1) - 1, 0));
-		}
-	}
 	matrix transform(up, right, forward);
-	transform = transform * (1 / radius);
+	transform = transform * (2.0f / generator.radius);
 
 	std::vector<std::vector<vector3d> > polys;
-	std::vector<vector3d> transformed;
-	std::vector<vector3d> zbuffer(points.size(), vector3d(0.0f, 0.0f, FLT_MAX));
 	for (std::vector<pcs_polygon>::const_iterator it = polygons.begin(); it != polygons.end(); ++it) {
 		if (dot(it->norm, forward) >= 0) {
 			continue;
 		}
-		transformed.clear();
+		std::vector<vector3d> transformed;
 		for (std::vector<pcs_vertex>::const_iterator jt = it->verts.begin(); jt != it->verts.end(); ++jt) {
 			transformed.push_back(transform * (jt->point - generator.pos));
 		}
@@ -287,65 +279,111 @@ bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
 			polys.push_back(transformed);
 		}
 	}
-	for (std::vector<std::vector<vector3d> >::const_iterator it = polys.begin(); it != polys.end(); ++it) {
-		for (unsigned int i = 0; i < points.size(); i++) {
-			if (inside_polygon(points[i], *it)) {
-				vector3d result = interpolate_z(points[i], *it);
-				if (result.z < zbuffer[i].z) {
-					zbuffer[i] = result;
+	std::vector<float> zbuffer(generator.subdivision * generator.subdivision, FLT_MAX);
+	std::vector<int> zbuffer_idx(generator.subdivision * generator.subdivision, -1);
+	for (unsigned int j = 0; j < polys.size(); j++) {
+		for (int i = 0; i < generator.subdivision; i++) {
+			for (int k = 0; k < generator.subdivision; k++) {
+				vector3d point(i * 2.0f / (generator.subdivision) - 1,
+						k * 2.0f / (generator.subdivision) - 1, 0);
+				if (inside_polygon(point, polys[j])) {
+					float result = interpolate_z(point, polys[j]);
+					if (result < zbuffer[i * generator.subdivision + k]) {
+						zbuffer[i * generator.subdivision + k] = result;
+						zbuffer_idx[i * generator.subdivision + k] = j;
+					}
 				}
 			}
 		}
 	}
-	std::vector<vector3d> verts;
-	transform = transform.invert();
-	verts.reserve(points.size());
-	vector3d average;
-	for (unsigned int i = 0; i < points.size(); i++) {
-		verts.push_back(generator.pos + (transform * zbuffer[i]));
-		average += verts[i];
-	}
-	average = average * (1.0/verts.size());
-	// Move back by our fudge factor in the projection direction to avoid
-	// intersecting the mesh.
-	offset = average - (forward * 0.05);
-	for (unsigned int i = 0; i < verts.size(); i++) {
-		verts[i] = verts[i] - average;
-	}
-
-	pcs_insig_face face;
-	for (int i = 0; i < generator.subdivision + 1; i++) {
-		for (int j = 0; j < generator.subdivision + 1; j++) {
-			face.verts[0] = verts[current(i, j, generator.subdivision)];
-			face.verts[1] = verts[next(i, j, generator.subdivision)];
-			face.verts[2] = verts[below_next(i, j, generator.subdivision)];
-			face.u[0] = (points[current(i, j, generator.subdivision)].y + 1) / 2;
-			face.u[1] = (points[next(i, j, generator.subdivision)].y + 1) / 2;
-			face.u[2] = (points[below_next(i, j, generator.subdivision)].y + 1) / 2;
-			face.v[0] = 1 - (points[current(i, j, generator.subdivision)].x + 1) / 2;
-			face.v[1] = 1 - (points[next(i, j, generator.subdivision)].x + 1) / 2;
-			face.v[2] = 1 - (points[below_next(i, j, generator.subdivision)].x + 1) / 2;
-			faces.push_back(face);
-
-			face.verts[0] = verts[current(i, j, generator.subdivision)];
-			face.verts[1] = verts[below_next(i, j, generator.subdivision)];
-			face.verts[2] = verts[below(i, j, generator.subdivision)];
-			face.u[0] = (points[current(i, j, generator.subdivision)].y + 1) / 2;
-			face.u[1] = (points[below_next(i, j, generator.subdivision)].y + 1) / 2;
-			face.u[2] = (points[below(i, j, generator.subdivision)].y + 1) / 2;
-			face.v[0] = 1 - (points[current(i, j, generator.subdivision)].x + 1) / 2;
-			face.v[1] = 1 - (points[below_next(i, j, generator.subdivision)].x + 1) / 2;
-			face.v[2] = 1 - (points[below(i, j, generator.subdivision)].x + 1) / 2;
-			faces.push_back(face);
+	std::set<unsigned int> included_polys;
+	for (unsigned int i = 0; i < zbuffer_idx.size(); i++) {
+		if (zbuffer_idx[i] != -1) {
+			included_polys.insert(zbuffer_idx[i]);
 		}
 	}
-
+	transform = transform.invert();
+	pcs_insig_face face;
+	vector3d min_bounding_box, max_bounding_box;
+	for (std::set<unsigned int>::const_iterator it = included_polys.begin(); it != included_polys.end(); ++it) {
+		std::vector<vector3d> clipped_poly(clip(polys[*it]));
+		for (unsigned int i = 0; i < clipped_poly.size() - 2; i++) {
+			face.verts[0] = generator.pos + (transform * clipped_poly[i]);
+			face.u[0] = (1.0f + clipped_poly[i].y) / 2.0f;
+			face.v[0] = (1.0f -clipped_poly[i].x) / 2.0f;
+			face.verts[1] = generator.pos + (transform * clipped_poly[i + 1]);
+			face.u[1] = (1.0f + clipped_poly[i + 1].y) / 2.0f;
+			face.v[1] = (1.0f -clipped_poly[i + 1].x) / 2.0f;
+			face.verts[2] = generator.pos + (transform * clipped_poly[clipped_poly.size() - 1]);
+			face.u[2] = (1.0f + clipped_poly[clipped_poly.size() - 1].y) / 2.0f;
+			face.v[2] = (1.0f -clipped_poly[clipped_poly.size() - 1].x) / 2.0f;
+			faces.push_back(face);
+			for (int j = 0; j < 3; j++) {
+				for (int k = 0; k < 3; k++) {
+					if (face.verts[j][k] > max_bounding_box[k]) {
+						max_bounding_box[k] = face.verts[j][k];
+					}
+					if (face.verts[j][k] < min_bounding_box[k]) {
+						min_bounding_box[k] = face.verts[j][k];
+					}
+				}
+			}
+		}
+	}
+	vector3d center = min_bounding_box + ((max_bounding_box - min_bounding_box) / 2.0f);
+	offset = center - forward * (generator.distance);
+	for (unsigned int i = 0; i < faces.size(); i++) {
+		for (int j = 0; j < 3; j++) {
+			faces[i].verts[j] -= center;
+		}
+	}
 	return true;
 }
 
-vector3d pcs_insig::interpolate_z(const vector3d& v, const std::vector<vector3d>& verts) {
+namespace {
+	class edge {
+		float a, b, c;
+		public:
+		edge(float a, float b, float c) : a(a), b(b), c(c) {}
+
+		bool inside(const vector3d& v) const {
+			return a * v.x + b*v.y + c >= 0;
+		}
+
+		vector3d intersection(const vector3d& u, const vector3d& v) const {
+			vector3d direction = v - u;
+			float t = (a * u.x + b*u.y + c) / (a * (u.x - v.x) + b * (u.y - v.y));
+			return u + (t * direction);
+		}
+	};
+
+	std::vector<vector3d> clip_edge(const std::vector<vector3d> verts, const edge& current_edge) {
+		std::vector<vector3d> result;
+		unsigned int i;
+		int j;
+		for (i = 0, j = verts.size() - 1; i < verts.size(); j = i++) {
+			if (current_edge.inside(verts[i])) {
+				if (!current_edge.inside(verts[j])) {
+					result.push_back(current_edge.intersection(verts[i], verts[j]));
+				}
+				result.push_back(verts[i]);
+			} else if (current_edge.inside(verts[j])) {
+				result.push_back(current_edge.intersection(verts[i], verts[j]));
+			}
+		}
+		return result;
+	}
+
+}
+
+std::vector<vector3d> pcs_insig::clip(const std::vector<vector3d>& verts) {
+	return clip_edge(clip_edge(clip_edge(clip_edge(verts, edge(1, 0, 1)), edge(-1, 0, 1)), edge(0, 1, 1)), edge(0, -1, 1));
+
+}
+
+float pcs_insig::interpolate_z(const vector3d& v, const std::vector<vector3d>& verts) {
 	if (verts.size() < 3) {
-		return vector3d();
+		return FLT_MAX;
 	}
 	matrix transform(verts[0], verts[1], verts[2]);
 	for (int i = 0; i < 3; i++) {
@@ -353,8 +391,7 @@ vector3d pcs_insig::interpolate_z(const vector3d& v, const std::vector<vector3d>
 	}
 	transform = transform.invert();
 	vector3d z(verts[0].z, verts[1].z, verts[2].z);
-	z = transform * z;
-	return vector3d(v.x, v.y, dot(z, vector3d(v.x, v.y, 1)));
+	return dot(transform * z, vector3d(v.x, v.y, 1));
 }
 
 bool pcs_insig::inside_polygon(const vector3d& v, const std::vector<vector3d>& verts) {

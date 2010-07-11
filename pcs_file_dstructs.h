@@ -472,8 +472,9 @@ struct pcs_insig_generator
 	vector3d forward;
 	vector3d up;
 	float radius;
+	float distance;
 	int subdivision;
-	pcs_insig_generator() : radius(0.0f), subdivision(0) {}
+	pcs_insig_generator() : radius(0.0f), distance(0.005f), subdivision(128) {}
 };
 
 inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
@@ -494,19 +495,8 @@ struct pcs_insig
 	bool Generate(std::vector<pcs_polygon> polys);
 	static bool outside_viewport(const std::vector<vector3d>& verts);
 	static bool inside_polygon(const vector3d& v, const std::vector<vector3d>& verts);
-	static vector3d interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);
-	static inline int current(int i, int j, int subdivision) {
-		return i * (subdivision + 2) + j;
-	}
-	static inline int next(int i, int j, int subdivision) {
-		return i * (subdivision + 2) + j + 1;
-	}
-	static inline int below(int i, int j, int subdivision) {
-		return i * (subdivision + 2) + j + (subdivision + 2);
-	}
-	static inline int below_next(int i, int j, int subdivision) {
-		return i * (subdivision + 2) + j + (subdivision + 3);
-	}
+	static float interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);
+	static std::vector<vector3d> clip(const std::vector<vector3d>& verts);
 
 	pcs_insig() : lod(0) {} 
 };
