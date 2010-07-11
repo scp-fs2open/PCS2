@@ -137,19 +137,20 @@ bool operator!=(vector3d &one, vector3d &two);
 vector3d operator-(const vector3d &one, const vector3d &two);
 vector3d operator+(const vector3d &one, const vector3d &two);
 vector3d& operator+=(vector3d &one, const vector3d &two);
+vector3d& operator-=(vector3d &one, const vector3d &two);
 
 vector3d MakeUnitVector(const vector3d &vect);
 
-vector3d operator *(float scalar, vector3d &v); 
-vector3d operator *(vector3d &v, float scalar); 
-vector3d operator /(vector3d &v, float scalar);
+vector3d operator *(float scalar, const vector3d &v); 
+vector3d operator *(const vector3d &v, float scalar); 
+vector3d operator /(const vector3d &v, float scalar);
 float Distance(const vector3d &one, const vector3d &two);
 
-bool operator>(vector3d &one, vector3d &two);
-bool operator<(vector3d &one, vector3d &two);
+bool operator>(const vector3d &one, const vector3d &two);
+bool operator<(const vector3d &one, const vector3d &two);
 
-bool operator>=(vector3d &one, vector3d &two);
-bool operator<=(vector3d &one, vector3d &two);
+bool operator>=(const vector3d &one, const vector3d &two);
+bool operator<=(const vector3d &one, const vector3d &two);
 
 vector3d MakeVector(float ax, float ay, float az);
 float Abs(float n);
