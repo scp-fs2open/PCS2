@@ -983,7 +983,8 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 		Render();
 //########################end mouse movement code########################//
 	}
-	else if (event.GetEventType() == wxEVT_MOUSEWHEEL){
+	
+	if (event.GetEventType() == wxEVT_MOUSEWHEEL){
 //************************start scroll code************************//
 		if(event.m_controlDown){
 	//------------------------start omnipoint code------------------------//
