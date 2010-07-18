@@ -474,7 +474,7 @@ struct pcs_insig_generator
 	float radius;
 	float distance;
 	int subdivision;
-	pcs_insig_generator() : radius(0.0f), distance(0.005f), subdivision(128) {}
+	pcs_insig_generator() : forward(-1,0,0), up(0,1,0), radius(3.0f), distance(0.005f), subdivision(128) {}
 };
 
 inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){

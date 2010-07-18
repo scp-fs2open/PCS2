@@ -1029,6 +1029,7 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 
 	if(update_omnipoints){
 		mainpanel->control_panel->set_omnipoints(omni);
+		set_omnipoints(mainpanel->control_panel->get_omnipoints());
 	}
 //	Render();
 }

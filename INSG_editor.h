@@ -345,6 +345,10 @@ public:
 						vector3d right = CrossProduct(forward, up);
 						float radius = generator.radius / 2;
 						std::vector<omnipoint> points;
+						points.resize(1);
+						points[0].pos = generator.pos;
+						points[0].norm = forward * 10;
+						o.point.push_back(points);
 						points.resize(4);
 						for (int i = 0; i < 4; i++) {
 							points[i].norm = forward * 10;
@@ -366,7 +370,15 @@ public:
 	}
 
 	void set_omnipoints(const omnipoints&points_){
-		// TODO
+		if (insignia->get_index() != -1) {
+			pcs_insig insig = insignia->get_curent_value();
+			if (insig.faces.size() > 0) {
+				// TODO
+			} else {
+				insig.generator.pos = points_.point[0][0].pos;
+				insignia->set_curent_value(insig);
+			}
+		}
 	}
 
 	void get_omnipoint_coords(int&list, int&item){
@@ -378,11 +390,12 @@ public:
 			pcs_insig insig = insignia->get_curent_value();
 			if (insig.faces.size() > 0) {
 				list = insignia->get_child_control()->get_index();
+				item = -1;
 			} else {
 				list = 0;
+				item = 0;
 			}
 		}
-		item = -1;
 	}
 	void set_omnipoint_coords(int&list, int&item){
 		// TODO
