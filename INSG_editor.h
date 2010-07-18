@@ -250,6 +250,8 @@ public:
 			lod->set_value(insignia.lod);
 			generator->Hide();
 			project_btn->Hide();
+			wxCommandEvent event(EDIT_DONE);
+			GetEventHandler()->ProcessEvent(event);
 		}
 	}
 };
