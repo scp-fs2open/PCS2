@@ -220,11 +220,11 @@ public:
 		insignia.lod = lod->get_value();
 		insignia.generator = generator->get_value();
 		if (insignia.faces.size() == 0) {
-			generator->Show();
-			project_btn->Show();
+			generator->Enable();
+			project_btn->Enable();
 		} else {
-			generator->Hide();
-			project_btn->Hide();
+			generator->Disable();
+			project_btn->Disable();
 		}
 		return insignia;
 	}
@@ -248,8 +248,8 @@ public:
 			faces->set_value(insignia.faces);
 			offset->set_value(insignia.offset);
 			lod->set_value(insignia.lod);
-			generator->Hide();
-			project_btn->Hide();
+			generator->Disable();
+			project_btn->Disable();
 			wxCommandEvent event(EDIT_DONE);
 			GetEventHandler()->ProcessEvent(event);
 		}
