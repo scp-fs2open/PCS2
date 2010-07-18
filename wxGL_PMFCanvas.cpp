@@ -189,6 +189,7 @@
 #include <wx/wfstream.h>
 #include <wx/filename.h>
 #include <cfloat>
+#include "INSG_editor.h"
 
 #include "geo_sphere.h"
 
@@ -469,7 +470,7 @@ void wxGL_PMFCanvas::Render()
 			model.draw_shields();
 
 		if(active_chunk == INSG)
-			model.draw_insignia(omni.lod);
+			model.draw_insignia(omni.lod, omni);
 
 		glDisable(GL_TEXTURE_2D);
 

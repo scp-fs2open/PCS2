@@ -269,6 +269,7 @@
 #include "pcs_pof_bspfuncs.h"
 #include <fstream>
 #include "color.h"
+#include "omnipoints.h"
 #include <wx/msgdlg.h>
 
 unsigned int PCS_Model::BSP_MAX_DEPTH = 0;
@@ -1712,7 +1713,7 @@ void PCS_Model::draw_shields(){
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void PCS_Model::draw_insignia(int lod){
+void PCS_Model::draw_insignia(int lod, const omnipoints& omni){
 	if (Wireframe) {
 		return;
 	}
@@ -1760,40 +1761,28 @@ void PCS_Model::draw_insignia(int lod){
 				glEnd();
 				ERROR_CHECK;
 			}
-			if (insig.faces.size() == 0) {
-				pcs_insig_generator& generator = insig.generator;
-				if (generator.up != vector3d() && generator.forward != vector3d() && generator.radius > 0.0f) {
-					vector3d forward = MakeUnitVector(generator.forward);
-					vector3d up = MakeUnitVector(generator.up - (dot(generator.up, forward) * forward));
-					vector3d right = CrossProduct(forward, up);
-					float radius = generator.radius / 2;
-					vector3d pos;
-					glBegin(GL_POLYGON);
-					if (!Textureless) {
-						glTexCoord2f(0.0f, 0.0f);
-					}
-					pos = generator.pos + (up * radius) - (right * radius);
-					glVertex3fv((GLfloat *) &pos);
-					if (!Textureless) {
-						glTexCoord2f(1.0f, 0.0f);
-					}
-					pos = generator.pos + (up * radius) + (right * radius);
-					glVertex3fv((GLfloat *) &pos);
-					if (!Textureless) {
-						glTexCoord2f(1.0f, 1.0f);
-					}
-					pos = generator.pos - (up * radius) + (right * radius);
-					glVertex3fv((GLfloat *) &pos);
-					if (!Textureless) {
-						glTexCoord2f(0.0f, 1.0f);
-					}
-					pos = generator.pos - (up * radius) - (right * radius);
-					glVertex3fv((GLfloat *) &pos);
-					glEnd();
-					ERROR_CHECK;
-				}
-			}
 		}
+	}
+	if (omni.point.size() == 2 && omni.point[0].size() == 1 && omni.point[1].size() == 4) {
+			glBegin(GL_POLYGON);
+			if (!Textureless) {
+				glTexCoord2f(0.0f, 0.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][0]);
+			if (!Textureless) {
+				glTexCoord2f(1.0f, 0.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][1]);
+			if (!Textureless) {
+				glTexCoord2f(1.0f, 1.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][2]);
+			if (!Textureless) {
+				glTexCoord2f(0.0f, 1.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][3]);
+			glEnd();
+			ERROR_CHECK;
 	}
 
 	glDisable(GL_BLEND);
