@@ -305,6 +305,43 @@ bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
 	transform = transform.invert();
 	pcs_insig_face face;
 	vector3d min_bounding_box, max_bounding_box;
+	const double epsilon = 0.9999;
+	bool merged = true;
+	while (merged) {
+		merged = false;
+		for (std::set<unsigned int>::const_iterator it = included_polys.begin(); it != included_polys.end(); ++it) {
+			std::set<unsigned int>::const_iterator jt = it;
+		   	++jt;
+			for (; jt != included_polys.end(); ++jt) {
+				if (dot(MakeUnitVector(CrossProduct(polys[*it][1] - polys[*it][0],
+									polys[*it][2] - polys[*it][0])),
+							MakeUnitVector(CrossProduct(polys[*jt][1] - polys[*jt][0],
+									polys[*jt][2] - polys[*jt][0]))) > epsilon) {
+					for (unsigned int k = 0; k < polys[*it].size() && !merged; k++) {
+						for (unsigned int l = 0; l < polys[*jt].size() && !merged; l++) {
+							if (polys[*it][(k + 1) % polys[*it].size()] == polys[*jt][l] &&
+									polys[*it][k] == polys[*jt][(l + 1) % polys[*jt].size()]) {
+								// TODO: test for convexity
+								merged = true;
+								polys[*it].resize(polys[*it].size() + polys[*jt].size() - 2);
+								// Shift vertices after the break out of the way.
+								for (int i = polys[*it].size() - 1; i > k + 1; i--) {
+									polys[*it][i] = polys[*it][i - polys[*jt].size() + 2];
+								}
+								// Copy vertices from poly being merged, in order.
+								int i = k + 1;
+								for (int j = (l + 2) % polys[*jt].size(); j != l; j = (j + 1) % polys[*jt].size()) {
+									polys[*it][i] = polys[*jt][j];
+									i++;
+								}
+								included_polys.erase(jt);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	for (std::set<unsigned int>::const_iterator it = included_polys.begin(); it != included_polys.end(); ++it) {
 		std::vector<vector3d> clipped_poly(clip(polys[*it]));
 		for (unsigned int i = 0; i < clipped_poly.size() - 2; i++) {
