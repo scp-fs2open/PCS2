@@ -253,7 +253,7 @@ void pcs_insig::Write(std::ostream& out)
 	BFWriteVector(faces)
 }
 
-bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
+bool pcs_insig::Generate(const std::vector<pcs_polygon>& polygons, const float epsilon)
 {
 	if (!(generator.up != vector3d() && generator.forward != vector3d() &&
 				generator.radius > 0.0f && generator.subdivision > 0)) {
@@ -305,7 +305,6 @@ bool pcs_insig::Generate(const std::vector<pcs_polygon> polygons)
 	transform = transform.invert();
 	pcs_insig_face face;
 	vector3d min_bounding_box, max_bounding_box;
-	const double epsilon = 0.9999;
 	bool merged = true;
 	while (merged) {
 		merged = false;

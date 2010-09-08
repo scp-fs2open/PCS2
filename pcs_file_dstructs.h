@@ -474,12 +474,13 @@ struct pcs_insig_generator
 	float radius;
 	float distance;
 	int subdivision;
-	pcs_insig_generator() : forward(-1,0,0), up(0,1,0), radius(3.0f), distance(0.005f), subdivision(128) {}
+	float merge_eps;
+	pcs_insig_generator() : forward(-1,0,0), up(0,1,0), radius(3.0f), distance(0.005f), subdivision(128), merge_eps(0.9999f) {}
 };
 
 inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
 	return t.pos == o.pos && t.forward == o.forward && t.up == o.up &&
-		t.radius == o.radius;
+		t.radius == o.radius && t.merge_eps == o.merge_eps;
 }
 
 struct pcs_insig
@@ -492,7 +493,7 @@ struct pcs_insig
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
-	bool Generate(std::vector<pcs_polygon> polys);
+	bool Generate(const std::vector<pcs_polygon>& polys, const float epsilon);
 	static bool outside_viewport(const std::vector<vector3d>& verts);
 	static bool inside_polygon(const vector3d& v, const std::vector<vector3d>& verts);
 	static float interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);

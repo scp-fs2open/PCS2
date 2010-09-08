@@ -115,6 +115,10 @@ public:
 		return face;
 	}
 
+	int get_index() {
+		return verts->get_index();
+	}
+
 };
 
 class insignia_face_array_ctrl
@@ -136,6 +140,7 @@ protected:
 	vector_ctrl*up;
 	float_ctrl*radius;
 	float_ctrl*distance;
+	float_ctrl*merge_eps;
 	int_ctrl*subdivision;
 
 public:
@@ -149,6 +154,7 @@ public:
 		add_control(radius =new float_ctrl(this,0,0,60,40,_("Length")),0,wxEXPAND );
 		add_control(distance =new float_ctrl(this,0,0,60,40,_("Back-off distance")),0,wxEXPAND );
 		add_control(subdivision =new int_ctrl(this,0,0,60,40,_("Subdivision")),0,wxEXPAND );
+		add_control(merge_eps =new float_ctrl(this,0,0,60,40,_("Polygon merge threshold")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_generator_ctrl(void){};
@@ -161,6 +167,7 @@ public:
 		radius->set_value(t.radius);
 		distance->set_value(t.distance);
 		subdivision->set_value(t.subdivision);
+		merge_eps->set_value(t.merge_eps);
 		
 	}
 
@@ -173,6 +180,7 @@ public:
 		generator.radius = radius->get_value();
 		generator.distance = distance->get_value();
 		generator.subdivision = subdivision->get_value();
+		generator.merge_eps = merge_eps->get_value();
 		return generator;
 	}
 };
@@ -197,7 +205,7 @@ public:
 		add_control(lod =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
 		add_control(offset =new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
 		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,310,_("Faces"), _("")),0,wxEXPAND );
-		add_control(generator =new insignia_generator_ctrl(this,0,0,60,260,_("Projection")),0,wxEXPAND );
+		add_control(generator =new insignia_generator_ctrl(this,0,0,60,300,_("Projection")),0,wxEXPAND );
 		add_control(project_btn = new wxButton(this, INSG_PROJECT, _("Project")));
 	};
 
@@ -237,6 +245,15 @@ public:
 		return faces->get_index();
 	}
 
+	std::vector<int> get_indexes() {
+		std::vector<int> result;
+		result.resize(2);
+		result[0] = faces->get_index();
+		result[1] = faces->get_child_control()->get_index();
+		return result;
+	}
+
+
 	DECLARE_EVENT_TABLE();
 	void on_project(wxCommandEvent& event){
 		PCS_Model& model = get_main_window()->get_model();
@@ -244,7 +261,7 @@ public:
 		insignia.lod = lod->get_value();
 		insignia.generator = generator->get_value();
 		int sobj = model.LOD(insignia.lod);
-		if (insignia.Generate(model.SOBJ(sobj).polygons)) {
+		if (insignia.Generate(model.SOBJ(sobj).polygons, insignia.generator.merge_eps)) {
 			faces->set_value(insignia.faces);
 			offset->set_value(insignia.offset);
 			lod->set_value(insignia.lod);
@@ -281,7 +298,7 @@ public:
 		:editor_ctrl<std::vector<pcs_insig> >(parent, _("Insignia"))
 	{
 		//add controls
-		add_control(insignia=new insignia_array_ctrl(this,0,0,60,750,_(""), _("")),0,wxEXPAND );
+		add_control(insignia=new insignia_array_ctrl(this,0,0,60,790,_(""), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called
@@ -391,8 +408,9 @@ public:
 		if (insignia->get_index() != -1) {
 			pcs_insig insig = insignia->get_curent_value();
 			if (insig.faces.size() > 0) {
-				list = insignia->get_child_control()->get_index();
-				item = -1;
+				std::vector<int> indexes = insignia->get_child_control()->get_indexes();
+				list = indexes[0];
+				item = indexes[1];
 			} else {
 				list = 0;
 				item = 0;

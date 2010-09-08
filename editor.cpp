@@ -90,7 +90,7 @@ color TXTR_ctrl::selected_item = color(255,200,200);
 color SHLD_ctrl::selected_item = color(64,64,0);
 
 color INSG_ctrl::selected_item = color(64,32,32);
-color INSG_ctrl::selected_list = color(64,32,32);
+color INSG_ctrl::selected_list = color(64,0,32);
 color INSG_ctrl::unselected = color(64,0,0);
 
 color get_SOBJ_color(){
