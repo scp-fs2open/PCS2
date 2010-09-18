@@ -656,7 +656,7 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 		int back_polys = CountContainedPolygons(bmax,bmin, polygons, contained);
 
 		//try to fix invalid bboxes
-		while(!(back_polys&&front_polys)) //without this.. we go infinite recurse
+		for (int trys = 0; !(back_polys&&front_polys) && trys < 1000; trys++) //without this.. we go infinite recurse
 		{
 			//if one of them does not have any polys it's bad
 			if(back_polys)
@@ -666,6 +666,13 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 
 			front_polys = CountContainedPolygons(fmax,fmin, polygons, contained);
 			back_polys = CountContainedPolygons(bmax,bmin, polygons, contained);
+		}
+		if (!(back_polys && front_polys))
+		{
+			//Something is probably horribly wrong with the model so give up.
+			delete node;
+			PCS_Model::BSP_COMPILE_ERROR = true;
+			return make_poly_list(Max, Min, polygons, contained);
 		}
 
 		//lets allow for 5% diference to be consitered 
