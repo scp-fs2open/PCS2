@@ -40,6 +40,10 @@ BEGIN_EVENT_TABLE (normal_ctrl,_normal_ctrl<text_ctrl>)
 	EVT_BUTTON(NORM_NORMALIZE,normal_ctrl::on_normalize)
 END_EVENT_TABLE()
 
+BEGIN_EVENT_TABLE (insignia_ctrl,editor<pcs_insig>)
+	EVT_BUTTON(INSG_PROJECT,insignia_ctrl::on_project)
+END_EVENT_TABLE()
+
 
 template<> color WPNT_ctrl<GUN>::selected_item = color(255,192,192);
 template<> color WPNT_ctrl<GUN>::selected_list = color(128,64,64);
@@ -84,6 +88,10 @@ color ACEN_ctrl::unselected = color(255,128,128);
 color SOBJ_ctrl::selected_item = color(255,255,255);
 color TXTR_ctrl::selected_item = color(255,200,200);
 color SHLD_ctrl::selected_item = color(64,64,0);
+
+color INSG_ctrl::selected_item = color(64,32,32);
+color INSG_ctrl::selected_list = color(64,0,32);
+color INSG_ctrl::unselected = color(64,0,0);
 
 color get_SOBJ_color(){
 	return SOBJ_ctrl::selected_item;

@@ -269,6 +269,7 @@
 #include "pcs_pof_bspfuncs.h"
 #include <fstream>
 #include "color.h"
+#include "omnipoints.h"
 #include <wx/msgdlg.h>
 
 unsigned int PCS_Model::BSP_MAX_DEPTH = 0;
@@ -1706,6 +1707,88 @@ void PCS_Model::draw_shields(){
 
 		glEnd();
 	}
+	glDepthMask(GL_TRUE);
+
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+void PCS_Model::draw_insignia(int lod, const omnipoints& omni){
+	if (Wireframe) {
+		return;
+	}
+	glColor4f(1.0, 1.0, 1.0, 1.0); // clear any color
+
+	glDisable(GL_LIGHTING);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.01f);
+	glDisable(GL_CULL_FACE);
+	ERROR_CHECK;
+	if (!Textureless) {
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 1);
+		//for completness, set the first stage to multiply the base texture with light
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 1.0f);
+	} else {
+		glActiveTexture(GL_TEXTURE0);
+		glDisable(GL_TEXTURE_2D);
+	}
+
+	for (unsigned int i = 0; i < insignia.size(); i++)
+	{
+		pcs_insig& insig = insignia[i];
+		if (lod == insig.lod) {
+			for (unsigned int j = 0; j < insig.faces.size(); j++) {
+				pcs_insig_face& face = insig.faces[j];
+				glBegin(GL_POLYGON);
+				for (unsigned int k = 0; k < 3; k++)
+				{
+					vector3d offsetted(face.verts[k] + insig.offset);
+					if (!Textureless) {
+						glTexCoord2f(face.u[k], face.v[k]);
+					}
+					glVertex3fv((GLfloat *) &offsetted);
+				}
+				glEnd();
+				ERROR_CHECK;
+			}
+		}
+	}
+	if (omni.point.size() == 2 && omni.point[0].size() == 1 && omni.point[1].size() == 4) {
+			glBegin(GL_POLYGON);
+			if (!Textureless) {
+				glTexCoord2f(0.0f, 0.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][0]);
+			if (!Textureless) {
+				glTexCoord2f(1.0f, 0.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][1]);
+			if (!Textureless) {
+				glTexCoord2f(1.0f, 1.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][2]);
+			if (!Textureless) {
+				glTexCoord2f(0.0f, 1.0f);
+			}
+			glVertex3fv((GLfloat *) &omni.point[1][3]);
+			glEnd();
+			ERROR_CHECK;
+	}
+
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+	glColor4ubv( (GLubyte*)get_SHLD_color().col);
+
 	glDepthMask(GL_TRUE);
 
 }

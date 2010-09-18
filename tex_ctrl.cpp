@@ -149,6 +149,7 @@
 #include <fstream>
 #include "pcs2.h"
 #include "main_panel.h"
+#include "insignia.png.h"
 
 using namespace std;
 
@@ -156,7 +157,7 @@ using namespace std;
 #ifndef WIN32
 #pragma message("*****DevIL exeption handeling not implemented for thsi platform! see the top of tex_ctrl for details*****")
 #endif
-bool load(ILenum type, char*buf, int zero){
+bool load(ILenum type, const void*buf, int zero){
 #ifdef WIN32
 __try{
 #else
@@ -228,6 +229,24 @@ void TextureControl::LoadTextures(PCS_Model &pf, std::vector<std::string> &paths
 
 
 	// done
+
+	// Load our insignia image.
+	ILuint ImageName;
+	ilGenImages(1, &ImageName);
+	ilBindImage(ImageName);
+
+	if (load(IL_PNG, insignia_png, sizeof(insignia_png)))
+	{
+		ILinfo imginfo;
+		iluGetImageInfo(&imginfo);
+#ifdef UNIX
+		iluFlipImage();
+#endif
+		float sz = (imginfo.Width > imginfo.Height)?imginfo.Width:imginfo.Height;
+		iluScale(sz, sz, imginfo.Depth);
+		ilutGLBindTexImage();
+	}
+	ilDeleteImages(1, &ImageName);
 
 	unsigned int i;
 	std::string fname;

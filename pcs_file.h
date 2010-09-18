@@ -229,6 +229,7 @@
 // forward dec
 class TextureControl;
 class model_editor_ctrl_base;
+struct omnipoints;
 
 #define PMF_VERSION 102
 #define PMF_MIN_VERSION 100
@@ -384,6 +385,7 @@ class PCS_Model
 		// Rendering
 		void Render(TextureControl &tc, bool use_vbos, bool highlight = false);
 		void draw_shields();
+		void draw_insignia(int lod, const omnipoints& omni);
 
 
 		// Accessors

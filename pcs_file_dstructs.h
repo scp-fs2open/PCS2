@@ -457,16 +457,55 @@ struct pcs_insig_face
 	pcs_insig_face() { memset(this, 0, sizeof(pcs_insig_face)); }
 };
 
+inline bool operator==(const pcs_insig_face&t, const pcs_insig_face&o){
+	return t.verts[0] == o.verts[0] &&
+		t.verts[1] == o.verts[1] &&
+		t.verts[2] == o.verts[2] &&
+		t.u[0] == o.u[0] && t.v[0] == o.v[0] &&
+		t.u[1] == o.u[1] && t.v[1] == o.v[1] &&
+		t.u[2] == o.u[2] && t.v[2] == o.v[2];
+}
+
+struct pcs_insig_generator
+{
+	vector3d pos;
+	vector3d forward;
+	vector3d up;
+	float radius;
+	float distance;
+	int subdivision;
+	float merge_eps;
+	pcs_insig_generator() : forward(-1,0,0), up(0,1,0), radius(3.0f), distance(0.005f), subdivision(128), merge_eps(0.9999f) {}
+};
+
+inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
+	return t.pos == o.pos && t.forward == o.forward && t.up == o.up &&
+		t.radius == o.radius && t.merge_eps == o.merge_eps;
+}
+
 struct pcs_insig
 {
 	int lod;
 	vector3d offset; // offset from center of ship
 	std::vector<pcs_insig_face> faces;
 
+	pcs_insig_generator generator;
+
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
+	bool Generate(const std::vector<pcs_polygon>& polys, const float epsilon);
+	static bool outside_viewport(const std::vector<vector3d>& verts);
+	static bool inside_polygon(const vector3d& v, const std::vector<vector3d>& verts);
+	static float interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);
+	static std::vector<vector3d> clip(const std::vector<vector3d>& verts);
+
 	pcs_insig() : lod(0) {} 
 };
+
+inline bool operator==(const pcs_insig&t, const pcs_insig&o){
+	return t.lod == o.lod && t.offset == o.offset && t.faces == o.faces && t.generator == o.generator;
+}
+
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 

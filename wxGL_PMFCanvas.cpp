@@ -189,6 +189,7 @@
 #include <wx/wfstream.h>
 #include <wx/filename.h>
 #include <cfloat>
+#include "INSG_editor.h"
 
 #include "geo_sphere.h"
 
@@ -457,6 +458,9 @@ void wxGL_PMFCanvas::Render()
 			model.set_active_texture(omni_selected_item);
 		else
 			model.set_active_texture(-1);
+		if (omni.lod > -1 && omni.lod < model.GetLODCount()) {
+			model.set_active_model(model.LOD(omni.lod));
+		}
 	
 		model.Render(tex_ctrl, UseVBOs, active_chunk == SOBJ);
 
@@ -464,6 +468,9 @@ void wxGL_PMFCanvas::Render()
 
 		if(active_chunk == SHLD)
 			model.draw_shields();
+
+		if(active_chunk == INSG)
+			model.draw_insignia(omni.lod, omni);
 
 		glDisable(GL_TEXTURE_2D);
 
@@ -558,7 +565,7 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 				vector3d pnt = omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model);
 				glTranslatef(pnt.x, pnt.y, pnt.z);
 
-				if(omni.flags & OMNIPOINT_PATH){
+				if(omni.flags & OMNIPOINT_ANY_PATH){
 					//sphere.draw(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model), model.get_avg_dimintion()/30.0f, 2, col*10);
 					float r = model.get_avg_dimintion()/30.0f;
 					glScalef(r,r,r);
@@ -579,7 +586,7 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 			else
 			{
 				sphere.draw(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model), omni.point[i][j].rad, 2, col);
-				if(omni.flags & OMNIPOINT_PATH) 	                      
+				if(omni.flags & OMNIPOINT_ANY_PATH) 	                      
 					sphere.draw(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model), model.get_avg_dimintion()/30.0f, 2, col*10);
 	 		}
 
@@ -607,7 +614,7 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 	glLineWidth(2.5f);
 
 
-	if(omni.flags & OMNIPOINT_PATH)
+	if(omni.flags & OMNIPOINT_ANY_PATH)
 	for(i = 0; i<omni.point.size(); i++){
 		glBegin(GL_LINE_STRIP);
 		for(j = 0; j<omni.point[i].size(); j++){
@@ -618,6 +625,16 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 			col = col * 4.0f;
 			glColor4ubv( (GLubyte*)col.col);
 			vector3d v(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model));
+			glVertex3fv((GLfloat *)&(v));
+		}
+		if (omni.flags & OMNIPOINT_CLOSED_PATH) {
+			color col = omni.unselected;
+			if(i == (unsigned)omni_selected_list){
+				col = omni.selected_item;
+			}
+			col = col * 4.0f;
+			glColor4ubv( (GLubyte*)col.col);
+			vector3d v(omni.point[i][0].pos+model.get_model_offset(omni.point[i][0].model));
 			glVertex3fv((GLfloat *)&(v));
 		}
 		glEnd();
@@ -810,7 +827,7 @@ void wxGL_PMFCanvas::ray_pick(vector3d point, vector3d norm){
 			vector3d g = MakeUnitVector(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model) - point);
 
 			float rad = 0.0f;
-			if(omni.flags & OMNIPOINT_PATH)//paths can have rediculusly huge radius's
+			if(omni.flags & OMNIPOINT_ANY_PATH)//paths can have rediculusly huge radius's
 				rad = log(omni.point[i][j].rad)+1.0f;
 			else
 				rad = omni.point[i][j].rad;
@@ -1014,6 +1031,7 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 
 	if(update_omnipoints){
 		mainpanel->control_panel->set_omnipoints(omni);
+		set_omnipoints(mainpanel->control_panel->get_omnipoints());
 	}
 //	Render();
 }

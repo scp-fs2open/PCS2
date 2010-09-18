@@ -90,5 +90,6 @@ template class op_stack<class std::vector<struct pcs_eye_pos> >;
 template class op_stack<class std::vector<struct pcs_special> >;
 template class op_stack<class std::vector<struct pcs_dock_point> >;
 template class op_stack<class std::vector<struct pcs_slot> >;
+template class op_stack<class std::vector<struct pcs_insig> >;
 template class op_stack<struct vector3d>;
 template class op_stack<struct header_data>;

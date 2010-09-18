@@ -11,4 +11,5 @@
 #include"WPNT_editor.h"
 #include"TXTR_editor.h"
 #include"ACEN_editor.h"
+#include"INSG_editor.h"
 #include"header_editor.h"
