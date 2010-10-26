@@ -62,13 +62,16 @@ public:
 
 		std::vector<std::string> op;
 		op.push_back("$special=subsystem\n");
+		op.push_back("$special=no_rotate\n");
 		op.push_back("$name=x\n");
+		op.push_back("$lod0_name=x\n");
 		op.push_back("");
 		op.push_back("$fov=180\n");
 		op.push_back("");
 		op.push_back("$rotate=x\n");
+		op.push_back("$dumb_rotate:x\n");
+		op.push_back("$pbank=0\n");
 		op.push_back("");
-		op.push_back("$detail_sphere:1,x\n");
 		op.push_back("$detail_box:1\n");
 		op.push_back("$box_min: x,x,x\n");
 		op.push_back("$box_max: x,x,x\n");
@@ -79,11 +82,16 @@ public:
 		op.push_back("$steps=4\n");
 		op.push_back("$t_paused=2\n");
 		op.push_back("$t_transit=6\n");
+		op.push_back("$fraction_accel=x\n");
 		op.push_back("");
-		op.push_back("$look_at:0\n");
+		op.push_back("$gun_rotation:\n");
+		op.push_back("");
 		op.push_back("$uvec:0,1,0\n");
 		op.push_back("$fvec:0,0,1\n");
-
+		op.push_back("");
+		op.push_back("$no_collisions\n");
+		op.push_back("$nocollide_this_only\n");
+		op.push_back("$collide_invisible\n");
 		add_control(properties=new suggest_ctrl<std::string, multi_string_ctrl>(this,0,0,60,40,_("Properties"),op, SUGGEST_APPEND),1,wxEXPAND );
 		
 	};
