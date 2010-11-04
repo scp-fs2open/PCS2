@@ -2,7 +2,7 @@ import os
 import string
 # Edit this to suit your application
 defines = ['UNIX', 'HAVE_SYS_TYPES_H', 'HAVE_SYS_STAT_H', 'HAVE_UNISTD_H', 'ILUT_USE_OPENGL']
-include_path = ['/usr/local/include/colladadom', '/usr/local/include/colladadom/1.4']
+include_path = ['/usr/include/colladadom', '/usr/include/colladadom/1.4']
 cc_flags = ['-Wall', '-Wno-unknown-pragmas']
 libs = ['GL', 'GLU', 'xml2', 'pcre', 'pcrecpp', 'minizip', 'boost_system', 'boost_filesystem', 'IL', 'ILU', 'ILUT', 'collada14dom']
 
@@ -21,7 +21,7 @@ release.Append(CCFLAGS=cc_flags)
 
 debug = release.Clone()
 
-release.BuildDir('release/', './')
+release.VariantDir('release/', './')
 release.ParseConfig('wx-config --cppflags --libs --gl-libs')
 release.Append(LIBS=release_libs)
 release.Append(CPPDEFINES=['NDEBUG'])
@@ -31,7 +31,7 @@ for dir in subdirs:
   sources = sources + Glob('release/' + dir + '*.cpp');
 pcs2 = release.Program(prog_name, sources)
 
-debug.BuildDir('debug/', './')
+debug.VariantDir('debug/', './')
 debug.ParseConfig('wx-config --cppflags --libs --gl-libs --debug')
 debug.Append(CPPDEFINES=['_DEBUG'])
 debug.Append(LIBS=debug_libs)
