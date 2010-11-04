@@ -72,7 +72,6 @@ int DAEHandler::populate(void) {
 
 	daeTArray< daeSmartRef<daeElement> > helpers = root->getDescendant("visual_scene")->getChildren();
 	vector<int> lods;
-	vector<pcs_eye_pos> eyes;
 	vector<pcs_slot> guns, missiles;
 	string name;
 	map<string, int> detail, debris;
@@ -410,20 +409,30 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 	}
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
 		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "thrusters", strlen("thrusters")) == 0) {
+			std::string name = helpers[i]->getAttribute("name");
+			if (strnicmp(name.c_str(), "thrusters", strlen("thrusters")) == 0) {
 				process_thrusters(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "firepoints", strlen("firepoints")) == 0) {
+			} else if (strnicmp(name.c_str(), "firepoints", strlen("firepoints")) == 0) {
 				process_firepoints(helpers[i],current_sobj_id,arm_id,rotation_matrix);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "glowbank", strlen("glowbank")) == 0) {
+			} else if (strnicmp(name.c_str(), "glowbank", strlen("glowbank")) == 0) {
 				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "path", strlen("path")) == 0) {
+			} else if (strnicmp(name.c_str(), "path", strlen("path")) == 0) {
 				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "vec", strlen("vec")) == 0) {
+			} else if (strnicmp(name.c_str(), "vec", strlen("vec")) == 0) {
 				process_sobj_vec(helpers[i],rotation_matrix, &subobjs[current_sobj_id]->properties);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "rotate-nospeed", strlen("rotate-nospeed")) == 0) {
+			} else if (strnicmp(name.c_str(), "rotate-nospeed", strlen("rotate-nospeed")) == 0) {
 				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id], false);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "rotate", strlen("rotate")) == 0) {
+			} else if (strnicmp(name.c_str(), "rotate", strlen("rotate")) == 0) {
 				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id]);
+			} else if (strnicmp(name.c_str(), "eyepoint", strlen("eyepoint")) == 0) {
+				unsigned int eye;
+				if (name.length() > strlen("eyepoint")) {
+					eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
+					if (eyes.size() <= eye) {
+						eyes.resize(eye + 1);
+					}
+					eyes[eye] = process_eyepoint(helpers[i], rotation_matrix, current_sobj_id);
+				}
 			}
 		}
 	}
@@ -1323,12 +1332,11 @@ pcs_slot DAEHandler::process_gunbank(daeElement *helper, int type) {
 	return bank;
 }
 
-// TODO: Add sobj parent
-pcs_eye_pos DAEHandler::process_eyepoint(daeElement* helper) {
+pcs_eye_pos DAEHandler::process_eyepoint(daeElement* helper, matrix transform, int subobj_idx) {
 	pcs_eye_pos result;
-	result.normal = fix_axes(up,get_rotation(helper));
-	result.sobj_offset = get_translation(helper);
-	result.sobj_number = -1;
+	result.normal = fix_axes(up, get_rotation(helper, transform));
+	result.sobj_offset = get_translation(helper, transform);
+	result.sobj_number = subobj_idx;
 	return result;
 
 }
@@ -1896,17 +1904,19 @@ void DAESaver::add_guns() {
 }
 
 void DAESaver::add_eyes() {
-	daeElement *element;
-	stringstream name;
-	pcs_eye_pos *eye;
 	for (int i = 0; i < model->GetEyeCount(); i++) {
-		eye = &model->Eye(i);
-		name.str("");
+		pcs_eye_pos& eye = model->Eye(i);
+		stringstream name;
 		name << "eyepoint" << setfill ('0') << setw (2) << (i+1);
-		element = scene->add("node");
+		daeElement *element;
+		if (eye.sobj_number == -1) {
+			element = scene->add("node");
+		} else {
+			element = find_helper(subobjs[eye.sobj_number])->add("node");
+		}
 		element->setAttribute("id",name.str().c_str());
 		element->setAttribute("name",name.str().c_str());
-		write_transform(element,eye->sobj_offset,eye->normal,vector3d(0,1,0));
+		write_transform(element,eye.sobj_offset,eye.normal,vector3d(0,1,0));
 	}
 }
 

@@ -35,6 +35,7 @@ class DAEHandler
 		std::vector<pcs_sobj*> subobjs;
 		std::vector<pcs_special*> specials;
 		std::vector<pcs_dock_point*> docks;
+		std::vector<pcs_eye_pos> eyes;
 		AsyncProgress *progress;
 
 		int up_axis;
@@ -69,7 +70,7 @@ class DAEHandler
 		void process_dockpoint(daeElement *element);
 		void process_sobj_vec(daeElement *element, matrix rotation, std::string* properties);
 		void process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed=true);
-		pcs_eye_pos process_eyepoint(daeElement* helper);
+		pcs_eye_pos process_eyepoint(daeElement* helper, matrix transform = matrix(), int subobj_idx = -1);
 		pcs_slot process_gunbank(daeElement *helper, int type);
 		void process_moment_of_inertia(daeElement *element);
 		vector3d fix_axes(vector3d broken, matrix rotation);
