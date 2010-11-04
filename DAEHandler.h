@@ -67,6 +67,8 @@ class DAEHandler
 		void process_path(daeElement *element,std::string parent,matrix rotation, vector3d offset, int dock = -1);
 		void process_insignia(daeElement *element);
 		void process_dockpoint(daeElement *element);
+		void process_sobj_vec(daeElement *element, matrix rotation, std::string* properties);
+		void process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed=true);
 		pcs_eye_pos process_eyepoint(daeElement* helper);
 		pcs_slot process_gunbank(daeElement *helper, int type);
 		void process_moment_of_inertia(daeElement *element);
@@ -126,12 +128,14 @@ private:
 	void add_subsystems();
 	void add_shield();
 	void add_paths();
-	void add_helper(daeElement *element,std::string properties);
+	daeElement* add_helper(daeElement *element,std::string properties);
+	void add_sobj_helpers(daeElement *subobj, daeElement* helper, const pcs_sobj& sobj);
 	std::string add_material(int idx,daeElement *node);
 	void add_glows();
 	void add_insignia();
 	void add_moment_of_inertia();
 	static void write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale=1.0f, float external_scale=1.0f);
+	static void write_transform_binormal(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale=1.0f, float external_scale=1.0f);
 
 public:
 

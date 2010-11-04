@@ -418,6 +418,12 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
 			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "path", strlen("path")) == 0) {
 				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
+			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "vec", strlen("vec")) == 0) {
+				process_sobj_vec(helpers[i],rotation_matrix, &subobjs[current_sobj_id]->properties);
+			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "rotate-nospeed", strlen("rotate-nospeed")) == 0) {
+				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id], false);
+			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "rotate", strlen("rotate")) == 0) {
+				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id]);
 			}
 		}
 	}
@@ -516,6 +522,63 @@ void DAEHandler::process_properties(daeElement *element,string *properties) {
 
 }
 
+void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::string* properties) {
+	rotation = get_rotation(element, rotation);
+	vector3d uvec = MakeUnitVector(fix_axes(up, rotation));
+	vector3d fvec = MakeUnitVector(fix_axes(front, rotation));
+	if (properties->find("uvec") == string::npos) {
+		properties->append("\n$uvec:");
+		stringstream output;
+		output << uvec.x << ", " << uvec.y << ", " << uvec.z;
+		properties->append(output.str());
+	}
+	if (properties->find("fvec") == string::npos) {
+		properties->append("\n$fvec:");
+		stringstream output;
+		output << fvec.x << ", " << fvec.y << ", " << fvec.z;
+		properties->append(output.str());
+	}
+}
+
+void DAEHandler::process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed) {
+	rotation = get_rotation(element, rotation);
+	vector3d rotate = fix_axes(up, rotation);
+	float x, y, z, x_abs, y_abs, z_abs;
+	x = dot(rotate, vector3d(1,0,0));
+	y = dot(rotate, vector3d(0,1,0));
+	z = dot(rotate, vector3d(0,0,1));
+	x_abs = fabs(x);
+	y_abs = fabs(y);
+	z_abs = fabs(z);
+	float length;
+	if (x_abs > y_abs) {
+		if (x_abs > z_abs) {
+			sobj->movement_axis = MV_X;
+			length = x;
+		} else {
+			sobj->movement_axis = MV_Z;
+			length = z;
+		}
+	} else if (y_abs > z_abs) {
+		sobj->movement_axis = MV_Y;
+		length = y;
+	} else {
+		sobj->movement_axis = MV_Z;
+		length = z;
+	}
+	sobj->movement_type = ROTATE;
+	if (speed) {
+		if (sobj->properties.find("rotate") == string::npos) {
+			sobj->properties.append("\n$rotate=");
+			stringstream output;
+			output << length;
+			sobj->properties.append(output.str());
+		}
+	}
+
+
+}
+
 void DAEHandler::process_thrusters(daeElement *element,string name,matrix rotation_matrix, vector3d offset) {
 	offset = get_translation(element, rotation_matrix) + offset;
 	rotation_matrix = get_rotation(element,rotation_matrix);
@@ -568,14 +631,6 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 			//subobjs[parent]->properties += "$name=GunTurret\r\n";
 		}
 	}
-	if (parent != arm) {
-		subobjs[parent]->movement_type = 1; //rotate on axis
-		subobjs[parent]->movement_axis = 0; // x axis
-
-		subobjs[arm]->movement_type = 1; //rotate on axis
-		subobjs[arm]->movement_axis = 2; // y axis
-	}
-
 	turret.turret_normal = MakeUnitVector(turret.turret_normal);
 	model->AddTurret(&turret);
 }
@@ -1433,27 +1488,28 @@ void DAESaver::add_geom() {
 void DAESaver::get_subobj(int idx,string *name) {
 	if (subobjs[idx] != NULL) return;
 	daeElement *subobj;
-	if (model->SOBJ(idx).parent_sobj == -1) {
+	pcs_sobj& sobj = model->SOBJ(idx);
+	if (sobj.parent_sobj == -1) {
 		subobj = scene->add("node");
 	} else {
-		if (subobjs[model->SOBJ(idx).parent_sobj] != NULL) {
-			subobj = subobjs[model->SOBJ(idx).parent_sobj]->add("node");
+		if (subobjs[sobj.parent_sobj] != NULL) {
+			subobj = subobjs[sobj.parent_sobj]->add("node");
 		} else {
 			return;
 		}
 	}
 	subobjs[idx] = subobj;
-	add_helper(subobj,model->SOBJ(idx).properties);
+	daeElement* helper = add_helper(subobj,sobj.properties);
 	daeElement *translate = subobj->add("translate");
-	translate->setCharData(write_vector3d(model->SOBJ(idx).offset).c_str());
+	translate->setCharData(write_vector3d(sobj.offset).c_str());
 	if (name) {
 		progress->incrementWithMessage("Adding " + *name);
 		subobj->setAttribute("id",name->c_str());
 		subobj->setAttribute("name",name->c_str());
 	} else {
-		subobj->setAttribute("id",model->SOBJ(idx).name.c_str());
-		subobj->setAttribute("name",model->SOBJ(idx).name.c_str());
-		progress->incrementWithMessage("Adding " + model->SOBJ(idx).name);
+		subobj->setAttribute("id",sobj.name.c_str());
+		subobj->setAttribute("name",sobj.name.c_str());
+		progress->incrementWithMessage("Adding " + sobj.name);
 	}
 	
 	// split up polies by texture...
@@ -1465,18 +1521,18 @@ void DAESaver::get_subobj(int idx,string *name) {
 	for (int i = 0; i <= num_textures; i++) {
 		polies[i].resize(VECTOR_INITIAL_SIZE);
 	}
-	for (unsigned int i = 0; i < model->SOBJ(idx).polygons.size(); i++) {
-		if (model->SOBJ(idx).polygons[i].texture_id < num_textures && model->SOBJ(idx).polygons[i].texture_id >= 0) {
-			if (counters[model->SOBJ(idx).polygons[i].texture_id] >= polies[model->SOBJ(idx).polygons[i].texture_id].size()) {
-				polies[model->SOBJ(idx).polygons[i].texture_id].resize(polies[model->SOBJ(idx).polygons[i].texture_id].size() * VECTOR_GROWTH_FACTOR);
+	for (unsigned int i = 0; i < sobj.polygons.size(); i++) {
+		if (sobj.polygons[i].texture_id < num_textures && sobj.polygons[i].texture_id >= 0) {
+			if (counters[sobj.polygons[i].texture_id] >= polies[sobj.polygons[i].texture_id].size()) {
+				polies[sobj.polygons[i].texture_id].resize(polies[sobj.polygons[i].texture_id].size() * VECTOR_GROWTH_FACTOR);
 			}
-			polies[model->SOBJ(idx).polygons[i].texture_id][counters[model->SOBJ(idx).polygons[i].texture_id]] = &(model->SOBJ(idx).polygons[i]);
-			counters[model->SOBJ(idx).polygons[i].texture_id]++;
+			polies[sobj.polygons[i].texture_id][counters[sobj.polygons[i].texture_id]] = &(sobj.polygons[i]);
+			counters[sobj.polygons[i].texture_id]++;
 		} else {
 			if (counters[num_textures] >= polies[num_textures].size()) {
 				polies[num_textures].resize(polies[num_textures].size() * VECTOR_GROWTH_FACTOR);
 			}
-			polies[num_textures][counters[num_textures]] = &(model->SOBJ(idx).polygons[i]);
+			polies[num_textures][counters[num_textures]] = &(sobj.polygons[i]);
 			counters[num_textures]++;
 		}
 	}
@@ -1494,7 +1550,67 @@ void DAESaver::get_subobj(int idx,string *name) {
 	group_name << subobj->getAttribute("name").c_str() << "-geometry";
 	current_group = get_polygroups(polies,string(group_name.str().c_str()),subobj);
 
+	if (export_helpers) {
+		add_sobj_helpers(subobj, helper, sobj);
+	}
+}
 
+void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pcs_sobj& sobj) {
+	if (sobj.movement_type == 1) {
+		vector3d direction;
+		double length = 1;
+		size_t rotate_offset = sobj.properties.find("$rotate=");
+		if (rotate_offset != string::npos) {
+			sscanf(sobj.properties.c_str() + rotate_offset, "$rotate=%lf", &length);
+		}
+		switch(sobj.movement_axis) {
+			case MV_X:
+				direction = vector3d(1,0,0);
+				break;
+			case MV_Y:
+				direction = vector3d(0,1,0);
+				break;
+			case MV_Z:
+				direction = vector3d(0,0,1);
+				break;
+		}
+		if (helper == NULL) {
+			helper = subobj->add("node");
+			helper->setAttribute("id","helper");
+			helper->setAttribute("name","helper");
+		}
+		daeElement* rotation = helper->add("node");
+		if (rotate_offset != string::npos) {
+			rotation->setAttribute("id","rotate");
+			rotation->setAttribute("name","rotate");
+		} else {
+			rotation->setAttribute("id","rotate-nospeed");
+			rotation->setAttribute("name","rotate-nospeed");
+		}
+		write_transform(rotation, vector3d(), direction, vector3d(0,1,0), length);
+	}
+	size_t uvec_offset, fvec_offset;
+	uvec_offset = sobj.properties.find("$uvec");
+	fvec_offset = sobj.properties.find("$fvec");
+	if (uvec_offset != string::npos && fvec_offset != string::npos) {
+		double x = 0;
+		double y = 0;
+		double z = 0;
+		vector3d fvec, uvec;
+		sscanf(sobj.properties.c_str() + fvec_offset, "$fvec:%lf,%lf,%lf", &x, &y, &z);
+		fvec = vector3d(x, y, z);
+		sscanf(sobj.properties.c_str() + uvec_offset, "$uvec:%lf,%lf,%lf", &x, &y, &z);
+		uvec = vector3d(x, y, z);
+		if (helper == NULL) {
+			helper = subobj->add("node");
+			helper->setAttribute("id","helper");
+			helper->setAttribute("name","helper");
+		}
+		daeElement* vec = helper->add("node");
+		vec->setAttribute("id","vec");
+		vec->setAttribute("name","vec");
+		write_transform_binormal(vec, vector3d(), fvec, uvec, vector3d(0,0,1));
+	}
 }
 
 daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, string name,daeElement *node) {
@@ -2084,29 +2200,40 @@ string DAESaver::add_material(int idx,daeElement *node) {
 	return string(model->Texture(idx) + "-mat");
 }
 
-void DAESaver::add_helper(daeElement *element,string properties) {
+void filter_string(std::string& base, const std::string& property) {
+	size_t start = base.find(property);
+	if (start == string::npos) {
+		return;
+	}
+	size_t end = base.find("\n", start);
+	if (end == string::npos) {
+		base.erase(start);
+	} else {
+		base.erase(start, end - start + 1);
+	}
+}
+
+daeElement* DAESaver::add_helper(daeElement *element,string properties) {
 	if (export_helpers) {
 		if (properties.size() > 0 && strlen(properties.c_str()) > 0) {
-			//num_helpers++;
 			daeElement *helper = element->add("node");
 			daeElement *props;
 			stringstream temp;
-			
+
 			string result;
 			string properti;
 			string previous;
-			//temp << "helper" << num_helpers;
 			helper->setAttribute("id", "helper");
 			helper->setAttribute("name", "helper");
-			//temp.str("");
-			//temp << "properties" << num_properties;
+			filter_string(properties, "$rotate");
+			filter_string(properties, "$uvec");
+			filter_string(properties, "$fvec");
 
 			if (props_as_helpers) {
 				props = helper->add("node");
 				props->setAttribute("id","properties");
 				props->setAttribute("name","properties");
 				result = properties;
-				//result.replace(' ',SPACE_REPLACEMENT);
 				temp.str(result.c_str());
 				while (!temp.eof()) {
 					temp >> properti;
@@ -2122,9 +2249,12 @@ void DAESaver::add_helper(daeElement *element,string properties) {
 				props->setCharData(properties.c_str());
 
 			}
+			return helper;
 		}
 	}
+	return NULL;
 }
+
 
 void DAESaver::add_property(daeElement *props, const char* prop) {
 	daeElement *current_prop;
@@ -2219,10 +2349,14 @@ string write_vector3d(vector3d vec,vector3d scale) {
 }
 
 void DAESaver::write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale, float external_scale) {
+	write_transform_binormal(element, offset, norm, vector3d(1, 0, 0), base, scale, external_scale);
+}
+
+void DAESaver::write_transform_binormal(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale, float external_scale) {
 	element = element->add("matrix");
 	element->setAttribute("sid","matrix");
 	int order[3] = {0, 2, 1};
-	vector3d one(MakeUnitVector(norm)), two(1,0,0), three;
+	vector3d one(MakeUnitVector(norm)), two(MakeUnitVector(binorm)), three;
 	if (fabs(dot(one, two)) > 0.9) {
 		two = vector3d(0,1,0);
 	}
