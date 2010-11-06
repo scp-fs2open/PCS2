@@ -136,7 +136,8 @@ public:
 			for(unsigned int j = 0; j<pnt[i].fire_points.size(); j++){
 				o.point[i][j].pos = pnt[i].fire_points[j];
 				o.point[i][j].norm = pnt[i].turret_normal;
-				o.point[i][j].model = pnt[i].sobj_parent;
+				o.point[i][j].model = pnt[i].sobj_par_phys != -1 ?
+					pnt[i].sobj_par_phys : pnt[i].sobj_parent;
 			}
 		}
 
