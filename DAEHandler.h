@@ -58,7 +58,7 @@ class DAEHandler
 		void shield_handler(daeElement *helper);
 		void eyepoint_handler(daeElement *helper);
 		void process_poly_group(daeElement *element, pcs_sobj *subobj, matrix rotation, std::map<std::string, std::string> *texture_mapping);
-		void process_sobj_helpers(daeElement *element,int current_sobj_id, int arm_id, matrix rotation);
+		void process_sobj_helpers(daeElement *element,int current_sobj_id, int parent_sobj_id, matrix rotation);
 		void process_special_helpers(daeElement *element, int idx, matrix rotation);
 		void process_properties(daeElement *element,std::string *properties);
 		void process_thrusters(daeElement *element,std::string name,matrix rotation, vector3d offset);

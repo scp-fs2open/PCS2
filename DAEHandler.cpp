@@ -273,7 +273,6 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 
 	this->subobjs.push_back(subobj);
 	int current_sobj_id = this->subobjs.size() - 1;
-	int arm_id = current_sobj_id;
 
 	daeTArray< daeSmartRef<daeElement> > subobjs = element->getChildren();
 	daeElement *sobj_helpers = NULL;
@@ -282,7 +281,6 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 		if (strcmp(subobjs[i]->getTypeName(),"node") == 0) {
 			if (strnicmp(subobjs[i]->getAttribute("name").c_str(),"helper",strlen("helper"))) {
 				if (!strstr(subobjs[i]->getAttribute("name").c_str(),"-trans")) {
-					arm_id = this->subobjs.size();
 					subobj_map[subobjs[i]->getAttribute("name")] = i;
 					//process_subobj(subobjs[i],current_sobj_id,rotation_matrix);
 				}
@@ -301,7 +299,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	}
 
 	if (sobj_helpers) {
-		process_sobj_helpers(sobj_helpers,current_sobj_id,arm_id,rotation_matrix);
+		process_sobj_helpers(sobj_helpers,current_sobj_id,parent,rotation_matrix);
 	}
 
 }
@@ -396,7 +394,7 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 }
 
 // Go through the helpers and hand off work appropriately...
-void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, int arm_id, matrix rotation_matrix) {
+void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
 	vector3d offset = relative_to_absolute(vector3d(0,0,0),subobjs[current_sobj_id],&subobjs);
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
@@ -412,8 +410,10 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 			std::string name = helpers[i]->getAttribute("name");
 			if (strnicmp(name.c_str(), "thrusters", strlen("thrusters")) == 0) {
 				process_thrusters(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
+			} else if (strnicmp(name.c_str(), "multifirepoints", strlen("firepoints")) == 0) {
+				process_firepoints(helpers[i],parent_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (strnicmp(name.c_str(), "firepoints", strlen("firepoints")) == 0) {
-				process_firepoints(helpers[i],current_sobj_id,arm_id,rotation_matrix);
+				process_firepoints(helpers[i],current_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (strnicmp(name.c_str(), "glowbank", strlen("glowbank")) == 0) {
 				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
 			} else if (strnicmp(name.c_str(), "path", strlen("path")) == 0) {
@@ -618,9 +618,7 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 	turret.sobj_parent = parent;
 	turret.sobj_par_phys = arm;
 	turret.turret_normal = vector3d(0,0,0);
-	
 
-	//thruster.properties = string("$engine_subsystem=$") + name;
 	for (unsigned int i = 0; i < turrets.getCount(); i++) {
 		if (strcmp(turrets[i]->getTypeName(),"node") == 0) {
 			turret.turret_normal += fix_axes(up,get_rotation(turrets[i],rotation_matrix));
@@ -1564,7 +1562,7 @@ void DAESaver::get_subobj(int idx,string *name) {
 }
 
 void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pcs_sobj& sobj) {
-	if (sobj.movement_type == 1) {
+	if (sobj.movement_type == 1 && sobj.movement_axis != ANONE) {
 		vector3d direction;
 		double length = 1;
 		size_t rotate_offset = sobj.properties.find("$rotate=");
@@ -1780,13 +1778,17 @@ void DAESaver::add_turret_fps() {
 	daeElement *helper;
 	for (int i = 0; i < model->GetTurretCount(); i++) {
 		turret = &model->Turret(i);
-		helper = find_helper(subobjs[turret->sobj_parent]);
+		helper = find_helper(subobjs[turret->sobj_par_phys]);
 		if (helper == NULL) {
 			helper = scene;
 		}
 		helper = helper->add("node");
 		name.str("");
-		name << "firepoints" << i;
+		if (turret->sobj_parent == turret->sobj_par_phys) {
+			name << "firepoints" << i;
+		} else {
+			name << "multifirepoints" << i;
+		}
 		helper->setAttribute("id",name.str().c_str());
 		helper->setAttribute("name",name.str().c_str());
 		for (unsigned int j = 0; j < turret->fire_points.size(); j++) {
