@@ -421,6 +421,8 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 				process_firepoints(helpers[i],current_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (strnicmp(name.c_str(), "glowbank", strlen("glowbank")) == 0) {
 				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
+			} else if (strnicmp(name.c_str(), "bay", strlen("bay")) == 0) {
+				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
 			} else if (strnicmp(name.c_str(), "path", strlen("path")) == 0) {
 				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
 			} else if (strnicmp(name.c_str(), "vec", strlen("vec")) == 0) {
@@ -470,6 +472,8 @@ void DAEHandler::process_special_helpers(daeElement *element, int idx, matrix ro
 		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
 			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "thrusters", strlen("thrusters")) == 0) {
 				process_thrusters(helpers[i],specials[idx]->name,rotation,offset);
+			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "bay", strlen("bay")) == 0) {
+				process_path(helpers[i],specials[idx]->name,rotation,offset);
 			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "path", strlen("path")) == 0) {
 				process_path(helpers[i],specials[idx]->name,rotation,offset);
 			}
