@@ -538,13 +538,13 @@ void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::str
 	if (properties->find("uvec") == string::npos) {
 		properties->append("\n$uvec:");
 		stringstream output;
-		output << uvec.x << ", " << uvec.y << ", " << uvec.z;
+		output << -uvec.x << ", " << uvec.y << ", " << uvec.z;
 		properties->append(output.str());
 	}
 	if (properties->find("fvec") == string::npos) {
 		properties->append("\n$fvec:");
 		stringstream output;
-		output << fvec.x << ", " << fvec.y << ", " << fvec.z;
+		output << -fvec.x << ", " << fvec.y << ", " << fvec.z;
 		properties->append(output.str());
 	}
 }
@@ -1306,7 +1306,7 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 		} else if (strcmp(children[i]->getTypeName(),"matrix") == 0) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),16);
 			rot = matrix(temp);
-			old = rot % old;
+			old = old % rot;
 			delete temp;
 		}
 	}
@@ -1604,9 +1604,9 @@ void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pc
 		double z = 0;
 		vector3d fvec, uvec;
 		sscanf(sobj.properties.c_str() + fvec_offset, "$fvec:%lf,%lf,%lf", &x, &y, &z);
-		fvec = vector3d(x, y, z);
+		fvec = vector3d(-x, y, z);
 		sscanf(sobj.properties.c_str() + uvec_offset, "$uvec:%lf,%lf,%lf", &x, &y, &z);
-		uvec = vector3d(x, y, z);
+		uvec = vector3d(-x, y, z);
 		if (helper == NULL) {
 			helper = subobj->add("node");
 			helper->setAttribute("id","helper");
