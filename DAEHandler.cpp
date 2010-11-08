@@ -88,7 +88,9 @@ int DAEHandler::populate(void) {
 			name = helpers[i]->getAttribute("name");
 			progress->incrementWithMessage("Processing " + name);
 			if (strnicmp(name.c_str(), "subsystem", strlen("subsystem")) == 0) {
-				subsystem_handler(helpers[i]);
+				subsystem_handler(helpers[i], true);
+			} else if (strnicmp(name.c_str(), "special", strlen("special")) == 0) {
+				subsystem_handler(helpers[i], false);
 			} else if (strnicmp(name.c_str(), "shield", strlen("shield")) == 0) {
 				shield_handler(helpers[i]);
 			} else if (strnicmp(name.c_str(), "thrusters", strlen("thrusters")) == 0) {
@@ -795,11 +797,16 @@ int DAEHandler::find_or_add_texture(string name) {
 	return texture_map[name];
 }
 
-void DAEHandler::subsystem_handler(daeElement *helper) {
+void DAEHandler::subsystem_handler(daeElement *helper, bool isSubsystem) {
 	pcs_special *special = new pcs_special;
 	matrix rot = get_rotation(helper);
 	special->name = "$";
-	special->name += &helper->getAttribute("name").c_str()[strlen("Subsystem")];
+	if (isSubsystem) {
+		special->name += &helper->getAttribute("name").c_str()[strlen("subsystem")];
+	} else {
+		special->properties.clear();
+		special->name += &helper->getAttribute("name").c_str()[strlen("special")];
+	}
 	special->point = get_translation(helper);
 	special->radius = rot.scale();
 	specials.push_back(special);
@@ -1952,7 +1959,12 @@ void DAESaver::add_subsystems() {
 	for (int i = 0; i < model->GetSpecialCount(); i++) {
 		subsys = &model->Special(i);
 		name.str("");
-		name << "subsystem" << (subsys->name.c_str() + 1);
+		if (subsys->properties.find("$special=subsystem") != string::npos) {
+			name << "subsystem";
+		} else {
+			name << "special";
+		}
+	    name << (subsys->name.c_str() + 1);
 		element = scene->add("node");
 		element->setAttribute("id",name.str().c_str());
 		element->setAttribute("name",name.str().c_str());

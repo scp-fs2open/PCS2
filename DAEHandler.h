@@ -54,7 +54,7 @@ class DAEHandler
 
 		int find_or_add_texture(std::string name);
 		int find_texture_id(std::string name, std::map<std::string, std::string> *texture_mapping);
-		void subsystem_handler(daeElement *helper);
+		void subsystem_handler(daeElement *helper, bool isSubsystem);
 		void shield_handler(daeElement *helper);
 		void eyepoint_handler(daeElement *helper);
 		void process_poly_group(daeElement *element, pcs_sobj *subobj, matrix rotation, std::map<std::string, std::string> *texture_mapping);
