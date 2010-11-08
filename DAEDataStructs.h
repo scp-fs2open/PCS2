@@ -66,4 +66,5 @@ vector3d radius_to_scale(float radius);
 void add_scale(daeElement *element, vector3d scale, vector3d parent_scale = vector3d(1,1,1));
 void add_texture_mappings(daeElement *element, std::map<std::string, std::string>* mapping);
 void filter_string(std::string& base, const std::string& property);
+void trim_extra_spaces(std::string& s);
 #endif

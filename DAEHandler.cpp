@@ -445,6 +445,7 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 			}
 		}
 	}
+	trim_extra_spaces(subobjs[current_sobj_id]->properties);
 }
 
 void DAEHandler::process_special_helpers(daeElement *element, int idx, matrix rotation) {
@@ -536,10 +537,10 @@ void DAEHandler::process_properties(daeElement *element,string *properties) {
 		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
 			*properties += helpers[i]->getAttribute("name");
 			//properties->replace(SPACE_REPLACEMENT,' ');
-			*properties += "\r\n";
+			*properties += "\n";
 		}
 	}
-
+	trim_extra_spaces(*properties);
 }
 
 void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::string* properties) {
@@ -637,16 +638,16 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 		}
 	}
 	if (subobjs[parent]->properties.size() == 0) {
-		subobjs[parent]->properties = "$special=subsystem\r\n$fov=180\r\n$name=GunTurret\r\n";
+		subobjs[parent]->properties = "$special=subsystem\n$fov=180\n$name=GunTurret\n";
 	} else {
 		if (!strstr(subobjs[parent]->properties.c_str(),"special")) {
-			subobjs[parent]->properties += "$special=subsystem\r\n";
+			subobjs[parent]->properties += "$special=subsystem\n";
 		}
 		if (!strstr(subobjs[parent]->properties.c_str(),"fov")) {
-			subobjs[parent]->properties += "$fov=180\r\n";
+			subobjs[parent]->properties += "$fov=180\n";
 		}
 		if (!strstr(subobjs[parent]->properties.c_str(),"name")) {
-			//subobjs[parent]->properties += "$name=GunTurret\r\n";
+			//subobjs[parent]->properties += "$name=GunTurret\n";
 		}
 	}
 	turret.turret_normal = MakeUnitVector(turret.turret_normal);
@@ -656,6 +657,7 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 void DAEHandler::process_path(daeElement *element,string parent,matrix rotation_matrix, vector3d offset, int dock) {
 	pcs_path path;
 	path.name = string ("$") + element->getAttribute("name").c_str();
+	trim_extra_spaces(path.name);
 #if LOGGING_DAE
 	*log << element->getAttribute("id").c_str() << endl;
 #endif
@@ -2288,6 +2290,7 @@ daeElement* DAESaver::add_helper(daeElement *element,string properties) {
 			filter_string(properties, "$rotate");
 			filter_string(properties, "$uvec");
 			filter_string(properties, "$fvec");
+			trim_extra_spaces(properties);
 
 			if (props_as_helpers) {
 				props = helper->add("node");
@@ -2512,4 +2515,37 @@ void add_texture_mappings(daeElement *element, map<string, string> *mapping) {
 			mapping->insert(pair<string, string>(children[i]->getAttribute("symbol"), children[i]->getAttribute("target")));
 		}
 	}
+}
+
+void trim_extra_spaces(std::string& s) {
+	if (s.empty()) {
+		return;
+	}
+	string::iterator it, jt;
+	jt = s.begin();
+	for (it = jt; it < s.end() && isspace(*it); ++it) ;
+	if (it == s.end()) {
+		s.clear();
+		return;
+	}
+	*jt = *it;
+	++it;
+	for (; it < s.end(); ++it) {
+		if (!(isspace(*it) && isspace(*jt))) {
+			++jt;
+			if (*it == '\r' || *it == '\n') {
+				*jt = '\n';
+			} else if (isspace(*it)) {
+				*jt = ' ';
+			} else {
+				*jt = *it;
+			}
+		} else if (*it == '\r' || *it == '\n') {
+			*jt = '\n';
+		}
+	}
+	if (isspace(*jt)) {
+		jt--;
+	}
+	s.resize(jt - s.begin() + 1);
 }
