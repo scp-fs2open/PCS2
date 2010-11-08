@@ -72,6 +72,7 @@ class DAEHandler
 		void process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed=true);
 		pcs_eye_pos process_eyepoint(daeElement* helper, matrix transform = matrix(), int subobj_idx = -1);
 		pcs_slot process_gunbank(daeElement *helper, int type);
+		void process_mass(daeElement *element);
 		void process_moment_of_inertia(daeElement *element);
 		vector3d fix_axes(vector3d broken, matrix rotation);
 		vector3d get_translation(daeElement *element, matrix rotation = matrix());
@@ -134,6 +135,7 @@ private:
 	std::string add_material(int idx,daeElement *node);
 	void add_glows();
 	void add_insignia();
+	void add_mass();
 	void add_moment_of_inertia();
 	static void write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale=1.0f, float external_scale=1.0f);
 	static void write_transform_binormal(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale=1.0f, float external_scale=1.0f);

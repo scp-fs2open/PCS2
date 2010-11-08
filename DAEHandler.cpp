@@ -75,6 +75,7 @@ int DAEHandler::populate(void) {
 	vector<pcs_slot> guns, missiles;
 	string name;
 	map<string, int> detail, debris;
+	model->SetMass(-1);
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
 #if LOGGING_DAE
 		*log << "Found " << helpers[i]->getTypeName();
@@ -135,6 +136,8 @@ int DAEHandler::populate(void) {
 					continue;
 				}
 				missiles[bank] = process_gunbank(helpers[i], 1);
+			} else if (strnicmp(name.c_str(), "mass", strlen("mass")) == 0) {
+				process_mass(helpers[i]);
 			} else if (strnicmp(name.c_str(), "moi", strlen("moi")) == 0) {
 				process_moment_of_inertia(helpers[i]);
 			}
@@ -186,7 +189,9 @@ int DAEHandler::populate(void) {
 
 	// Perpetuating a shonky way of calculating mass...
 	progress->incrementWithMessage("Setting mass");
-	model->SetMass((model->GetMaxBounding().x - model->GetMinBounding().x) * (model->GetMaxBounding().y - model->GetMinBounding().y) * (model->GetMaxBounding().z - model->GetMinBounding().z));
+	if (model->GetMass() == -1) {
+		model->SetMass((model->GetMaxBounding().x - model->GetMinBounding().x) * (model->GetMaxBounding().y - model->GetMinBounding().y) * (model->GetMaxBounding().z - model->GetMinBounding().z));
+	}
 
 	return 0;
 
@@ -912,6 +917,16 @@ void DAEHandler::process_insignia(daeElement *element) {
 	model->AddInsignia(&insignia);
 }
 
+void DAEHandler::process_mass(daeElement *element) {
+	element = element->getChild("node");
+	if (element != NULL) {
+		std::stringstream stream(element->getAttribute("name"));
+		float mass;
+		stream >> mass;
+		model->SetMass(mass);
+	}
+}
+
 void DAEHandler::process_moment_of_inertia(daeElement *element) {
 	element = element->getChild("node");
 	if (element != NULL) {
@@ -1356,7 +1371,7 @@ DAESaver::DAESaver(string name, PCS_Model *model, int helpers, int props_as_help
 
 int DAESaver::save(void) {
 	if (export_helpers) {
-		progress->setTarget(subobjs.size() + 15);
+		progress->setTarget(subobjs.size() + 16);
 	} else {
 		progress->setTarget(subobjs.size() + 4);
 	}
@@ -1388,6 +1403,8 @@ int DAESaver::save(void) {
 		add_glows();
 		progress->incrementWithMessage( "Adding insignia");
 		add_insignia();
+		progress->incrementWithMessage( "Adding mass");
+		add_mass();
 		progress->incrementWithMessage( "Adding moment of inertia");
 		add_moment_of_inertia();
 	}
@@ -2161,6 +2178,21 @@ void DAESaver::add_insignia() {
 		daeElement *vert_input = verts->add("input");
 		vert_input->setAttribute("semantic", "POSITION");
 		vert_input->setAttribute("source", (string("#") + name.str().c_str() + "-position").c_str());
+	}
+}
+
+void DAESaver::add_mass() {
+	daeElement *mass = scene->add("node");
+	if (mass != NULL) {
+		mass->setAttribute("id", "mass");
+		mass->setAttribute("name", "mass");
+		mass = mass->add("node");
+		if (mass != NULL) {
+			stringstream stream;
+			stream << model->GetMass();
+			mass->setAttribute("id", stream.str().c_str());
+			mass->setAttribute("name", stream.str().c_str());
+		}
 	}
 }
 
