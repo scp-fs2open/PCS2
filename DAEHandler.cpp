@@ -1872,10 +1872,6 @@ void DAESaver::add_thrusters() {
 		if (engine_name.size() > 0 && strlen(engine_name.c_str()) > 0 && strstr(engine_name.c_str(),"$engine_subsystem=")) {
 			engine_name = string(strrchr(engine_name.c_str(),'=') + 1);
 			helper = find_subsystem(engine_name,offset,scale_vec);
-			if (helper == NULL && strchr(engine_name.c_str(),'$')) {
-				engine_name.erase(0, 1);
-				helper = find_subsystem(engine_name,offset,scale_vec);
-			}
 		}
 		if (helper == NULL) {
 			helper = scene;
@@ -2055,9 +2051,6 @@ void DAESaver::add_paths() {
 	for (int i = 0; i < model->GetPathCount(); i++) {
 		path = &model->Path(i);
 		helper = find_subsystem(path->parent,offset,scale_vec);
-		if (helper == NULL) {
-			helper = find_subsystem(path->parent.c_str() + 1,offset,scale_vec);
-		}
 		if (helper == NULL) {
 			helper = find_dockpoint(i,offset);
 		}
@@ -2344,6 +2337,30 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 				scale = radius_to_scale(model->Special(i).radius);
 				answer = specials[i];
 				break;
+			}
+		}
+	}
+	if (answer == NULL) {
+		if (name[0] != '$') {
+			name.insert(0, "$");
+		} else if (name[0] == '$') {
+			name.erase(0,1);
+		}
+		for (unsigned int i = 0; i < subobjs.size(); i++) {
+			if (model->SOBJ(i).name == name) {
+				offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),&model_subobjs);
+				answer = subobjs[i];
+				break;
+			}
+		}
+		if (answer == NULL) {
+			for (int i = 0; i < model->GetSpecialCount(); i++) {
+				if (model->Special(i).name == name) {
+					offset = model->Special(i).point;
+					scale = radius_to_scale(model->Special(i).radius);
+					answer = specials[i];
+					break;
+				}
 			}
 		}
 	}
