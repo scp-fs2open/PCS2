@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include"model_editor_ctrl.h"
 #include"array_ctrl.h"
 #include"primitive_ctrl.h"
@@ -322,40 +323,63 @@ public:
 
 	DECLARE_EVENT_TABLE();
 	void on_auto_gen(wxCommandEvent& event){
-		if(get_value().size() > 0){
-			if(wxMessageBox(_("Warning: Path Auto-Generation will erase all exsisting Paths,\ndo you wish to proceed?"), _("WARNING"), wxYES_NO) == wxNO)
-				return;
+		PCS_Model& model = get_main_window()->get_model();
+		std::vector<pcs_path> paths = get_value();
+		std::map<std::string, int> sobj_to_turret;
+		std::map<std::string, int> special_map;
+		std::vector<bool> turrets(model.GetTurretCount(), false);
+		std::vector<bool> specials(model.GetSpecialCount(), false);
+		for (int i = 0; i < model.GetSpecialCount(); i++) {
+			special_map[model.Special(i).name] = i;
+			if (model.Special(i).properties.find("$special=subsystem") == std::string::npos) {
+				specials[i] = true;
+			}
 		}
-
-		std::vector<pcs_path> path;
-		
-		int i;
-		for(i = 0; i<get_main_window()->get_model().GetTurretCount(); i++){
-			path.push_back(auto_gen_turret(i));
-			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
+		for (int i = 0; i < model.GetTurretCount(); i++) {
+			sobj_to_turret[model.SOBJ(model.Turret(i).sobj_parent).name] = i;
 		}
-		for(i = 0; i<get_main_window()->get_model().GetSpecialCount(); i++){
-			path.push_back(auto_gen_spcl(i));
-			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
+		int max_path = 0;
+		int current_path;
+		for (size_t i = 0; i < paths.size(); i++) {
+			const std::string& parent = paths[i].parent;
+			if (!parent.empty()) {
+				std::map<std::string, int>::iterator it = sobj_to_turret.find(parent);
+				if (it != sobj_to_turret.end()) {
+					turrets[it->second] = true;
+				}
+				it = special_map.find(parent);
+				if (it != special_map.end()) {
+					specials[it->second] = true;
+				}
+			}
+			if (sscanf(paths[i].name.c_str(), "$path%d", &current_path) == 1 ||
+					sscanf(paths[i].name.c_str(), "$Path%d", &current_path) == 1) {
+				if (current_path > max_path) {
+					max_path = current_path;
+				}
+			}
 		}
-		for(i = 0; i<get_main_window()->get_model().GetDockingCount(); i++){
-			path.push_back(auto_gen_dock(i));
-			path[path.size()-1].name = wxString::Format(_("$Path%0.2d"), path.size()).mb_str();
-			get_main_window()->get_model().Dock(i).paths.resize(1);
-			get_main_window()->get_model().Dock(i).paths[0] = (int)path.size()-1;
+		for(int i = 0; i<model.GetTurretCount(); i++){
+			if (!turrets[i]) {
+				paths.push_back(auto_gen_turret(i));
+				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+			}
 		}
-
-		std::vector<pcs_path> old_path = get_value();
-
-		//add all fighter bay paths from the old list
-		for(i = 0; i< (int)old_path.size(); i++){
-			if(wxString(old_path[i].name.c_str(), wxConvUTF8).Find(_("Bay")) != wxNOT_FOUND ||
-				wxString(old_path[i].name.c_str(), wxConvUTF8).Find(_("bay")) != wxNOT_FOUND)
-				path.push_back(old_path[i]);
+		for(int i = 0; i<model.GetSpecialCount(); i++){
+			if (!specials[i]) {
+				paths.push_back(auto_gen_spcl(i));
+				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+			}
 		}
-
-		set_value(path);
-
+		for(int i = 0; i<model.GetDockingCount(); i++){
+			if (model.Dock(i).paths.empty()) {
+				paths.push_back(auto_gen_dock(i));
+				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				model.Dock(i).paths.resize(1);
+				model.Dock(i).paths[0] = (int)paths.size()-1;
+			}
+		}
+		set_value(paths);
 	}
 };
 
