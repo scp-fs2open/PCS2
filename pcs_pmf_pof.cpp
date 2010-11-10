@@ -1279,13 +1279,19 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 		dst.bsp_data= new char[dst.bsp_data_size];
 		memcpy(dst.bsp_data, bsp_cache[src_num].bsp_data, dst.bsp_data_size);
 
-		dst.bounding_box_max_point = dst.bounding_box_min_point = src.polygons[0].verts[0].point;
+		if (src.polygons.size() == 0 || src.polygons[0].verts.size() == 0) {
+			dst.bounding_box_max_point = dst.bounding_box_min_point = vector3d();
+		} else {
+			dst.bounding_box_max_point = dst.bounding_box_min_point = src.polygons[0].verts[0].point;
+		}
 
 		for(unsigned int i = 0; i<src.polygons.size(); i++){
 			for(unsigned int j = 0; j<src.polygons[i].verts.size(); j++){
 				ExpandBoundingBoxes(dst.bounding_box_max_point, dst.bounding_box_min_point,  src.polygons[i].verts[j].point);
 			}
 		}
+		dst.bounding_box_max_point += vector3d(0.1f, 0.1f, 0.1f);
+		dst.bounding_box_min_point -= vector3d(0.1f, 0.1f, 0.1f);
 		POFTranslateBoundingBoxes(dst.bounding_box_min_point, dst.bounding_box_max_point);
 
 		dst.radius = FindObjectRadius(dst.bounding_box_max_point, dst.bounding_box_min_point, vector3d(0,0,0));
