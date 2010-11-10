@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <boost/tr1/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
 #define VECTOR_GROWTH_FACTOR 4
@@ -726,16 +727,8 @@ void DAEHandler::process_glowpoints_properties(pcs_glow_array &glowbank) {
 }
 
 string strip_texture(string name) {
-	if (strrchr(name.c_str(),'/')) {
-		name = name.substr(strrchr(name.c_str(),'/') + 1 - name.c_str(), name.size() - (strrchr(name.c_str(),'/') + 1 - name.c_str()));
-	}
-	if (strrchr(name.c_str(),'\\')) {
-		name = name.substr(strrchr(name.c_str(),'\\') + 1 - name.c_str(), name.size() - (strrchr(name.c_str(),'\\') + 1 - name.c_str()));
-	}
-	if (strrchr(name.c_str(),'.')) {
-		name.resize(strrchr(name.c_str(),'.') - name.c_str());
-	}
-	return name;
+	std::tr1::regex re("([^/\\\\]+?)(?:\\.[^./\\\\]+)?$");
+	return std::tr1::regex_replace(name, re, "$1", boost::format_no_copy | boost::format_first_only);
 
 }
 
