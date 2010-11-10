@@ -76,6 +76,7 @@
 #include "vector3d.h"
 #include <string>
 #include "ogl_vertex_buffers.h"
+#include <boost/shared_array.hpp>
 
 
 #include <iostream>
@@ -638,15 +639,14 @@ inline bool operator == (const header_data&t, const header_data&h){
 struct pmf_bsp_cache
 {
 	int bsp_size;
-	char *bsp_data;
+	boost::shared_array<char> bsp_data;
 	bool changed;
 
 	pmf_bsp_cache() : bsp_size(0), bsp_data(NULL), changed(false) {}
 
 	void decache() // use this when it's been changed
 	{
-		if (bsp_data)
-			delete[] bsp_data;
+		bsp_data.reset(NULL);
 		bsp_size = 0;
 		changed = true;
 	}
@@ -654,7 +654,7 @@ struct pmf_bsp_cache
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 
-	~pmf_bsp_cache() { decache(); }
+	~pmf_bsp_cache() {}
 };
 
 

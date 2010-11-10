@@ -59,6 +59,7 @@
  *
  */
 
+#include <boost/shared_array.hpp>
 #include <iostream>
 
 
@@ -313,7 +314,7 @@ class POF {
 		bool OBJ2_Get_Props					(int SOBJNum, std::string &properties);
 		bool OBJ2_Get_MoveType				(int SOBJNum, int &type);
 		bool OBJ2_Get_MoveAxis				(int SOBJNum, int &axis);
-		bool OBJ2_Get_BSPData				(int SOBJNum, int &size, char* &bsp_data);
+		bool OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char> &bsp_data);
 		bool OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data);
 		//'SPCL' specials functions
 		void SPCL_AddSpecial				(std::string Name, std::string Properties, vector3d point, float radius);

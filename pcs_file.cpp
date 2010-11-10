@@ -700,6 +700,8 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 	{
 		BFReadAdvVector(bsp_cache)
 		BFRead(can_bsp_cache, bool)
+		// XXX: bsp_data will always be junk so never use cached data.
+		can_bsp_cache = false;
 
 		// new in ver 102.. but not associated with above
 		BFRead(has_fullsmoothing_data, bool)
@@ -1288,6 +1290,9 @@ void PCS_Model::DelTextures(unsigned int idx)
 
 void PCS_Model::AddSOBJ(pcs_sobj *obj)
 {
+	pmf_bsp_cache cache;
+	cache.decache();
+	bsp_cache.push_back(cache);
 	if (obj)
 		subobjects.push_back(*obj);
 	else
@@ -1369,6 +1374,7 @@ void PCS_Model::DelSOBJ(int idx)
 	if(active_submodel < 0 && header.detail_levels.size() > 0)
 		active_submodel = header.detail_levels[0];
 
+	bsp_cache.erase(bsp_cache.begin() + idx);
 	RemoveIndex(subobjects, idx);
 }
 
@@ -2076,7 +2082,7 @@ void PCS_Model::RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_v
 		gluSphere(quadratic,subobjects[sobj].radius,32,32);
 		gluDeleteQuadric(quadratic);				// Delete Quadratic - Free Resources*/
 		
-		RenderBSP(0, (unsigned char*)bsp_cache[sobj].bsp_data, subobjects[sobj].geometric_center);
+		RenderBSP(0, (unsigned char*)bsp_cache[sobj].bsp_data.get(), subobjects[sobj].geometric_center);
 	}
 
 	// return to parents position

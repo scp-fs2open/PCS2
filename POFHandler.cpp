@@ -3127,7 +3127,7 @@ bool POF::OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data)
 	return true;
 }
 
-bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, char* &bsp_data)
+bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char> &bsp_data)
 {
 	if ((unsigned)SOBJNum > OBJ2_Count() || SOBJNum < 0)
 		return false;
@@ -3135,13 +3135,13 @@ bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, char* &bsp_data)
 
 	if (size == 0)
 	{
-		bsp_data = NULL;
+		bsp_data.reset(NULL);
 		return true;
 	}
 
-	bsp_data = new char[size];
+	bsp_data.reset(new char[size]);
 
-	memcpy(bsp_data, objects[SOBJNum].bsp_data, size);
+	memcpy(bsp_data.get(), objects[SOBJNum].bsp_data, size);
 
 	return true;
 }

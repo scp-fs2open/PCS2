@@ -1263,8 +1263,8 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 			// clear the saved - stale cache
 			bsp_cache[src_num].decache();
 			bsp_cache[src_num].bsp_size = dst.bsp_data_size;
-			bsp_cache[src_num].bsp_data= new char[dst.bsp_data_size];
-			memcpy(bsp_cache[src_num].bsp_data, dst.bsp_data, dst.bsp_data_size);
+			bsp_cache[src_num].bsp_data.reset(new char[dst.bsp_data_size]);
+			memcpy(bsp_cache[src_num].bsp_data.get(), dst.bsp_data, dst.bsp_data_size);
 			bsp_cache[src_num].changed = false;
 		}
 
@@ -1277,7 +1277,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 
 		// allocate buffer and write the defpoints
 		dst.bsp_data= new char[dst.bsp_data_size];
-		memcpy(dst.bsp_data, bsp_cache[src_num].bsp_data, dst.bsp_data_size);
+		memcpy(dst.bsp_data, bsp_cache[src_num].bsp_data.get(), dst.bsp_data_size);
 
 		if (src.polygons.size() == 0 || src.polygons[0].verts.size() == 0) {
 			dst.bounding_box_max_point = dst.bounding_box_min_point = vector3d();

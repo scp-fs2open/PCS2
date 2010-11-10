@@ -510,6 +510,7 @@ void pcs_glow_array::Write(std::ostream& out)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
+#include <cstdio>
 void pmf_bsp_cache::Read(std::istream& in, int ver)
 {
 	if (ver >= 102)
@@ -517,10 +518,11 @@ void pmf_bsp_cache::Read(std::istream& in, int ver)
 		BFRead(bsp_size, int)
 		if (bsp_size != 0) 
 		{
-			bsp_data = new char[bsp_size];
+			bsp_data.reset(new char[bsp_size]);
+			// XXX FIXME: Reads sizeof(bsp_size): 4 bytes.
 			BFRead(bsp_data, bsp_size) 
 		}
-		BFRead(changed, int)
+		BFRead(changed, bool)
 	}
 }
 	
@@ -528,6 +530,7 @@ void pmf_bsp_cache::Write(std::ostream& out)
 {
 	BFWrite(bsp_size, int)
 	if (bsp_size != 0) {
-		BFWrite(bsp_data, bsp_size) }
+		// XXX FIXME: Writes sizeof(bsp_size): 4 bytes.
+		BFWrite(*bsp_data.get(), bsp_size) }
 	BFWrite(changed, bool)
 }
