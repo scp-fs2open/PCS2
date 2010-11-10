@@ -4,18 +4,10 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <boost/algorithm/string.hpp>
 
 #define VECTOR_GROWTH_FACTOR 4
 #define VECTOR_INITIAL_SIZE 100
-
-#ifdef UNIX
-#define strnicmp strncasecmp
-#define stricmp strcasecmp
-#else
-#define strnicmp _strnicmp
-#define stricmp _stricmp
-
-#endif
 
 using namespace std;
 
@@ -35,10 +27,10 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 	this->model = model;
 	daeElement *temp = root->getDescendant("up_axis");
 	if (temp != NULL) {
-		if (strcmp(temp->getCharData().c_str(),"X_UP") == 0) {
+		if (boost::algorithm::equals(temp->getCharData(), "X_UP")) {
 			up_axis = 0;
 			
-		} else if (strcmp(temp->getCharData().c_str(),"Y_UP") == 0) {
+		} else if (boost::algorithm::equals(temp->getCharData(), "Y_UP")) {
 			up_axis = 1;
 			front = vector3d(0,0,1);
 			up = vector3d(0,1,0);
@@ -84,28 +76,28 @@ int DAEHandler::populate(void) {
 		}
 		*log << endl;
 #endif
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			name = helpers[i]->getAttribute("name");
 			progress->incrementWithMessage("Processing " + name);
-			if (strnicmp(name.c_str(), "subsystem", strlen("subsystem")) == 0) {
+			if (boost::algorithm::istarts_with(name, "subsystem")) {
 				subsystem_handler(helpers[i], true);
-			} else if (strnicmp(name.c_str(), "special", strlen("special")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "special")) {
 				subsystem_handler(helpers[i], false);
-			} else if (strnicmp(name.c_str(), "shield", strlen("shield")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "shield")) {
 				shield_handler(helpers[i]);
-			} else if (strnicmp(name.c_str(), "thrusters", strlen("thrusters")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "thrusters")) {
 				process_thrusters(helpers[i],string(),matrix(),vector3d(0,0,0));
-			} else if (strnicmp(name.c_str(), "insigLOD", strlen("insigLOD")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "insigLOD")) {
 				process_insignia(helpers[i]);
-			} else if (strnicmp(name.c_str(), "debris", strlen("debris")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "debris")) {
 				debris[name] = i;
-			} else if (strnicmp(name.c_str(), "dockpoint", strlen("dockpoint")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "dockpoint")) {
 				process_dockpoint(helpers[i]);
-			} else if (strnicmp(name.c_str(), "bay", strlen("bay")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "bay")) {
 				process_path(helpers[i], "", matrix(), vector3d());
-			} else if (strnicmp(name.c_str(), "detail", strlen("detail")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "detail")) {
 				detail[name] = i;
-			} else if (strnicmp(name.c_str(), "eyepoint", strlen("eyepoint")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
 					eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
@@ -116,7 +108,7 @@ int DAEHandler::populate(void) {
 					continue;
 				}
 				eyes[eye] = process_eyepoint(helpers[i]);
-			} else if (strnicmp(name.c_str(), "gunbank", strlen("gunbank")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "gunbank")) {
 				unsigned int bank;
 				if (name.length() > strlen("gunbank")) {
 					bank = atoi(name.substr(strlen("gunbank"),2).c_str()) - 1;
@@ -127,7 +119,7 @@ int DAEHandler::populate(void) {
 					continue;
 				}
 				guns[bank] = process_gunbank(helpers[i], 0);
-			} else if (strnicmp(name.c_str(), "missilebank", strlen("missilebank")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "missilebank")) {
 				unsigned int bank;
 				if (name.length() > strlen("missilebank")) {
 					bank = atoi(name.substr(strlen("missilebank"),2).c_str()) - 1;
@@ -138,9 +130,9 @@ int DAEHandler::populate(void) {
 					continue;
 				}
 				missiles[bank] = process_gunbank(helpers[i], 1);
-			} else if (strnicmp(name.c_str(), "mass", strlen("mass")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "mass")) {
 				process_mass(helpers[i]);
-			} else if (strnicmp(name.c_str(), "moi", strlen("moi")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "moi")) {
 				process_moment_of_inertia(helpers[i]);
 			}
 		}
@@ -246,7 +238,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	daeTArray< daeSmartRef<daeElement> > poly_groups = mesh->getChildren();
 	for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
 		// Add the polies to the subobj.
-		if (strcmp(poly_groups[i]->getTypeName(),"triangles") == 0 || strcmp(poly_groups[i]->getTypeName(),"polylist") == 0) {
+		if (boost::algorithm::equals(poly_groups[i]->getTypeName(), "triangles") || boost::algorithm::equals(poly_groups[i]->getTypeName(), "polylist")) {
 			process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
 		}
 	}
@@ -269,7 +261,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 					poly_groups = mesh->getChildren();
 					for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
 						// Add the polies to the subobj.
-						if (strcmp(poly_groups[i]->getTypeName(),"triangles") == 0 || strcmp(poly_groups[i]->getTypeName(),"polylist") == 0) {
+						if (boost::algorithm::equals(poly_groups[i]->getTypeName(), "triangles") || boost::algorithm::equals(poly_groups[i]->getTypeName(), "polylist")) {
 							process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
 						}
 					}
@@ -285,8 +277,8 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	daeElement *sobj_helpers = NULL;
 	std::map<std::string, unsigned int> subobj_map;
 	for (unsigned int i = 0; i < subobjs.getCount(); i++) {
-		if (strcmp(subobjs[i]->getTypeName(),"node") == 0) {
-			if (strnicmp(subobjs[i]->getAttribute("name").c_str(),"helper",strlen("helper"))) {
+		if (boost::algorithm::equals(subobjs[i]->getTypeName(), "node")) {
+			if (!boost::algorithm::istarts_with(subobjs[i]->getAttribute("name"), "helper")) {
 				if (!strstr(subobjs[i]->getAttribute("name").c_str(),"-trans")) {
 					subobj_map[subobjs[i]->getAttribute("name")] = i;
 					//process_subobj(subobjs[i],current_sobj_id,rotation_matrix);
@@ -294,7 +286,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 			} else {
 				sobj_helpers = subobjs[i];
 			}
-		} else if (strcmp(subobjs[i]->getTypeName(),"extra") == 0) {
+		} else if (boost::algorithm::equals(subobjs[i]->getTypeName(), "extra")) {
 			daeElement *props = subobjs[i]->getDescendant("user_properties");
 			if (props) {
 				subobj->properties = props->getCharData().c_str();
@@ -316,7 +308,7 @@ void DAEHandler::process_dockpoint(daeElement *helper) {
 	pcs_hardpoint temp;
 	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0 && strnicmp(helpers[i]->getAttribute("name").c_str(),"helper",strlen("helper"))) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && !boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "helper")) {
 			temp.norm = fix_axes(up,get_rotation(helpers[i]));
 			temp.point = get_translation(helpers[i]);
 			dockpoint->dockpoints.push_back(temp);
@@ -405,35 +397,35 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 	vector3d offset = relative_to_absolute(vector3d(0,0,0),subobjs[current_sobj_id],&subobjs);
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			// better check for custom properties first
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "properties", strlen("properties")) == 0) {
+			if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "properties")) {
 				process_properties(helpers[i],&subobjs[current_sobj_id]->properties);
 			}
 		}
 	}
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			std::string name = helpers[i]->getAttribute("name");
-			if (strnicmp(name.c_str(), "thrusters", strlen("thrusters")) == 0) {
+			if (boost::algorithm::istarts_with(name, "thrusters")) {
 				process_thrusters(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
-			} else if (strnicmp(name.c_str(), "multifirepoints", strlen("firepoints")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "multifirepoints")) {
 				process_firepoints(helpers[i],parent_sobj_id,current_sobj_id,rotation_matrix);
-			} else if (strnicmp(name.c_str(), "firepoints", strlen("firepoints")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "firepoints")) {
 				process_firepoints(helpers[i],current_sobj_id,current_sobj_id,rotation_matrix);
-			} else if (strnicmp(name.c_str(), "glowbank", strlen("glowbank")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "glowbank")) {
 				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
-			} else if (strnicmp(name.c_str(), "bay", strlen("bay")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "bay")) {
 				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
-			} else if (strnicmp(name.c_str(), "path", strlen("path")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "path")) {
 				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
-			} else if (strnicmp(name.c_str(), "vec", strlen("vec")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "vec")) {
 				process_sobj_vec(helpers[i],rotation_matrix, &subobjs[current_sobj_id]->properties);
-			} else if (strnicmp(name.c_str(), "rotate-nospeed", strlen("rotate-nospeed")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "rotate-nospeed")) {
 				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id], false);
-			} else if (strnicmp(name.c_str(), "rotate", strlen("rotate")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "rotate")) {
 				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id]);
-			} else if (strnicmp(name.c_str(), "eyepoint", strlen("eyepoint")) == 0) {
+			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
 					eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
@@ -452,7 +444,7 @@ void DAEHandler::process_special_helpers(daeElement *element, int idx, matrix ro
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	daeElement *helper = NULL;
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0 && strnicmp(helpers[i]->getAttribute("name").c_str(), "helper", strlen("helper")) == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "helper")) {
 			helper = helpers[i];
 			break;
 		}
@@ -464,20 +456,20 @@ void DAEHandler::process_special_helpers(daeElement *element, int idx, matrix ro
 	vector3d offset = specials[idx]->point;
 	helpers = helper->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			// better check for custom properties first
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "properties", strlen("properties")) == 0) {
+			if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "properties")) {
 				process_properties(helpers[i],&specials[idx]->properties);
 			}
 		}
 	}
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "thrusters", strlen("thrusters")) == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
+			if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "thrusters")) {
 				process_thrusters(helpers[i],specials[idx]->name,rotation,offset);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "bay", strlen("bay")) == 0) {
+			} else if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "bay")) {
 				process_path(helpers[i],specials[idx]->name,rotation,offset);
-			} else if (strnicmp(helpers[i]->getAttribute("name").c_str(), "path", strlen("path")) == 0) {
+			} else if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "path")) {
 				process_path(helpers[i],specials[idx]->name,rotation,offset);
 			}
 		}
@@ -489,7 +481,7 @@ void DAEHandler::process_dock_helpers(daeElement *element) {
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	daeElement *helper = NULL;
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0 && strnicmp(helpers[i]->getAttribute("name").c_str(), "helper", strlen("helper")) == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "helper")) {
 			helper = helpers[i];
 			break;
 		}
@@ -506,16 +498,16 @@ void DAEHandler::process_dock_helpers(daeElement *element) {
 	vector3d offset = vector3d(0,0,0);//docks[idx]->dockpoints[0].point;
 	helpers = helper->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			// better check for custom properties first
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "properties", strlen("properties")) == 0) {
+			if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "properties")) {
 				process_properties(helpers[i],&docks[idx]->properties);
 			}
 		}
 	}
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
-			if (strnicmp(helpers[i]->getAttribute("name").c_str(), "path", strlen("path")) == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
+			if (boost::algorithm::istarts_with(helpers[i]->getAttribute("name"), "path")) {
 				process_path(helpers[i],"",matrix(),offset,idx);
 			}
 		}
@@ -534,7 +526,7 @@ void DAEHandler::process_properties(daeElement *element,string *properties) {
 	}
 	*properties = "";
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			*properties += helpers[i]->getAttribute("name");
 			//properties->replace(SPACE_REPLACEMENT,' ');
 			*properties += "\n";
@@ -614,7 +606,7 @@ void DAEHandler::process_thrusters(daeElement *element,string name,matrix rotati
 		}
 	}
 	for (unsigned int i = 0; i < thrusters.getCount(); i++) {
-		if (strcmp(thrusters[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(thrusters[i]->getTypeName(), "node")) {
 			glow.pos = get_translation(thrusters[i], rotation_matrix) + offset;
 			glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thrusters[i],rotation_matrix)));
 			glow.radius = get_rotation(thrusters[i], rotation_matrix).scale();
@@ -632,7 +624,7 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 	turret.turret_normal = vector3d(0,0,0);
 
 	for (unsigned int i = 0; i < turrets.getCount(); i++) {
-		if (strcmp(turrets[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(turrets[i]->getTypeName(), "node")) {
 			turret.turret_normal += fix_axes(up,get_rotation(turrets[i],rotation_matrix));
 			turret.fire_points.push_back(get_translation(turrets[i],rotation_matrix));
 		}
@@ -666,7 +658,7 @@ void DAEHandler::process_path(daeElement *element,string parent,matrix rotation_
 	pcs_pvert vert;
 
 	for (unsigned int i = 0; i < paths.getCount(); i++) {
-		if (strcmp(paths[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(paths[i]->getTypeName(), "node")) {
 			vert.pos = get_translation(paths[i],rotation_matrix) + offset;
 			vert.radius = get_rotation(paths[i], rotation_matrix).scale();
 			path.verts.push_back(vert);
@@ -685,8 +677,8 @@ void DAEHandler::process_glowpoints(daeElement *element,int parent,matrix rotati
 	glowbank.obj_parent = parent;
 	pcs_thrust_glow glow;
 	for (unsigned int i = 0; i < glows.getCount(); i++) {
-		if (strcmp(glows[i]->getTypeName(),"node") == 0) {
-			if (strnicmp(glows[i]->getAttribute("name").c_str(), "helper", strlen("helper")) == 0) {
+		if (boost::algorithm::equals(glows[i]->getTypeName(), "node")) {
+			if (boost::algorithm::istarts_with(glows[i]->getAttribute("name"), "helper")) {
 				process_properties(glows[i]->getChild("node"),&glowbank.properties);
 			} else {
 				glow.pos = get_translation(glows[i], rotation_matrix);
@@ -694,7 +686,7 @@ void DAEHandler::process_glowpoints(daeElement *element,int parent,matrix rotati
 				glow.norm = vector3d(0,0,0);
 				glowbank.lights.push_back(glow);
 			}
-		} else if (strcmp(glows[i]->getTypeName(),"extra") == 0) {
+		} else if (boost::algorithm::equals(glows[i]->getTypeName(), "extra")) {
 			daeElement *props = glows[i]->getDescendant("user_properties");
 			if (props != NULL) {
 				glowbank.properties = props->getCharData().c_str();
@@ -716,15 +708,15 @@ void DAEHandler::process_glowpoints_properties(pcs_glow_array &glowbank) {
 			size_t offset = temp.find_first_of("=");
 			if (offset != string::npos) {
 				int value = atoi(temp.substr(offset + 1).c_str());
-				if (stricmp(temp.substr(0, offset).c_str(), "type") == 0) {
+				if (boost::algorithm::iequals(temp.substr(0, offset), "type")) {
 					glowbank.type = value;
-				} else if (stricmp(temp.substr(0, offset).c_str(), "on") == 0) {
+				} else if (boost::algorithm::iequals(temp.substr(0, offset), "on")) {
 					glowbank.on_time = value;
-				} else if (stricmp(temp.substr(0, offset).c_str(), "off") == 0) {
+				} else if (boost::algorithm::iequals(temp.substr(0, offset), "off")) {
 					glowbank.off_time = value;
-				} else if (stricmp(temp.substr(0, offset).c_str(), "displacement") == 0) {
+				} else if (boost::algorithm::iequals(temp.substr(0, offset), "displacement")) {
 					glowbank.disp_time = value;
-				} else if (stricmp(temp.substr(0, offset).c_str(), "lod") == 0) {
+				} else if (boost::algorithm::iequals(temp.substr(0, offset), "lod")) {
 					glowbank.LOD = value;
 				}
 			}
@@ -743,7 +735,6 @@ string strip_texture(string name) {
 	if (strrchr(name.c_str(),'.')) {
 		name.resize(strrchr(name.c_str(),'.') - name.c_str());
 	}
-	cerr << name << endl;
 	return name;
 
 }
@@ -1252,7 +1243,7 @@ DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
 	max_offset = 0;
 	daeTArray< daeSmartRef<daeElement> > poly_bits = element->getChildren();
 	for (unsigned int k = 0; k < poly_bits.getCount(); k++) {
-		if (strcmp(poly_bits[k]->getAttribute("semantic").c_str(),"VERTEX") == 0) {
+		if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "VERTEX")) {
 			vert_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
 			max_offset = max(max_offset,vert_offset);
 			temp = doc;
@@ -1261,13 +1252,13 @@ DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
 			daeTArray< daeSmartRef<daeElement> > vertices = uri.getElement()->getChildren();
 			for (unsigned int i = 0; i < vertices.getCount(); i++) {
 
-				if (strcmp(vertices[i]->getAttribute("semantic").c_str(),"POSITION") == 0) {
+				if (boost::algorithm::equals(vertices[i]->getAttribute("semantic"), "POSITION")) {
 					pos_offset = vert_offset;
 					temp = doc;
 					temp += vertices[i]->getAttribute("source").c_str();
 					uri.setURI(temp.c_str());
 					pos = DAEInput(uri);
-				} else if (strcmp(vertices[i]->getAttribute("semantic").c_str(),"NORMAL") == 0) {
+				} else if (boost::algorithm::equals(vertices[i]->getAttribute("semantic"), "NORMAL")) {
 					norm_offset = vert_offset;
 					temp = doc;
 					temp += vertices[i]->getAttribute("source").c_str();
@@ -1275,21 +1266,21 @@ DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
 					norm = DAEInput(uri);
 				}
 			}
-		} else if (strcmp(poly_bits[k]->getAttribute("semantic").c_str(),"NORMAL") == 0) {
+		} else if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "NORMAL")) {
 			norm_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
 			max_offset = max(max_offset,norm_offset);
 			temp = doc;
 			temp += poly_bits[k]->getAttribute("source").c_str();
 			uri.setURI(temp.c_str());
 			norm = DAEInput(uri);
-		} else if (strcmp(poly_bits[k]->getAttribute("semantic").c_str(),"TEXCOORD") == 0) {
+		} else if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "TEXCOORD")) {
 			uv_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
 			max_offset = max(max_offset,uv_offset);
 			temp = doc;
 			temp += poly_bits[k]->getAttribute("source").c_str();
 			uri.setURI(temp.c_str());
 			uv = DAEInput(uri);
-		} else if (strcmp(poly_bits[k]->getAttribute("offset").c_str(),"") != 0) {
+		} else if (!boost::algorithm::equals(poly_bits[k]->getAttribute("offset"), "")) {
 			max_offset = max(max_offset,atoi(poly_bits[k]->getAttribute("offset").c_str()));
 		}
 	}
@@ -1317,13 +1308,13 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
 	vector<float> *temp;
 	for (unsigned int i = 0; i < children.getCount(); i++) {
-		if (strcmp(children[i]->getTypeName(),"rotate") == 0) {
+		if (boost::algorithm::equals(children[i]->getTypeName(), "rotate")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),4);
 			rot = matrix(((*temp)[3] * M_PI) / 180.0f);
 			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
 			old = base.invert() % rot % base % old;
 			delete temp;
-		} else if (strcmp(children[i]->getTypeName(),"scale") == 0) {
+		} else if (boost::algorithm::equals(children[i]->getTypeName(), "scale")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),3);
 			base = matrix();
 			for (int j = 0; j < 3; j++) {
@@ -1331,7 +1322,7 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 			}
 			delete temp;
 			old = base % old;
-		} else if (strcmp(children[i]->getTypeName(),"matrix") == 0) {
+		} else if (boost::algorithm::equals(children[i]->getTypeName(), "matrix")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),16);
 			rot = matrix(temp);
 			old = old % rot;
@@ -1349,7 +1340,7 @@ pcs_slot DAEHandler::process_gunbank(daeElement *helper, int type) {
 	vector3d translation = get_translation(helper);
 	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strcmp(helpers[i]->getTypeName(),"node") == 0) {
+		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			temp.norm = fix_axes(up,get_rotation(helpers[i], rot));
 			temp.point = get_translation(helpers[i], rot) + translation;
 			bank.muzzles.push_back(temp);
@@ -1869,8 +1860,8 @@ void DAESaver::add_thrusters() {
 		helper = NULL;
 		thruster = &model->Thruster(i);
 		engine_name = thruster->properties;
-		if (engine_name.size() > 0 && strlen(engine_name.c_str()) > 0 && strstr(engine_name.c_str(),"$engine_subsystem=")) {
-			engine_name = string(strrchr(engine_name.c_str(),'=') + 1);
+		if (!engine_name.empty() && boost::algorithm::istarts_with(engine_name, "$engine_subsystem=")) {
+			engine_name = engine_name.substr(engine_name.find("="));
 			helper = find_subsystem(engine_name,offset,scale_vec);
 		}
 		if (helper == NULL) {
@@ -2293,7 +2284,7 @@ daeElement* DAESaver::add_helper(daeElement *element,string properties) {
 				temp.str(result.c_str());
 				while (!temp.eof()) {
 					temp >> properti;
-					if (strcmp(properti.c_str(),previous.c_str())) {
+					if (boost::algorithm::iequals(properti, previous)) {
 						add_property(props,properti.c_str());
 					}
 					previous = properti;
@@ -2324,7 +2315,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 	offset = vector3d(0,0,0);
 	scale = vector3d(1,1,1);
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
-		if (model->SOBJ(i).name == name) {
+		if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
 			offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),&model_subobjs);
 			answer = subobjs[i];
 			break;
@@ -2332,7 +2323,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 	}
 	if (answer == NULL) {
 		for (int i = 0; i < model->GetSpecialCount(); i++) {
-			if (model->Special(i).name == name) {
+			if (boost::algorithm::iequals(model->Special(i).name, name)) {
 				offset = model->Special(i).point;
 				scale = radius_to_scale(model->Special(i).radius);
 				answer = specials[i];
@@ -2347,7 +2338,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 			name.erase(0,1);
 		}
 		for (unsigned int i = 0; i < subobjs.size(); i++) {
-			if (model->SOBJ(i).name == name) {
+			if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
 				offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),&model_subobjs);
 				answer = subobjs[i];
 				break;
@@ -2355,7 +2346,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 		}
 		if (answer == NULL) {
 			for (int i = 0; i < model->GetSpecialCount(); i++) {
-				if (model->Special(i).name == name) {
+				if (boost::algorithm::iequals(model->Special(i).name, name)) {
 					offset = model->Special(i).point;
 					scale = radius_to_scale(model->Special(i).radius);
 					answer = specials[i];
@@ -2371,7 +2362,7 @@ daeElement *DAESaver::find_helper(daeElement *element) {
 	if (element == NULL) return NULL;
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (strnicmp(helpers[i]->getAttribute("id").c_str(), "helper", strlen("helper")) == 0) {
+		if (boost::algorithm::istarts_with(helpers[i]->getAttribute("id"), "helper")) {
 			return helpers[i];
 		}
 	}
@@ -2528,7 +2519,7 @@ void add_texture_mappings(daeElement *element, map<string, string> *mapping) {
 	}
 	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
 	for (unsigned int i = 0; i < children.getCount(); i++) {
-		if (strcmp(children[i]->getTypeName(), "instance_material") == 0 && mapping->find(children[i]->getAttribute("symbol")) == mapping->end()) {
+		if (boost::algorithm::equals(children[i]->getTypeName(), "instance_material") && mapping->find(children[i]->getAttribute("symbol")) == mapping->end()) {
 			mapping->insert(pair<string, string>(children[i]->getAttribute("symbol"), children[i]->getAttribute("target")));
 		}
 	}
