@@ -316,20 +316,20 @@ bool pcs_insig::Generate(const std::vector<pcs_polygon>& polygons, const float e
 									polys[*it][2] - polys[*it][0])),
 							MakeUnitVector(CrossProduct(polys[*jt][1] - polys[*jt][0],
 									polys[*jt][2] - polys[*jt][0]))) > epsilon) {
-					for (unsigned int k = 0; k < polys[*it].size() && !merged; k++) {
-						for (unsigned int l = 0; l < polys[*jt].size() && !merged; l++) {
+					for (size_t k = 0; k < polys[*it].size() && !merged; k++) {
+						for (size_t l = 0; l < polys[*jt].size() && !merged; l++) {
 							if (polys[*it][(k + 1) % polys[*it].size()] == polys[*jt][l] &&
 									polys[*it][k] == polys[*jt][(l + 1) % polys[*jt].size()]) {
 								// TODO: test for convexity
 								merged = true;
 								polys[*it].resize(polys[*it].size() + polys[*jt].size() - 2);
 								// Shift vertices after the break out of the way.
-								for (int i = polys[*it].size() - 1; i > k + 1; i--) {
+								for (size_t i = polys[*it].size() - 1; i > k + 1; i--) {
 									polys[*it][i] = polys[*it][i - polys[*jt].size() + 2];
 								}
 								// Copy vertices from poly being merged, in order.
 								int i = k + 1;
-								for (int j = (l + 2) % polys[*jt].size(); j != l; j = (j + 1) % polys[*jt].size()) {
+								for (size_t j = (l + 2) % polys[*jt].size(); j != l; j = (j + 1) % polys[*jt].size()) {
 									polys[*it][i] = polys[*jt][j];
 									i++;
 								}
