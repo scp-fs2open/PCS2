@@ -290,9 +290,12 @@ public:
 	}
 
 	virtual void transform(const matrix& transform, const vector3d& translation) {
-		std::vector<pcs_slot> guns = get_value();
-		guns[get_item()[0]].Transform(transform, translation);
-		set_value(guns);
+		std::vector<int> items = get_item();
+		if (items[0] != -1) {
+			std::vector<pcs_slot> guns = get_value();
+			guns[items[0]].Transform(transform, translation);
+			set_value(guns);
+		}
 	}
 };
 
