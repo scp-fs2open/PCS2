@@ -56,4 +56,16 @@ public:
 	void set_omnipoints(const omnipoints&points){}
 	void get_omnipoint_coords(int&list, int&item){list = -1; item = -1;}
 	void set_omnipoint_coords(int&list, int&item){}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	void transform(const matrix& transform, const vector3d& translation) {
+		std::vector<pcs_shield_triangle> shields = get_value();
+		for (std::vector<pcs_shield_triangle>::iterator it = shields.begin(); it < shields.end(); ++it) {
+			it->Transform(transform, translation);
+		}
+		set_value(shields);
+	}
 };

@@ -120,7 +120,12 @@ public:
 	void set_pos(vector3d p){
 		offset->set_value(data.offset = p);
 	}
-	
+
+	virtual void transform(const matrix& transform, const vector3d& translation, int sobj_num) {
+		pcs_sobj sobj = get_value();
+		sobj.Transform(get_main_window()->get_model(), sobj_num, transform, translation, false, false);
+		set_value(sobj);
+	}
 };
 
 class SOBJ_ctrl
@@ -252,4 +257,11 @@ public:
 		GetEventHandler()->ProcessEvent(e);
 	}
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		sobj->transform(transform, translation, sobj_num);
+	}
 };

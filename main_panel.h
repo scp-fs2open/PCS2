@@ -144,6 +144,7 @@ class main_panel
 	wxPanel*control_pane;//holds the control panel and the buttons
 	wxButton*load_chunk_btn;	//button that appliys changes to the model
 	wxButton*save_chunk_btn; //button that discards changes and set's the control to what is in the model
+	wxButton*transform_chunk_btn;
 
 	// editor data
 	PCS_Model model;
@@ -215,6 +216,7 @@ public:
 
 	void on_load_chunk(wxCommandEvent &event);
 	void on_save_chunk(wxCommandEvent &event);
+	void on_transform_chunk(wxCommandEvent &event);
 
 	void on_cpy_sobj(wxCommandEvent &event);
 	void on_del_sobj(wxCommandEvent &event);
@@ -253,6 +255,16 @@ public:
 	
 	DECLARE_EVENT_TABLE();
 
+
+	class transform_dialog : public wxDialog
+	{
+		wxTextCtrl* matrix[16];
+
+		public:
+		transform_dialog(wxWindow* parent, model_editor_ctrl_base* control);
+		std::vector<float> get_value();
+		virtual ~transform_dialog(void){};
+	};
 };
 
 #endif //_MAIN_PANEL_H_

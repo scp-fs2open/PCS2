@@ -24,7 +24,7 @@ struct matrix {
 
 	matrix inverse();
 
-	std::string tostring();
+	std::string tostring() const;
 
 	float scale();
 
@@ -43,6 +43,8 @@ struct matrix {
 	matrix operator + (const matrix&m);
 
 	matrix invert();
+
+	float determinant() const;
 
 };
 

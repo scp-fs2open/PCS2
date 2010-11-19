@@ -54,6 +54,9 @@ class model_editor_ctrl_base : public wxScrolledWindow
 		virtual void redo()=0;
 		virtual void fix_buttons()=0;
 		virtual void reset_undo()=0;
+
+		virtual wxSizer* get_transform_options(wxWindow* parent)=0;
+		virtual void transform(const matrix& transform, const vector3d& translation)=0;
 };
 
 //base for the panel with the item specific editors on them
@@ -158,6 +161,8 @@ public:
 	virtual void set_omnipoints(const omnipoints&points)=0;
 	virtual void get_omnipoint_coords(int&list, int&item)=0;
 	virtual void set_omnipoint_coords(int&list, int&item)=0;
+	virtual wxSizer* get_transform_options(wxWindow* parent)=0;
+	virtual void transform(const matrix& transform, const vector3d& translation)=0;
 
 };
 
@@ -261,6 +266,16 @@ public:
 
 	virtual void set_omnipoint_coords(int&list, int&item){
 		conrol_panel->set_omnipoint_coords(list, item);
+	}
+
+	virtual wxSizer* get_transform_options(wxWindow* parent) {
+		return conrol_panel->get_transform_options(parent);
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		conrol_panel->transform(transform, translation);
+		wxCommandEvent event(EDIT_DONE);
+		GetEventHandler()->ProcessEvent(event);
 	}
 
 };

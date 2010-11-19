@@ -272,6 +272,7 @@ enum
 
 	MAIN_PANEL_LOAD_CHUNK_BTN,
 	MAIN_PANEL_SAVE_CHUNK_BTN,
+	MAIN_PANEL_TRANSFORM_CHUNK_BTN,
 
 	// -------------------------------- Progress Dialogs -------------------------------- 
 	OPEN_FILE_PROGRESS_MESSAGER,

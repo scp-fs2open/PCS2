@@ -56,7 +56,7 @@ matrix::matrix(std::vector<float> *matrix) {
 	}
 }
 
-std::string matrix::tostring() {
+std::string matrix::tostring() const {
 	std::stringstream logger;
 	for (int i = 0; i < MATRIX_SIZE; i++) {
 		for (int j = 0; j < MATRIX_SIZE; j++) {
@@ -153,4 +153,12 @@ matrix matrix::invert(){
 	ret.a2d[2][2] = float(double(-a2d[0][1]*a2d[1][0] + a2d[0][0]*a2d[1][1])/d);
 
 	return ret;
+}
+
+float matrix::determinant() const {
+	float result = 0.0f;
+	for (int i = 0; i < 3; i++) {
+		result += a2d[0][i] * (a2d[1][(i+1) % 3] * a2d[2][(i+2) % 3] - a2d[1][(i+2) % 3] * a2d[2][(i+1) % 3]);
+	}
+	return result;
 }

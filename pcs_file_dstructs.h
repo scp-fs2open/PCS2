@@ -74,6 +74,7 @@
 #define _pcs_file_dstructs_h_
 
 #include "vector3d.h"
+#include "matrix3d.h"
 #include <string>
 #include "ogl_vertex_buffers.h"
 #include <boost/shared_array.hpp>
@@ -215,6 +216,8 @@ inline bool operator==(const pcs_polygon&t, const pcs_polygon&o){
 enum { MNONE=0, ROTATE };
 enum { ANONE=0, MV_X, MV_Y, MV_Z };
 
+class PCS_Model;
+
 struct pcs_sobj
 {
 	//int sobj_num is determined by it's place in the vector
@@ -260,8 +263,14 @@ OGL vertex buffer stuf!
 	std::vector<ogl_vertex_buffer> vertex_buffer;
 	std::vector<ogl_vertex_buffer> line_vertex_buffer;//for outlineing
 
+	void Transform(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot);
+
 	void make_vertex_buffer(int tid);//set's up a vertex buffer
 	void destroy_vertex_buffer();//frees all the stuff
+
+	private:
+		void TransformBefore(PCS_Model& model, int idx);
+		void TransformAfter(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot);
 };
 
 inline bool operator == (const pcs_sobj&t, const pcs_sobj&o){
@@ -301,6 +310,7 @@ struct pcs_eye_pos
 	vector3d normal;
 
 	pcs_eye_pos() : sobj_number(-1), normal(0,0,1) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_eye_pos&t, const pcs_eye_pos&o){
@@ -320,6 +330,7 @@ struct pcs_special
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 	pcs_special() : properties("$special=subsystem"), radius(0.0) {}
+	void Transform(PCS_Model& model, const matrix& transform, const vector3d& translation);
 };
 
 
@@ -336,6 +347,7 @@ struct pcs_hardpoint
 	vector3d point;
 	vector3d norm;
 	pcs_hardpoint():norm(0,0,1){}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 inline bool operator==(const pcs_hardpoint&t, const pcs_hardpoint&o){
 	return t.point == o.point && t.norm == o.norm;
@@ -351,6 +363,7 @@ struct pcs_slot
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 	pcs_slot() : type(GUN) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_slot&t, const pcs_slot&o){
@@ -371,6 +384,7 @@ struct pcs_turret
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 	pcs_turret() : type(GUN), sobj_parent(-1), sobj_par_phys(-1) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_turret&t, const pcs_turret&o){
@@ -391,6 +405,7 @@ struct pcs_dock_point
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
+	void Transform(PCS_Model& model, const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_dock_point&t, const pcs_dock_point&o){
@@ -409,6 +424,7 @@ struct pcs_thrust_glow
 
 	pcs_thrust_glow() : norm(0,0,-1), radius(0.0) {}
 	pcs_thrust_glow(vector3d apos, vector3d anorm, float arad) : pos(apos), norm(anorm), radius(arad) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 
@@ -422,6 +438,7 @@ struct pcs_thruster
 {
 	std::vector<pcs_thrust_glow> points;
 	std::string properties;
+	void Transform(const matrix& transform, const vector3d& translation);
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
@@ -438,6 +455,7 @@ struct pcs_shield_triangle
 {
 	vector3d face_normal;
 	vector3d corners[3];
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_shield_triangle&t, const pcs_shield_triangle&o){
@@ -456,6 +474,7 @@ struct pcs_insig_face
 	float v[3];
 
 	pcs_insig_face() { memset(this, 0, sizeof(pcs_insig_face)); }
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_insig_face&t, const pcs_insig_face&o){
@@ -477,6 +496,7 @@ struct pcs_insig_generator
 	int subdivision;
 	float merge_eps;
 	pcs_insig_generator() : forward(-1,0,0), up(0,1,0), radius(3.0f), distance(0.005f), subdivision(128), merge_eps(0.9999f) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_insig_generator&t, const pcs_insig_generator&o){
@@ -499,6 +519,7 @@ struct pcs_insig
 	static bool inside_polygon(const vector3d& v, const std::vector<vector3d>& verts);
 	static float interpolate_z(const vector3d& v, const std::vector<vector3d>& verts);
 	static std::vector<vector3d> clip(const std::vector<vector3d>& verts);
+	void Transform(const matrix& transform, const vector3d& translation);
 
 	pcs_insig() : lod(0) {} 
 };
@@ -516,6 +537,7 @@ struct pcs_pvert
 	float radius;
 
 	pcs_pvert() : radius(0.0) {}
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_pvert&t, const pcs_pvert&o){
@@ -531,6 +553,7 @@ struct pcs_path
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
+	void Transform(const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_path&t, const pcs_path&o){
@@ -556,6 +579,7 @@ struct pcs_glow_array
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
 	pcs_glow_array() : disp_time(0), on_time(0), off_time(0), obj_parent(0), LOD(0), type(0), lights() {}
+	void Transform(const matrix& transform, const vector3d& translation);
 }; 
 
 inline bool operator==(const pcs_glow_array&t, const pcs_glow_array&o){

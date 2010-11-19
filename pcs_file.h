@@ -297,7 +297,6 @@ class PCS_Model
 		// priv funcs
 		void RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_vbos);
 		void RenderGeometry_vertex_buffers(int sobj, TextureControl &tc);
-		vector3d OffsetFromParent(int ObjNum);
 		int FindTexture(std::string name);
 
 
@@ -315,6 +314,8 @@ class PCS_Model
 
 	public:
 		bobboau::matrix moi_recalculate(int Xres, int Yres);
+		vector3d OffsetFromParent(int ObjNum);
+		void Transform(const matrix& transform, const vector3d& translation);
 
 		PCS_Model() : header(), can_bsp_cache(false), has_fullsmoothing_data(false), active_submodel(0), Wireframe(false), Textureless(false), draw_bsp(false)
 		{

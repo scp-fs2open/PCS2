@@ -167,4 +167,12 @@ public:
 	void get_omnipoint_coords(int&list, int&item){list = -1; item = -1;}
 	void set_omnipoint_coords(int&list, int&item){}
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	void transform(const matrix& transform, const vector3d& translation) {
+		get_main_window()->get_model().Transform(transform, translation);
+		set_data(get_main_window()->get_model());
+	}
 };

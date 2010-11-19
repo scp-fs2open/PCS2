@@ -56,6 +56,11 @@ public:
 		return t;
 	}
 	
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		pcs_special special = get_value();
+		special.Transform(get_main_window()->get_model(), transform, translation);
+		set_value(special);
+	}
 };
 
 //control for an array of Special points
@@ -155,5 +160,13 @@ public:
 	}
 	void set_omnipoint_coords(int&list, int&item){
 		points->set_index(item);
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		points->get_child_control()->transform(transform, translation);
 	}
 };

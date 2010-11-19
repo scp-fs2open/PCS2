@@ -110,6 +110,12 @@ public:
 		verts->set_index(idx);
 	}
 	
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		pcs_path path = get_value();
+		path.Transform(transform, translation);
+		set_value(path);
+	}
+
 };
 
 
@@ -380,6 +386,14 @@ public:
 			}
 		}
 		set_value(paths);
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		paths->get_child_control()->transform(transform, translation);
 	}
 };
 

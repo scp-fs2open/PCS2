@@ -36,6 +36,11 @@ public:
 		return t;
 	}
 	
+	void transform(const matrix& transform, const vector3d& translation) {
+		pcs_eye_pos eye = get_value();
+		eye.Transform(transform, translation);
+		set_value(eye);
+	}
 };
 
 //control for an array of hardpoints
@@ -139,4 +144,11 @@ public:
 		eye->set_index(item);
 	}
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		eye->get_child_control()->transform(transform, translation);
+	}
 };

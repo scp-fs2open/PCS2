@@ -58,6 +58,12 @@ public:
 	void set_index(int idx){
 		points->set_index(idx);
 	}
+
+	void transform(const matrix& transform, const vector3d& translation) {
+		pcs_turret turret = get_value();
+		turret.Transform(transform, translation);
+		set_value(turret);
+	}
 };
 
 //control for an array of turrets
@@ -170,5 +176,13 @@ public:
 	void set_omnipoint_coords(int&list, int&item){
 		turrets->set_index(list); 
 		turrets->get_child_control()->set_index(item);
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		turrets->get_child_control()->transform(transform, translation);
 	}
 };

@@ -253,6 +253,11 @@ public:
 		return result;
 	}
 
+	void transform(const matrix& transform, const vector3d& translation) {
+		pcs_insig insignia = get_value();
+		insignia.Transform(transform, translation);
+		set_value(insignia);
+	}
 
 	DECLARE_EVENT_TABLE();
 	void on_project(wxCommandEvent& event){
@@ -421,6 +426,14 @@ public:
 	}
 	void set_omnipoint_coords(int&list, int&item){
 		// TODO
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	void transform(const matrix& transform, const vector3d& translation) {
+		insignia->get_child_control()->transform(transform, translation);
 	}
 };
 #endif

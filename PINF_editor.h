@@ -53,4 +53,11 @@ public:
 	void set_omnipoints(const omnipoints&points){}
 	void get_omnipoint_coords(int&list, int&item){list = -1; item = -1;}
 	void set_omnipoint_coords(int&list, int&item){}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+	}
 };

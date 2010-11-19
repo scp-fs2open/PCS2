@@ -42,6 +42,12 @@ public:
 	void set_index(int idx){
 		points->set_index(idx);
 	}
+
+	void transform(const matrix& transform, const vector3d& translation) {
+		pcs_thruster thruster = get_value();
+		thruster.Transform(transform, translation);
+		set_value(thruster);
+	}
 };
 
 //control for an array of glowpoints
@@ -150,5 +156,13 @@ public:
 	void set_omnipoint_coords(int&list, int&item){
 		thrusters->set_index(list); 
 		thrusters->get_child_control()->set_index(item);
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		thrusters->get_child_control()->transform(transform, translation);
 	}
 };

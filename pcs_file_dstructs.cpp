@@ -38,7 +38,9 @@
 
 #include <cfloat>
 #include <set>
+#include <boost/algorithm/string.hpp>
 
+#include "pcs_file.h"
 #include "pcs_file_dstructs.h"
 #include "matrix3d.h"
 
@@ -533,4 +535,202 @@ void pmf_bsp_cache::Write(std::ostream& out)
 		// XXX FIXME: Writes sizeof(bsp_size): 4 bytes.
 		BFWrite(*bsp_data.get(), bsp_size) }
 	BFWrite(changed, bool)
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+void pcs_sobj::Transform(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot) {
+	if (parent_sobj == -1) {
+		fixed_pivot = true;
+	}
+	TransformBefore(model, idx);
+	TransformAfter(model, idx, transform, translation, transform_pivot, fixed_pivot);
+}
+
+void pcs_sobj::TransformBefore(PCS_Model& model, int idx) {
+	vector3d global_offset(-1.0f * model.OffsetFromParent(idx));
+	matrix transform;
+	// Child subobjects:
+	for (int i = 0; i < model.GetSOBJCount(); i++) {
+		pcs_sobj& other = model.SOBJ(i);
+		if (other.parent_sobj == idx) {
+			other.TransformBefore(model, i);
+		}
+	}
+	// Paths:
+	for (int i = 0; i < model.GetPathCount(); i++) {
+		pcs_path& path = model.Path(i);
+		if (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1))) {
+			path.Transform(transform, global_offset);
+		}
+	}
+	// Glowpoints:
+	for (int i = 0; i < model.GetLightCount(); i++) {
+		pcs_glow_array& lights = model.Light(i);
+		if (lights.obj_parent == idx) {
+			lights.Transform(transform, global_offset);
+		}
+	}
+}
+
+void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot) {
+	model.SetObjectChanged(idx);
+	// TODO: bounding box and radius.
+	// TODO: uvec, fvec
+	// TODO: rotation axis...
+	vector3d subtranslation = translation;
+	if (transform_pivot) {
+		offset = transform * offset;
+	}
+	if (!fixed_pivot) {
+		offset += subtranslation;
+		subtranslation = vector3d();
+	}
+
+	for (std::vector<pcs_polygon>::iterator it = polygons.begin(); it < polygons.end(); ++it) {
+		it->norm = transform * it->norm;
+		it->centeroid = transform * it->centeroid + subtranslation;
+		for (std::vector<pcs_vertex>::iterator jt = it->verts.begin(); jt < it->verts.end(); ++jt) {
+			jt->point = transform * jt->point + subtranslation;
+			jt->norm = transform * jt->norm;
+		}
+	}
+	// So OffsetFromParent works correctly.
+	model.SOBJ(idx) = *this;
+	// Child subobjects:
+	for (int i = 0; i < model.GetSOBJCount(); i++) {
+		pcs_sobj& other = model.SOBJ(i);
+		if (other.parent_sobj == idx) {
+			other.TransformAfter(model, i, transform, subtranslation, true, false);
+		}
+	}
+	// Turrets:
+	for (int i = 0; i < model.GetTurretCount(); i++) {
+		pcs_turret& turret = model.Turret(i);
+		if (turret.sobj_par_phys == idx) {
+			turret.Transform(transform, subtranslation);
+		}
+	}
+	// Eyepoints:
+	for (int i = 0; i < model.GetEyeCount(); i++) {
+		pcs_eye_pos& eye = model.Eye(i);
+		if (eye.sobj_number == idx) {
+			eye.Transform(transform, subtranslation);
+		}
+	}
+	vector3d global_offset(model.OffsetFromParent(idx));
+	// Paths:
+	for (int i = 0; i < model.GetPathCount(); i++) {
+		pcs_path& path = model.Path(i);
+		if (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1))) {
+			path.Transform(transform, subtranslation + global_offset);
+		}
+	}
+	// Glowpoints:
+	for (int i = 0; i < model.GetLightCount(); i++) {
+		pcs_glow_array& lights = model.Light(i);
+		if (lights.obj_parent == idx) {
+			lights.Transform(transform, subtranslation + global_offset);
+		}
+	}
+}
+
+void pcs_turret::Transform(const matrix& transform, const vector3d& translation) {
+	turret_normal = transform * turret_normal;
+	for (std::vector<vector3d>::iterator it = fire_points.begin(); it < fire_points.end(); ++it) {
+		*it = transform * *it + translation;
+	}
+}
+
+void pcs_eye_pos::Transform(const matrix& transform, const vector3d& translation) {
+	sobj_offset = transform * sobj_offset + translation;
+	normal = transform * normal;
+}
+
+void pcs_glow_array::Transform(const matrix& transform, const vector3d& translation) {
+	for (std::vector<pcs_thrust_glow>::iterator it = lights.begin(); it < lights.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+}
+
+void pcs_thruster::Transform(const matrix& transform, const vector3d& translation) {
+	for (std::vector<pcs_thrust_glow>::iterator it = points.begin(); it < points.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+}
+
+void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& translation) {
+	pos = transform * pos + translation;
+	norm = transform * norm;
+}
+
+void pcs_insig::Transform(const matrix& transform, const vector3d& translation) {
+	offset = transform * offset + translation;
+	for (std::vector<pcs_insig_face>::iterator it = faces.begin(); it < faces.end(); ++it) {
+		it->Transform(transform, vector3d());
+	}
+	generator.Transform(transform, translation);
+}
+
+void pcs_insig_generator::Transform(const matrix& transform, const vector3d& translation) {
+	pos = transform * pos + translation;
+	forward = transform * forward;
+	up = transform * up;
+}
+
+void pcs_insig_face::Transform(const matrix& transform, const vector3d& translation) {
+	for(int i = 0; i < 3; i++) {
+		verts[i] = transform * verts[i] + translation;
+	}
+}
+
+void pcs_path::Transform(const matrix& transform, const vector3d& translation) {
+	for (std::vector<pcs_pvert>::iterator it = verts.begin(); it < verts.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+}
+
+void pcs_pvert::Transform(const matrix& transform, const vector3d& translation) {
+	pos = transform * pos + translation;
+	radius *= transform.determinant();
+}
+
+void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
+	for (std::vector<pcs_hardpoint>::iterator it = dockpoints.begin(); it < dockpoints.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+		for (std::vector<int>::iterator it = paths.begin(); it < paths.end(); ++it) {
+			if (*it < model.GetPathCount()) {
+				model.Path(*it).Transform(transform, translation);
+			}
+		}
+}
+
+void pcs_shield_triangle::Transform(const matrix& transform, const vector3d& translation) {
+	face_normal = transform * face_normal;
+	for (int i = 0; i < 3; i++) {
+		corners[i] = transform * corners[i] + translation;
+	}
+}
+
+void pcs_hardpoint::Transform(const matrix& transform, const vector3d& translation) {
+	norm = transform * norm;
+	point = transform * point + translation;
+}
+
+void pcs_slot::Transform(const matrix& transform, const vector3d& translation) {
+	for (std::vector<pcs_hardpoint>::iterator it = muzzles.begin(); it < muzzles.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+}
+
+void pcs_special::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
+	point = transform * point + translation;
+	radius *= transform.determinant();
+	for (int i = 0; i < model.GetPathCount(); i++) {
+		pcs_path& path = model.Path(i);
+		if (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1))) {
+			path.Transform(transform, translation);
+		}
+	}
 }

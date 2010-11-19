@@ -268,6 +268,7 @@
 #include "pcs_file.h"
 #include "pcs_pof_bspfuncs.h"
 #include <fstream>
+#include <set>
 #include "color.h"
 #include "omnipoints.h"
 #include <wx/msgdlg.h>
@@ -2450,4 +2451,41 @@ bool PCS_Model::moi_colide(std::vector<vector3d>&cpoints, float x, float z){
 	}else{
 		return false;
 	}
+}
+
+void PCS_Model::Transform(const matrix& transform, const vector3d& translation) {
+	std::set<int> dock_paths;
+	for (std::vector<pcs_sobj>::iterator it = subobjects.begin(); it < subobjects.end(); ++it) {
+		if (it->parent_sobj == -1) {
+			it->Transform(*this, (int)(it - subobjects.begin()), transform, translation, true, true);
+		}
+	}
+	for (std::vector<pcs_special>::iterator it = special.begin(); it < special.end(); ++it) {
+		it->Transform(*this, transform, translation);
+	}
+	for (std::vector<pcs_slot>::iterator it = weapons.begin(); it < weapons.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+	for (std::vector<pcs_dock_point>::iterator it = docking.begin(); it < docking.end(); ++it) {
+		it->Transform(*this, transform, translation);
+		for (std::vector<int>::iterator jt = it->paths.begin(); jt < it->paths.end(); ++jt) {
+			dock_paths.insert(*jt);
+		}
+	}
+	for (std::vector<pcs_thruster>::iterator it = thrusters.begin(); it < thrusters.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+	for (std::vector<pcs_shield_triangle>::iterator it = shield_mesh.begin(); it < shield_mesh.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+	for (std::vector<pcs_insig>::iterator it = insignia.begin(); it < insignia.end(); ++it) {
+		it->Transform(transform, translation);
+	}
+	for (std::vector<pcs_path>::iterator it = ai_paths.begin(); it < ai_paths.end(); ++it) {
+		if (it->parent.empty() && dock_paths.find((int)(it - ai_paths.begin())) != dock_paths.end()) {
+			it->Transform(transform, translation);
+		}
+	}
+	header.mass_center = transform * header.mass_center + translation;
+	header.mass *= transform.determinant();
 }

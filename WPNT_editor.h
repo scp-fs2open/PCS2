@@ -285,6 +285,15 @@ public:
 		wpn->get_child_control()->set_index(item);
 	}
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		std::vector<pcs_slot> guns = get_value();
+		guns[get_item()[0]].Transform(transform, translation);
+		set_value(guns);
+	}
 };
 
 /*

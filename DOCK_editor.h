@@ -52,6 +52,11 @@ public:
 		dockpoints->set_index(idx);
 	}
 	
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		pcs_dock_point dock = get_value();
+		dock.Transform(get_main_window()->get_model(), transform, translation);
+		set_value(dock);
+	}
 };
 
 //array of dock points
@@ -157,5 +162,13 @@ public:
 	void set_omnipoint_coords(int&list, int&item){
 		docking->set_index(list); 
 		docking->get_child_control()->set_index(item);
+	}
+
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+		docking->get_child_control()->transform(transform, translation);
 	}
 };

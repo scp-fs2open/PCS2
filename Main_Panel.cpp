@@ -142,6 +142,8 @@
 #include"dragable_selected_open.xpm"
 #include"dragable_unselected_open.xpm"
 
+#include "matrix3d.h"
+
 #include<wx/filename.h>
 #include <wx/progdlg.h>
 #include <wx/imaglist.h>
@@ -269,7 +271,8 @@ main_panel::main_panel(wxFrame* parent)
 
 			//the buttons themselves
 			button_sizer->Add(load_chunk_btn = new wxButton(control_pane, MAIN_PANEL_LOAD_CHUNK_BTN, _("Load")),1.0);
-			button_sizer->Add(save_chunk_btn = new wxButton(control_pane, MAIN_PANEL_SAVE_CHUNK_BTN, _("Save")),1.0);
+			//button_sizer->Add(save_chunk_btn = new wxButton(control_pane, MAIN_PANEL_SAVE_CHUNK_BTN, _("Save")),1.0);
+			button_sizer->Add(transform_chunk_btn = new wxButton(control_pane, MAIN_PANEL_TRANSFORM_CHUNK_BTN, _("Transform")),1.0);
 		
 			//sizer that holds the buttons and the actual control panel
 			control_sizer = new wxBoxSizer(wxVERTICAL);
@@ -431,6 +434,7 @@ BEGIN_EVENT_TABLE(main_panel, wxPanel)
 
 	EVT_BUTTON(MAIN_PANEL_LOAD_CHUNK_BTN,main_panel::on_load_chunk)
 	EVT_BUTTON(MAIN_PANEL_SAVE_CHUNK_BTN,main_panel::on_save_chunk)
+	EVT_BUTTON(MAIN_PANEL_TRANSFORM_CHUNK_BTN,main_panel::on_transform_chunk)
 
 	EVT_BUTTON(SOBJ_BUTTON_CPY,main_panel::on_cpy_sobj)
 	EVT_BUTTON(SOBJ_BUTTON_DEL,main_panel::on_del_sobj)
@@ -630,6 +634,17 @@ void add_child_subobjects(PCS_Model&model, int parent_new, int imported_sobj, PC
 			import_model.SOBJ(i).parent_sobj = model.GetSOBJCount()-1;
 		}
 	}
+}
+
+void main_panel::on_transform_chunk(wxCommandEvent &event){
+	transform_dialog dialog(this, control_panel);
+	if (dialog.ShowModal() == wxID_OK) {
+		std::vector<float> entries = dialog.get_value();
+		matrix transform(&entries);
+		vector3d offset(entries[3], entries[7], entries[11]);
+		control_panel->transform(transform, offset);
+	}
+
 }
 
 void main_panel::on_load_chunk(wxCommandEvent &event){
@@ -1837,4 +1852,40 @@ void main_panel::on_omnipoint_ray_picked(wxCommandEvent &event){
 
 void main_panel::startRender() {
 	glcanvas->Init();
+}
+main_panel::transform_dialog::transform_dialog(wxWindow* parent, model_editor_ctrl_base* control)
+	: wxDialog(parent, -1, _("Enter Transform"))
+{
+	wxSizer* sizer;
+	wxSizer* top_sizer;
+	wxSizer* buttons_sizer;
+	wxSizerFlags flags;
+	flags.Centre();
+	sizer = new wxGridSizer(4);
+	top_sizer = new wxBoxSizer(wxVERTICAL);
+	buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxSizer* options = control->get_transform_options(this);
+	for (int i = 0; i < 16; i++) {
+		matrix[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"));
+		if (i >= 12) {
+			matrix[i]->SetEditable(false);
+		}
+		sizer->Add(matrix[i]);
+	}
+	buttons_sizer->Add(new wxButton(this, wxID_OK, _("OK")));
+	buttons_sizer->Add(new wxButton(this, wxID_CANCEL, _("Cancel")));
+	top_sizer->Add(sizer);
+	if (options) {
+		top_sizer->Add(options);
+	}
+	top_sizer->Add(buttons_sizer, flags);
+	SetSizerAndFit(top_sizer);
+}
+
+std::vector<float> main_panel::transform_dialog::get_value() {
+	std::vector<float> values(16, 0.0f);
+	for (int i = 0; i < 16; i++) {
+		values[i] = (float)atof(matrix[i]->GetValue().mb_str());
+	}
+	return values;
 }

@@ -65,6 +65,10 @@ public:
 	void get_omnipoint_coords(int&list, int&item){list = -1; item = textures->get_index();}
 	void set_omnipoint_coords(int&list, int&item){}
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
 
-
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+	}
 };

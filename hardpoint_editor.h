@@ -54,4 +54,10 @@ public:
 	virtual~hard_point_array_ctrl(){}
 
 
+	wxSizer* get_transform_options(wxWindow* parent) {
+		return NULL;
+	}
+
+	virtual void transform(const matrix& transform, const vector3d& translation) {
+	}
 };
