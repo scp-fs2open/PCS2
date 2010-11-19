@@ -1854,7 +1854,7 @@ void main_panel::startRender() {
 	glcanvas->Init();
 }
 main_panel::transform_dialog::transform_dialog(wxWindow* parent, model_editor_ctrl_base* control)
-	: wxDialog(parent, -1, _("Enter Transform"))
+	: wxDialog(parent, -1, wxString(_("Enter Transform")))
 {
 	wxSizer* sizer;
 	wxSizer* top_sizer;
