@@ -261,15 +261,17 @@ public:
 		insignia.lod = lod->get_value();
 		insignia.generator = generator->get_value();
 		int sobj = model.LOD(insignia.lod);
+		insignia.generator.pos -= model.SOBJ(sobj).offset;
 		if (insignia.Generate(model.SOBJ(sobj).polygons, insignia.generator.merge_eps)) {
 			faces->set_value(insignia.faces);
-			offset->set_value(insignia.offset);
+			offset->set_value(insignia.offset + model.SOBJ(sobj).offset);
 			lod->set_value(insignia.lod);
 			generator->Disable();
 			project_btn->Disable();
 			wxCommandEvent event(EDIT_DONE);
 			GetEventHandler()->ProcessEvent(event);
 		}
+		insignia.generator.pos += model.SOBJ(sobj).offset;
 	}
 };
 
