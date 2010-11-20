@@ -574,7 +574,6 @@ void pcs_sobj::TransformBefore(PCS_Model& model, int idx) {
 }
 
 void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot) {
-	model.SetObjectChanged(idx);
 	// TODO: bounding box and radius.
 	// TODO: uvec, fvec
 	// TODO: rotation axis...
@@ -637,6 +636,7 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 			lights.Transform(transform, subtranslation + global_offset);
 		}
 	}
+	model.SetObjectChanged(idx);
 }
 
 void pcs_turret::Transform(const matrix& transform, const vector3d& translation) {

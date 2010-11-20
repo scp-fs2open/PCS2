@@ -290,6 +290,7 @@ class PCS_Model
 		bool Wireframe;
 		bool Textureless;
 		bool highlight_active_model;
+		bool vbos_enabled;
 
 
 
@@ -610,7 +611,8 @@ class PCS_Model
 				return avg;
 			}
 
-	void make_vertex_buffers();//sets up all vertex buffers for this model
+	void make_vertex_buffers(bool enabled);//sets up all vertex buffers for this model
+	void make_vertex_buffer(int sobj);//sets up vertex buffers for a subobject
 
 };
 

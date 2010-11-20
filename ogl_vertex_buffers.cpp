@@ -4,15 +4,22 @@
 #include <GL/glu.h>
 
 //sets up all vertex buffers for this model
-void PCS_Model::make_vertex_buffers(){
+void PCS_Model::make_vertex_buffers(bool enabled){
 //	return;
-	for(unsigned int i = 0; i<subobjects.size(); i++){
-		subobjects[i].destroy_vertex_buffer();//clear out any exsisting ones
-		subobjects[i].vertex_buffer.resize(textures.size());
-		subobjects[i].line_vertex_buffer.resize(textures.size());
-		for(unsigned int j = 0; j <textures.size(); j++){
-			subobjects[i].make_vertex_buffer(j);
+	vbos_enabled = enabled;
+	if (vbos_enabled) {
+		for(unsigned int i = 0; i<subobjects.size(); i++){
+			make_vertex_buffer(i);
 		}
+	}
+}
+
+void PCS_Model::make_vertex_buffer(int sobj){
+	subobjects[sobj].destroy_vertex_buffer();//clear out any exsisting ones
+	subobjects[sobj].vertex_buffer.resize(textures.size());
+	subobjects[sobj].line_vertex_buffer.resize(textures.size());
+	for(unsigned int j = 0; j <textures.size(); j++){
+		subobjects[sobj].make_vertex_buffer(j);
 	}
 }
 

@@ -1386,6 +1386,9 @@ void PCS_Model::SetObjectChanged(unsigned int idx)
 	if (idx >= subobjects.size())
 		return;
 
+	if (vbos_enabled) {
+		make_vertex_buffer(idx);
+	}
 	if (can_bsp_cache)
 		bsp_cache[idx].changed = true;
 }
