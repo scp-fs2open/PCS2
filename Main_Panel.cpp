@@ -1072,7 +1072,7 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 	glcanvas->FreezeRender = false;
 
 	// start texture load
-	glcanvas->Reinit();
+	glcanvas->Reinit(true);
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1132,7 +1132,8 @@ void main_panel::SignalModelChange(std::string filename, bool skipProgdlg)
 	else
 	{
 		// we're just triggering a texture reload
-		glcanvas->Reinit();
+		glcanvas->FreezeRender = false;
+		glcanvas->Reinit(false);
 	}
 
 	

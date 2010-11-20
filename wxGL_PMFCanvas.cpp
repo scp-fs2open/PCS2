@@ -242,7 +242,7 @@ void wxGL_PMFCanvas::Init() {
 //	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 	glEnable(GL_COLOR_SUM);
 
-	Reinit();
+	Reinit(true);
 //	gr_debug = new debug_window(wxGetTopLevelParent(parent), GR_DEBUG_WINDOW, "Graphics Debug Output", wxPoint(1024-200,768-150), wxSize(200,150));
 }
 
@@ -321,7 +321,7 @@ bool wxGL_PMFCanvas::Destroy()
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 
-void wxGL_PMFCanvas::Reinit()
+void wxGL_PMFCanvas::Reinit(bool should_reset_view)
 {
 	previus_focus = NULL;
 
@@ -335,9 +335,12 @@ void wxGL_PMFCanvas::Reinit()
 	pConfig->SetPath(_T("/gr_options/"));
 	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 	UseVBOs = (itemp == 1);
+	model.make_vertex_buffers(itemp == 1);
 	if (model.GetSOBJCount())
 	{
-		reset_view();
+		if (should_reset_view) {
+			reset_view();
+		}
 
 		reload_textures();
 	}

@@ -122,7 +122,7 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		virtual void OnMouseEvt(wxMouseEvent& event);
 		void on_click(wxMouseEvent& event);
 		void Init();
-		void Reinit();
+		void Reinit(bool should_reset_view);
 		void reset_view();
 
 		void reload_textures();
