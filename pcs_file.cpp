@@ -2487,5 +2487,5 @@ void PCS_Model::Transform(const matrix& transform, const vector3d& translation) 
 		}
 	}
 	header.mass_center = transform * header.mass_center + translation;
-	header.mass *= transform.determinant();
+	header.mass *= fabs(transform.determinant());
 }

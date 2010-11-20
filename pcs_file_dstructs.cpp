@@ -586,6 +586,7 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 		offset += subtranslation;
 		subtranslation = vector3d();
 	}
+	bool should_reverse = transform.determinant() < 0.0f;
 
 	for (std::vector<pcs_polygon>::iterator it = polygons.begin(); it < polygons.end(); ++it) {
 		it->norm = transform * it->norm;
@@ -593,6 +594,9 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 		for (std::vector<pcs_vertex>::iterator jt = it->verts.begin(); jt < it->verts.end(); ++jt) {
 			jt->point = transform * jt->point + subtranslation;
 			jt->norm = transform * jt->norm;
+		}
+		if (should_reverse) {
+			std::reverse(it->verts.begin(), it->verts.end());
 		}
 	}
 	// So OffsetFromParent works correctly.
@@ -662,6 +666,7 @@ void pcs_thruster::Transform(const matrix& transform, const vector3d& translatio
 void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
 	norm = transform * norm;
+	radius *= fabs(transform.determinant());
 }
 
 void pcs_insig::Transform(const matrix& transform, const vector3d& translation) {
@@ -682,6 +687,9 @@ void pcs_insig_face::Transform(const matrix& transform, const vector3d& translat
 	for(int i = 0; i < 3; i++) {
 		verts[i] = transform * verts[i] + translation;
 	}
+	if (transform.determinant() < 0.0f) {
+		std::reverse(verts, verts + 3);
+	}
 }
 
 void pcs_path::Transform(const matrix& transform, const vector3d& translation) {
@@ -692,7 +700,7 @@ void pcs_path::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_pvert::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
-	radius *= transform.determinant();
+	radius *= fabs(transform.determinant());
 }
 
 void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
@@ -711,6 +719,9 @@ void pcs_shield_triangle::Transform(const matrix& transform, const vector3d& tra
 	for (int i = 0; i < 3; i++) {
 		corners[i] = transform * corners[i] + translation;
 	}
+	if (transform.determinant() < 0.0f) {
+		std::reverse(corners, corners + 3);
+	}
 }
 
 void pcs_hardpoint::Transform(const matrix& transform, const vector3d& translation) {
@@ -726,7 +737,7 @@ void pcs_slot::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_special::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
 	point = transform * point + translation;
-	radius *= transform.determinant();
+	radius *= fabs(transform.determinant());
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
 		if (!path.parent.empty() && (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1)))) {
