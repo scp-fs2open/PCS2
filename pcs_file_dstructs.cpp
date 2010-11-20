@@ -666,7 +666,7 @@ void pcs_thruster::Transform(const matrix& transform, const vector3d& translatio
 void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
 	norm = transform * norm;
-	radius *= fabs(transform.determinant());
+	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
 }
 
 void pcs_insig::Transform(const matrix& transform, const vector3d& translation) {
@@ -700,7 +700,7 @@ void pcs_path::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_pvert::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
-	radius *= fabs(transform.determinant());
+	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
 }
 
 void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
@@ -737,7 +737,7 @@ void pcs_slot::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_special::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
 	point = transform * point + translation;
-	radius *= fabs(transform.determinant());
+	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
 		if (!path.parent.empty() && (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1)))) {
