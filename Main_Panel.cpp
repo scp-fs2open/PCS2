@@ -1042,7 +1042,7 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/gr_options/"));
 	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
-	model.make_vertex_buffers(itemp);
+	model.make_vertex_buffers(itemp != 0);
 
 	//reset the editor, would be nice if I could keep the old one, 
 	//but there could be hidden data from the old model, so to be safe
