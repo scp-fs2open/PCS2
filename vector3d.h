@@ -140,6 +140,7 @@ vector3d& operator+=(vector3d &one, const vector3d &two);
 vector3d& operator-=(vector3d &one, const vector3d &two);
 
 vector3d MakeUnitVector(const vector3d &vect);
+vector3d SafeMakeUnitVector(const vector3d &vect);
 
 vector3d operator *(float scalar, const vector3d &v); 
 vector3d operator *(const vector3d &v, float scalar); 

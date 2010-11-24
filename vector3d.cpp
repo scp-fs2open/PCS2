@@ -234,6 +234,23 @@ vector3d MakeUnitVector(const vector3d &vect)
 }
 //****************************************************************************************************************
 
+vector3d SafeMakeUnitVector(const vector3d &vect)
+{
+	double VMag = sqrt(double(vect.x * vect.x) 
+		+ double(vect.y * vect.y) 
+		+ double(vect.z * vect.z));
+
+	if (VMag < 1e-5) {
+		return vector3d();
+	}
+	return vector3d(float(double(vect.x) / VMag), 
+					float(double(vect.y) / VMag), 
+					float(double(vect.z) / VMag));
+
+
+}
+//****************************************************************************************************************
+
 
 bool operator>(const vector3d &one, const vector3d &two)
 {

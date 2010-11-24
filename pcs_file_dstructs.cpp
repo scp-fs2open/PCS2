@@ -588,11 +588,11 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 	bool should_reverse = transform.determinant() < 0.0f;
 
 	for (std::vector<pcs_polygon>::iterator it = polygons.begin(); it < polygons.end(); ++it) {
-		it->norm = transform * it->norm;
+		it->norm = SafeMakeUnitVector(transform * it->norm);
 		it->centeroid = transform * it->centeroid + subtranslation;
 		for (std::vector<pcs_vertex>::iterator jt = it->verts.begin(); jt < it->verts.end(); ++jt) {
 			jt->point = transform * jt->point + subtranslation;
-			jt->norm = transform * jt->norm;
+			jt->norm = SafeMakeUnitVector(transform * jt->norm);
 		}
 		if (should_reverse) {
 			std::reverse(it->verts.begin(), it->verts.end());
@@ -640,7 +640,7 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 }
 
 void pcs_turret::Transform(const matrix& transform, const vector3d& translation) {
-	turret_normal = transform * turret_normal;
+	turret_normal = SafeMakeUnitVector(transform * turret_normal);
 	for (std::vector<vector3d>::iterator it = fire_points.begin(); it < fire_points.end(); ++it) {
 		*it = transform * *it + translation;
 	}
@@ -648,7 +648,7 @@ void pcs_turret::Transform(const matrix& transform, const vector3d& translation)
 
 void pcs_eye_pos::Transform(const matrix& transform, const vector3d& translation) {
 	sobj_offset = transform * sobj_offset + translation;
-	normal = transform * normal;
+	normal = SafeMakeUnitVector(transform * normal);
 }
 
 void pcs_glow_array::Transform(const matrix& transform, const vector3d& translation) {
@@ -664,9 +664,17 @@ void pcs_thruster::Transform(const matrix& transform, const vector3d& translatio
 }
 
 void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& translation) {
+	float norm_before, norm_after;
 	pos = transform * pos + translation;
+	norm_before = Magnitude(norm);
 	norm = transform * norm;
-	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
+	norm_after = Magnitude(norm);
+	norm = SafeMakeUnitVector(norm);
+	if (norm_after > 1e-5) {
+		radius *= sqrt(fabs(transform.determinant() / norm_after * norm_before));
+	} else {
+		radius = 0;
+	}
 }
 
 void pcs_insig::Transform(const matrix& transform, const vector3d& translation) {
@@ -679,8 +687,8 @@ void pcs_insig::Transform(const matrix& transform, const vector3d& translation) 
 
 void pcs_insig_generator::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
-	forward = transform * forward;
-	up = transform * up;
+	forward = SafeMakeUnitVector(transform * forward);
+	up = SafeMakeUnitVector(transform * up);
 }
 
 void pcs_insig_face::Transform(const matrix& transform, const vector3d& translation) {
@@ -715,7 +723,7 @@ void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const 
 }
 
 void pcs_shield_triangle::Transform(const matrix& transform, const vector3d& translation) {
-	face_normal = transform * face_normal;
+	face_normal = SafeMakeUnitVector(transform * face_normal);
 	for (int i = 0; i < 3; i++) {
 		corners[i] = transform * corners[i] + translation;
 	}
@@ -725,7 +733,7 @@ void pcs_shield_triangle::Transform(const matrix& transform, const vector3d& tra
 }
 
 void pcs_hardpoint::Transform(const matrix& transform, const vector3d& translation) {
-	norm = transform * norm;
+	norm = SafeMakeUnitVector(transform * norm);
 	point = transform * point + translation;
 }
 
