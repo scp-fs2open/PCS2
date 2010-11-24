@@ -1,5 +1,6 @@
 #include "matrix3d.h"
 #include <sstream>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <cassert>
 
@@ -32,6 +33,10 @@ matrix::matrix(vector3d basis) {
 	for (int j = 0; j < MATRIX_SIZE; j++) {
 		a2d[2][j] = temp[j];
 	}
+}
+
+static float round(float x) {
+	return floor(x + 0.5);
 }
 
 // Construct a rotation matrix from a given rotation angle
