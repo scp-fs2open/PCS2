@@ -66,6 +66,9 @@
 #include "model_editor_ctrl.h"
 #include <wx/progdlg.h>
 #include <wx/thread.h>
+#include <wx/notebook.h>
+
+#include "matrix3d.h"
 
 
 
@@ -255,14 +258,111 @@ public:
 	
 	DECLARE_EVENT_TABLE();
 
-
 	class transform_dialog : public wxDialog
 	{
-		wxTextCtrl* matrix[16];
+		class transform_method : public wxPanel {
+			public:
+				transform_method(wxWindow* parent, int id=wxID_ANY) : wxPanel(parent, id) {}
+				virtual matrix get_transform() const=0;
+				virtual vector3d get_translation() const=0;
+				virtual wxString name() const=0;
+		};
+
+		class matrix_transform : public transform_method {
+			private:
+				wxTextCtrl* matrix_entry[16];
+
+			public:
+				matrix_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
+					wxGridSizer* sizer = new wxGridSizer(4);
+					for (int i = 0; i < 16; i++) {
+						matrix_entry[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"));
+						if (i >= 12) {
+							matrix_entry[i]->SetEditable(false);
+						}
+						sizer->Add(matrix_entry[i]);
+					}
+					SetSizerAndFit(sizer);
+				}
+
+				virtual matrix get_transform() const;
+				virtual vector3d get_translation() const;
+				virtual wxString name() const {
+					return _("Matrix");
+				}
+
+		};
+
+		class scale_transform : public transform_method {
+			private:
+				wxTextCtrl* scale[3];
+
+			public:
+				scale_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
+					wxGridSizer* sizer = new wxGridSizer(3);
+					for (int i = 0; i < 3; i++) {
+						scale[i] = new wxTextCtrl(this, -1, _("1"));
+						sizer->Add(scale[i]);
+					}
+					SetSizerAndFit(sizer);
+				}
+
+				virtual matrix get_transform() const;
+				virtual vector3d get_translation() const;
+				virtual wxString name() const {
+					return _("Scale");
+				}
+
+		};
+
+		class translate_transform : public transform_method {
+			private:
+				wxTextCtrl* translate[3];
+
+			public:
+				translate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
+					wxGridSizer* sizer = new wxGridSizer(3);
+					for (int i = 0; i < 3; i++) {
+						translate[i] = new wxTextCtrl(this, -1, _("0"));
+						sizer->Add(translate[i]);
+					}
+					SetSizerAndFit(sizer);
+				}
+
+				virtual matrix get_transform() const;
+				virtual vector3d get_translation() const;
+				virtual wxString name() const {
+					return _("Translate");
+				}
+		};
+
+		class rotate_transform : public transform_method {
+			private:
+				wxTextCtrl* rotate[4];
+
+			public:
+				rotate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
+					wxGridSizer* sizer = new wxGridSizer(4);
+					for (int i = 0; i < 4; i++) {
+						rotate[i] = new wxTextCtrl(this, -1, (i == 0) ? _("1") : _("0"));
+						sizer->Add(rotate[i]);
+					}
+					SetSizerAndFit(sizer);
+				}
+				virtual matrix get_transform() const;
+				virtual vector3d get_translation() const;
+				virtual wxString name() const {
+					return _("Rotate");
+				}
+		};
+
+		std::vector<transform_method*> pages;
+		wxNotebook* tabs;
 
 		public:
 		transform_dialog(wxWindow* parent, model_editor_ctrl_base* control);
-		std::vector<float> get_value();
+		matrix get_transform() const;
+		vector3d get_translation() const;
 		virtual ~transform_dialog(void){};
 	};
 };

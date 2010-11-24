@@ -1303,7 +1303,7 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 	for (unsigned int i = 0; i < children.getCount(); i++) {
 		if (boost::algorithm::equals(children[i]->getTypeName(), "rotate")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),4);
-			rot = matrix(((*temp)[3] * M_PI) / 180.0f);
+			rot = matrix((*temp)[3]);
 			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
 			old = base.invert() % rot % base % old;
 			delete temp;

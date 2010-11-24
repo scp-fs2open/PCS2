@@ -147,6 +147,7 @@
 #include<wx/filename.h>
 #include <wx/progdlg.h>
 #include <wx/imaglist.h>
+#include <wx/notebook.h>
 
 #include <map>
 #include <algorithm>
@@ -639,10 +640,7 @@ void add_child_subobjects(PCS_Model&model, int parent_new, int imported_sobj, PC
 void main_panel::on_transform_chunk(wxCommandEvent &event){
 	transform_dialog dialog(this, control_panel);
 	if (dialog.ShowModal() == wxID_OK) {
-		std::vector<float> entries = dialog.get_value();
-		matrix transform(&entries);
-		vector3d offset(entries[3], entries[7], entries[11]);
-		control_panel->transform(transform, offset);
+		control_panel->transform(dialog.get_transform(), dialog.get_translation());
 	}
 
 }
@@ -1853,28 +1851,30 @@ void main_panel::on_omnipoint_ray_picked(wxCommandEvent &event){
 void main_panel::startRender() {
 	glcanvas->Init();
 }
+
 main_panel::transform_dialog::transform_dialog(wxWindow* parent, model_editor_ctrl_base* control)
 	: wxDialog(parent, -1, wxString(_("Enter Transform")))
 {
-	wxSizer* sizer;
 	wxSizer* top_sizer;
 	wxSizer* buttons_sizer;
+	tabs = new wxNotebook(this, wxID_ANY);
 	wxSizerFlags flags;
 	flags.Centre();
-	sizer = new wxGridSizer(4);
 	top_sizer = new wxBoxSizer(wxVERTICAL);
 	buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
 	wxSizer* options = control->get_transform_options(this);
-	for (int i = 0; i < 16; i++) {
-		matrix[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"));
-		if (i >= 12) {
-			matrix[i]->SetEditable(false);
-		}
-		sizer->Add(matrix[i]);
+
+	pages.push_back(new matrix_transform(tabs));
+	pages.push_back(new scale_transform(tabs));
+	pages.push_back(new translate_transform(tabs));
+	pages.push_back(new rotate_transform(tabs));
+	for (size_t i = 0; i < pages.size(); i++) {
+		tabs->AddPage(pages[i], pages[i]->name());
 	}
+
 	buttons_sizer->Add(new wxButton(this, wxID_OK, _("OK")));
 	buttons_sizer->Add(new wxButton(this, wxID_CANCEL, _("Cancel")));
-	top_sizer->Add(sizer);
+	top_sizer->Add(tabs);
 	if (options) {
 		top_sizer->Add(options);
 	}
@@ -1882,10 +1882,74 @@ main_panel::transform_dialog::transform_dialog(wxWindow* parent, model_editor_ct
 	SetSizerAndFit(top_sizer);
 }
 
-std::vector<float> main_panel::transform_dialog::get_value() {
+matrix main_panel::transform_dialog::get_transform() const {
+	int tab = tabs->GetSelection();
+	if (tab != -1) {
+		return pages[tab]->get_transform();
+	} else {
+		return matrix();
+	}
+}
+
+vector3d main_panel::transform_dialog::get_translation() const {
+	int tab = tabs->GetSelection();
+	if (tab != -1) {
+		return pages[tab]->get_translation();
+	} else {
+		return vector3d();
+	}
+}
+
+matrix main_panel::transform_dialog::matrix_transform::get_transform() const {
 	std::vector<float> values(16, 0.0f);
 	for (int i = 0; i < 16; i++) {
-		values[i] = (float)atof(matrix[i]->GetValue().mb_str());
+		values[i] = (float)atof(matrix_entry[i]->GetValue().mb_str());
 	}
-	return values;
+	return matrix(&values);
+}
+
+vector3d main_panel::transform_dialog::matrix_transform::get_translation() const {
+	vector3d result;
+	for (int i = 0; i < 3; i++) {
+		result[i] = (float)atof(matrix_entry[(i * 4) + 3]->GetValue().mb_str());
+	}
+	return result;
+}
+
+matrix main_panel::transform_dialog::scale_transform::get_transform() const {
+	matrix result;
+	for (int i = 0; i < 3; i++) {
+		result.a2d[i][i] = (float)atof(scale[i]->GetValue().mb_str());
+	}
+	return result;
+}
+
+vector3d main_panel::transform_dialog::scale_transform::get_translation() const {
+	return vector3d();
+}
+
+matrix main_panel::transform_dialog::translate_transform::get_transform() const {
+	return matrix();
+}
+
+vector3d main_panel::transform_dialog::translate_transform::get_translation() const {
+	vector3d result;
+	for (int i = 0; i < 3; i++) {
+		result[i] = (float)atof(translate[i]->GetValue().mb_str());
+	}
+	return result;
+}
+
+matrix main_panel::transform_dialog::rotate_transform::get_transform() const {
+	vector3d direction;
+	for (int i = 0; i < 3; i++) {
+		direction[i] = (float)atof(rotate[i]->GetValue().mb_str());
+	}
+	matrix transform(direction);
+	matrix rotation((float)(atof(rotate[3]->GetValue().mb_str())));
+	return transform.invert() % rotation % transform;
+}
+
+vector3d main_panel::transform_dialog::rotate_transform::get_translation() const {
+	return vector3d();
 }

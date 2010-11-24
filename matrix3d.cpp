@@ -37,9 +37,28 @@ matrix::matrix(vector3d basis) {
 // Construct a rotation matrix from a given rotation angle
 matrix::matrix(float angle) {
 	memset(a2d,0,sizeof(a2d));
-	a2d[1][1] = cos(angle);
+	if (fabs(angle - round(angle)) < 10e-5 && ((int)round(angle) % 90) == 0) {
+		int quarters = ((((int)round(angle)) / 90) + 4) % 4;
+		switch(quarters) {
+			case 0:
+				a2d[1][1] = 1;
+				break;
+			case 1:
+				a2d[2][1] = 1;
+				break;
+			case 2:
+				a2d[1][1] = -1;
+				break;
+			case 3:
+				a2d[2][1] = -1;
+				break;
+		}
+	} else {
+		angle = angle * M_PI / 180;
+		a2d[1][1] = cos(angle);
+		a2d[2][1] = -sin(angle);
+	}
 	a2d[2][2] = a2d[1][1];
-	a2d[2][1] = -sin(angle);
 	a2d[1][2] = -a2d[2][1];
 	a2d[0][0] = 1.0f;
 }
