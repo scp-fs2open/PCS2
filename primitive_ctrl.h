@@ -484,7 +484,7 @@ public:
 		}
 
 		//add it to our controls
-		combo_box = new wxRadioBox(this,wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, list.size(), choices.get(), 0, wxBORDER_NONE);
+		combo_box = new wxRadioBox(this,wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, list.size(), choices.get(), 1, wxBORDER_NONE | wxRA_SPECIFY_COLS);
 		this->add_control(combo_box, 1,wxEXPAND ,1);
 		if(!list.empty()) {
 			combo_box->Select(0);
