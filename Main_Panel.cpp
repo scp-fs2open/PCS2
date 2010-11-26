@@ -338,7 +338,7 @@ main_panel::main_panel(wxFrame* parent)
 	path[0] = -1;
 
 	tree_id.SOBJ_ID = navigation_panel->AppendItem(navigation_panel->GetRootItem(),_("SubObjects"), TREE_NOUNSEL, TREE_NOSEL, new tree_node_id(SOBJ, path));
-	navigation_panel->SetItemImage(tree_id.SOBJ_ID, TREE_NOSEL_OP, wxTreeItemIcon_Expanded);
+	navigation_panel->SetItemImage(tree_id.SOBJ_ID, TREE_NOUNSEL_OP, wxTreeItemIcon_Expanded);
 	navigation_panel->SetItemImage(tree_id.SOBJ_ID, TREE_NOSEL_OP, wxTreeItemIcon_SelectedExpanded);
 		
 	path.resize(2);
