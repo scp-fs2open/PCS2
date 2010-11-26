@@ -22,8 +22,8 @@ public:
 	{
 		//add controls
 	//	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-		add_control(parent_obj=new model_list_ctrl(this,0,0,60,40,_("Parent")),0,wxEXPAND );
-		add_control(physical_obj=new model_list_ctrl(this,0,50,60,40,_("Physical")),0,wxEXPAND );
+		add_control(parent_obj=new model_list_ctrl(this,0,0,60,40,_("Turret Base")),0,wxEXPAND );
+		add_control(physical_obj=new model_list_ctrl(this,0,50,60,40,_("Turret Arm")),0,wxEXPAND );
 		add_control(norm=new normal_ctrl(this,0,100,60,40,_("Normal")),0,wxEXPAND );
 		add_control(points=new vector_array_ctrl(this,0,100,90,110,_("Points"), _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM),0,wxEXPAND );
 	//	add_sizer(sizer,0,wxEXPAND );
