@@ -6,6 +6,8 @@
 #include "pcs2_CIDs.h"
 #include "suggest.xpm"
 
+#include <boost/scoped_array.hpp>
+
 
 inline wxString get_wx_string(wxStaticText* ctrl) {
 	return ctrl->GetLabel();
@@ -475,14 +477,14 @@ public:
 	{
 		//make the radio buttons
 		option.resize(list.size());
-		wxString choices[list.size()];
+		boost::scoped_array<wxString> choices(new wxString[list.size()]);
 		for (size_t i = 0; i < list.size(); i++) {
 			choices[i] = wxString(list[i].title.c_str(), wxConvUTF8);
 			option[i]=list[i].data;
 		}
 
 		//add it to our controls
-		combo_box = new wxRadioBox(this,wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, list.size(), choices, 0, wxBORDER_NONE);
+		combo_box = new wxRadioBox(this,wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, list.size(), choices.get(), 0, wxBORDER_NONE);
 		this->add_control(combo_box, 1,wxEXPAND ,1);
 		if(!list.empty()) {
 			combo_box->Select(0);
