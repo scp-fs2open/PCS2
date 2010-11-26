@@ -435,7 +435,62 @@ BEGIN_EVENT_TABLE_TEMPLATE1 (primitive_list_ctrl,editor<type>,type)
 END_EVENT_TABLE()
 
 
+//primitive list of options, rather than a direct editor it has a set of radio
+//buttons with available options
+template<typename type>
+class primitive_radio_button_ctrl :
+	public editor<type>
+{
+protected:
+	wxRadioBox* combo_box;
+	std::vector<type> option;
 
+public:
+	void set_item(const int&i){combo_box->Select(i);}
+
+	virtual type get_value(){
+		int idx = combo_box->GetSelection();
+
+		if(idx>-1 && idx<(int)combo_box->GetCount())
+			return option[idx];
+		else if(option.size()>=1)
+			return option[0];
+		else 
+			return type();//emergency failure
+	}
+
+	virtual void set_value(const type&i){
+		for(unsigned int a =0; a<option.size(); a++){
+			if(option[a] == i){
+				combo_box->Select(a);
+				return;
+			}
+		}
+	}
+
+	
+	//constructor builds the text box and adds it to editor's static box sizer
+	primitive_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+	:editor<type>(parent,x,y,w,h, orient, Title)
+	{
+		//make the radio buttons
+		option.resize(list.size());
+		wxString choices[list.size()];
+		for (size_t i = 0; i < list.size(); i++) {
+			choices[i] = wxString(list[i].title.c_str(), wxConvUTF8);
+			option[i]=list[i].data;
+		}
+
+		//add it to our controls
+		combo_box = new wxRadioBox(this,wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, list.size(), choices, 0, wxBORDER_NONE);
+		this->add_control(combo_box, 1,wxEXPAND ,1);
+		if(!list.empty()) {
+			combo_box->Select(0);
+		}
+	};
+
+	virtual ~primitive_radio_button_ctrl(void){};
+};
 
 inline void make_int_list(const std::vector<std::string>&l, std::vector<primitive_list_item<int> >&ret){
 	ret.resize(l.size());

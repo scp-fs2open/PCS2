@@ -17,8 +17,7 @@ class sobj_ctrl :
 protected:
 //controls
 	string_ctrl*name;
-	primitive_list_ctrl<int>*movement_type;
-	primitive_list_ctrl<int>*movement_axis;
+	primitive_radio_button_ctrl<int>*movement_axis;
 	multi_string_ctrl*properties;
 	vector_ctrl*offset;
 
@@ -31,16 +30,6 @@ public:
 
 		//add controls
 		add_control(name=new string_ctrl(this,0,0,60,40,_("Name")),0,wxEXPAND );
-
-		list.resize(2);
-
-		list[0].title = "No Movement";
-		list[0].data = MNONE;
-
-		list[1].title = "Rotate";
-		list[1].data = ROTATE;
-
-		add_control(movement_type=new primitive_list_ctrl<int>(this, list,0,0,60,40,_("Movement Type")),0,wxEXPAND );
 
 		list.resize(4);
 
@@ -56,7 +45,7 @@ public:
 		list[3].title = "Z Axis";
 		list[3].data = MV_Z;
 
-		add_control(movement_axis=new primitive_list_ctrl<int>(this, list,0,0,60,40,_("Axis")),0,wxEXPAND );
+		add_control(movement_axis=new primitive_radio_button_ctrl<int>(this, list,0,0,60,160,_("Rotation Axis")),0,wxEXPAND );
 
 		add_control(offset=new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
 
@@ -102,8 +91,10 @@ public:
 	void set_value(const pcs_sobj&t){
 		data=t;
 		name->set_value(t.name);
-		movement_type->set_value(t.movement_type);
 		movement_axis->set_value(t.movement_axis);
+		if (t.movement_type == MNONE) {
+			movement_axis->set_value(ANONE);
+		}
 		offset->set_value(t.offset);
 		properties->set_value(t.properties);
 	}
@@ -111,8 +102,8 @@ public:
 	//return's the control's value
 	pcs_sobj get_value(){
 		data.name = name->get_value();
-		data.movement_type = movement_type->get_value();
 		data.movement_axis = movement_axis->get_value();
+		data.movement_type = data.movement_axis == ANONE ? MNONE : ROTATE;
 		data.offset = offset->get_value();
 		data.properties = properties->get_value();
 		return data;
