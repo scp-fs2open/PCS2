@@ -276,6 +276,7 @@ public:
 		conrol_panel->transform(transform, translation);
 		wxCommandEvent event(EDIT_DONE);
 		GetEventHandler()->ProcessEvent(event);
+		reset_undo();
 	}
 
 };
