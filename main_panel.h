@@ -342,11 +342,22 @@ public:
 
 			public:
 				rotate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
-					wxGridSizer* sizer = new wxGridSizer(4);
-					for (int i = 0; i < 4; i++) {
-						rotate[i] = new wxTextCtrl(this, -1, (i == 0) ? _("1") : _("0"));
-						sizer->Add(rotate[i]);
+					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+					wxStaticBoxSizer* axis_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Rotation axis"));
+					wxSizerFlags flags;
+					flags.Expand();
+					rotate[0] = new wxTextCtrl(this, -1, _("1"));
+					axis_sizer->Add(rotate[0]);
+					for (int i = 1; i < 3; i++) {
+						rotate[i] = new wxTextCtrl(this, -1, _("0"));
+						axis_sizer->AddStretchSpacer();
+						axis_sizer->Add(rotate[i]);
 					}
+					sizer->Add(axis_sizer, flags);
+					wxStaticBoxSizer* angle_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Rotation angle"));
+					rotate[3] = new wxTextCtrl(this, -1, _("0"));
+					angle_sizer->Add(rotate[3]);
+					sizer->Add(angle_sizer, flags);
 					SetSizerAndFit(sizer);
 				}
 				virtual matrix get_transform() const;

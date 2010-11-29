@@ -1945,6 +1945,10 @@ matrix main_panel::transform_dialog::rotate_transform::get_transform() const {
 	for (int i = 0; i < 3; i++) {
 		direction[i] = (float)atof(rotate[i]->GetValue().mb_str());
 	}
+	// Give up if we don't get a valid looking axis.
+	if (Magnitude(direction) < 1e-5) {
+		return matrix();
+	}
 	matrix transform(direction);
 	matrix rotation((float)(atof(rotate[3]->GetValue().mb_str())));
 	return transform.invert() % rotation % transform;
