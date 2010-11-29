@@ -964,23 +964,23 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 	//------------------------end omnipoint code------------------------//
 		} else if(event.m_altDown){
 			//------------------------start transform code------------------------//
-			vector3d start;
-			vector3d start_dir;
-			vector3d end;
-			vector3d end_dir;
-
-			ray_cast(event.GetX(), event.GetY(), end, end_dir);
-			ray_cast(mouse_start.x, mouse_start.y, start, start_dir);
-
-			// XXX: Should this have a value?
-			vector3d global_point = vector3d();
 			if(event.m_leftDown){
+				//if left button is down we move along x and y
 				bool s = true, s2 = true;
-				vector3d delta(0,0,0);
+				vector3d start;
+				vector3d start_dir;
+				vector3d end;
+				vector3d end_dir;
+
+				ray_cast(event.GetX(), event.GetY(), end, end_dir);
+				ray_cast(mouse_start.x, mouse_start.y, start, start_dir);
+
+				// XXX: Should this have a value?
+				vector3d global_point = vector3d();
+				vector3d delta;
 
 				delta = filter_movement_delta(	plane_line_intersect(global_point, get_movement_plane_norm(),end, end_dir, &s)
 						-	plane_line_intersect(global_point, get_movement_plane_norm(),start, start_dir, &s2));
-				//if left button is down we move along x and y
 				if(s &&s2 && !null_vec(delta)){
 					mainpanel->control_panel->transform(matrix(), delta);
 				}
