@@ -1864,10 +1864,10 @@ main_panel::transform_dialog::transform_dialog(wxWindow* parent, model_editor_ct
 	buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
 	wxSizer* options = control->get_transform_options(this);
 
-	pages.push_back(new matrix_transform(tabs));
+	pages.push_back(new rotate_transform(tabs));
 	pages.push_back(new scale_transform(tabs));
 	pages.push_back(new translate_transform(tabs));
-	pages.push_back(new rotate_transform(tabs));
+	pages.push_back(new matrix_transform(tabs));
 	for (size_t i = 0; i < pages.size(); i++) {
 		tabs->AddPage(pages[i], pages[i]->name());
 	}
