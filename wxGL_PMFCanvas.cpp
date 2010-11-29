@@ -962,6 +962,37 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 				}
 			}
 	//------------------------end omnipoint code------------------------//
+		} else if(event.m_altDown){
+			//------------------------start transform code------------------------//
+			vector3d start;
+			vector3d start_dir;
+			vector3d end;
+			vector3d end_dir;
+
+			ray_cast(event.GetX(), event.GetY(), end, end_dir);
+			ray_cast(mouse_start.x, mouse_start.y, start, start_dir);
+
+			// XXX: Should this have a value?
+			vector3d global_point = vector3d();
+			if(event.m_leftDown){
+				bool s = true, s2 = true;
+				vector3d delta(0,0,0);
+
+				delta = filter_movement_delta(	plane_line_intersect(global_point, get_movement_plane_norm(),end, end_dir, &s)
+						-	plane_line_intersect(global_point, get_movement_plane_norm(),start, start_dir, &s2));
+				//if left button is down we move along x and y
+				if(s &&s2 && !null_vec(delta)){
+					mainpanel->control_panel->transform(matrix(), delta);
+				}
+			}else if(event.m_rightDown){
+				//if right is down we rotate about z
+				float angle = (mouse_start.y - event.GetY());
+				matrix transform(get_movement_plane_norm());
+				if(angle){
+					mainpanel->control_panel->transform(transform.invert() % matrix(angle) % transform, vector3d());
+				}
+			}
+		//------------------------end transform code------------------------//
 	}else{
 	//++++++++++++++++++++++++start view code++++++++++++++++++++++++//
 			if (!event.m_shiftDown)
@@ -1021,6 +1052,22 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 				update_omnipoints=true;
 			}
 	//------------------------end omnipoint code------------------------//
+		} else if(event.m_altDown){
+			//------------------------start transform code------------------------//
+			float scale;
+			if(event.GetWheelRotation()>0) {
+				scale = float(event.GetWheelRotation()/event.GetWheelDelta())*1.15;
+			} else {
+				scale = 1 / (float(-event.GetWheelRotation()/event.GetWheelDelta())*1.15);
+			}
+			matrix transform;
+			for (int i = 0; i < 3; i++) {
+				transform.a2d[i][i] = scale;
+			}
+			if(scale != 1.0f){
+				mainpanel->control_panel->transform(transform, vector3d());
+			}
+			//------------------------end transform code------------------------//
 		}else{
 	//++++++++++++++++++++++++start view code++++++++++++++++++++++++//
 			position.z -= float(	event.GetWheelRotation()/event.GetWheelDelta()	) * position.z/50.0f;
