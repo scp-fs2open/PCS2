@@ -130,6 +130,8 @@
 #include "pcs_pof_bspfuncs.h"
 #include <cmath>
 #include <wx/stopwatch.h>
+#include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 
 vector3d POFTranslate(vector3d v)
 {
@@ -188,7 +190,7 @@ pcs_polygon RebuildCleanPolygon(pcs_polygon &src)
 //****************************************************************************
 
 
-int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs_polygon> &polygons, 
+int PackTreeInBSP(boost::shared_ptr<bsp_tree_node> root, int offset, char *buffer, std::vector<pcs_polygon> &polygons, 
 				   std::vector<bsp_vert> &vlist, std::vector<vector3d> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags)
 {
 	// ----------- error detection ---------------
@@ -259,7 +261,6 @@ int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs
 
 					fpoly.Write(buffer+offset+size);
 					size += fpoly.MySize();
-					fpoly.Destroy();
 				}
 				else 
 				{
@@ -267,7 +268,6 @@ int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs
 
 					tpoly.Write(buffer+offset+size);
 					size += tpoly.MySize();
-					tpoly.Destroy();
 				}
 			}
 			// write EOF
@@ -298,13 +298,13 @@ int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs
 			}
 
 			snorm.prelist_offset = size;
-			size += PackTreeInBSP(NULL, offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL), offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
 				
 			snorm.postlist_offset = size;
-			size += PackTreeInBSP(NULL, offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL), offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
 				
 			snorm.online_offset = size;
-			size += PackTreeInBSP(NULL, offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL), offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
 			
 			snorm.front_offset = size;
 			size += PackTreeInBSP(root->front, offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
@@ -331,7 +331,7 @@ int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-int CalculateTreeSize(bsp_tree_node *root, std::vector<pcs_polygon> &polygons)
+int CalculateTreeSize(boost::shared_ptr<bsp_tree_node> root, std::vector<pcs_polygon> &polygons)
 {
 	if (root == NULL)
 		return 8; // size of an BSP::EOF
@@ -363,7 +363,7 @@ int CalculateTreeSize(bsp_tree_node *root, std::vector<pcs_polygon> &polygons)
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
 
-int CalcSLDCTreeSize(bsp_tree_node *root)
+int CalcSLDCTreeSize(boost::shared_ptr<bsp_tree_node> root)
 {
 	if (root == NULL)
 		return 0;
@@ -380,7 +380,7 @@ int CalcSLDCTreeSize(bsp_tree_node *root)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-int PackTreeInSLDC(bsp_tree_node *root, int offset, char *buffer, int bufsz)
+int PackTreeInSLDC(boost::shared_ptr<bsp_tree_node> root, int offset, char *buffer, int bufsz)
 {
 	if (root == NULL)
 		return 0;
@@ -463,7 +463,7 @@ int PackTreeInSLDC(bsp_tree_node *root, int offset, char *buffer, int bufsz)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void DebugPrintTree(bsp_tree_node *root, std::ostream &out)
+void DebugPrintTree(boost::shared_ptr<bsp_tree_node> root, std::ostream &out)
 {
 	if (root == NULL)
 		return;
@@ -496,23 +496,7 @@ void DebugPrintTree(bsp_tree_node *root, std::ostream &out)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void DestroyTree(bsp_tree_node* root)
-{
-	if (root == NULL)
-		return;
-
-	if (root->front)
-		DestroyTree(root->front);
-
-	if (root->back)
-		DestroyTree(root->back);
-
-	delete root;
-}
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-bsp_tree_node* MakeTree(std::vector<pcs_polygon> &polygons, vector3d &Max, vector3d &Min)
+boost::shared_ptr<bsp_tree_node> MakeTree(std::vector<pcs_polygon> &polygons, vector3d &Max, vector3d &Min)
 {
 	std::vector<int> polylist(polygons.size());
 	for (unsigned int i = 0; i < polylist.size(); i++)
@@ -527,7 +511,7 @@ bsp_tree_node* MakeTree(std::vector<pcs_polygon> &polygons, vector3d &Max, vecto
 
 	wxLongLong time = wxGetLocalTimeMillis();
 	PCS_Model::BSP_CUR_DEPTH = 0;
-	bsp_tree_node*node = GenerateTreeRecursion(Max, Min, polygons, polylist);
+	boost::shared_ptr<bsp_tree_node> node = GenerateTreeRecursion(Max, Min, polygons, polylist);
 	PCS_Model::BSP_TREE_TIME += (wxGetLocalTimeMillis() - time).ToLong();
 
 	if (node != NULL)
@@ -552,7 +536,7 @@ bool flat_box(vector3d min, vector3d max){
 
 void split_at_point(vector3d Max, vector3d Min, vector3d &point, vector3d &norm,vector3d &fmax, vector3d &fmin,vector3d &bmax, vector3d &bmin);
 
-bsp_tree_node* make_poly_list(vector3d fmax, vector3d fmin, std::vector<pcs_polygon> &polygons, std::vector<int> unculled){
+boost::shared_ptr<bsp_tree_node> make_poly_list(vector3d fmax, vector3d fmin, std::vector<pcs_polygon> &polygons, std::vector<int> unculled){
 
 
 	std::vector<int> pcontained = FindContainedPolygons(fmax, fmin, polygons, unculled);
@@ -560,7 +544,7 @@ bsp_tree_node* make_poly_list(vector3d fmax, vector3d fmin, std::vector<pcs_poly
 	if(PCS_Model::BSP_NODE_POLYS < pcontained.size())
 		PCS_Model::BSP_NODE_POLYS = pcontained.size();
 
-	bsp_tree_node *pnode = new bsp_tree_node;
+	boost::shared_ptr<bsp_tree_node> pnode(new bsp_tree_node);
 
 	//invalid bounding front riegon, make a poly out of it
 	//memset(pnode, 0, sizeof(bsp_tree_node));
@@ -573,7 +557,7 @@ bsp_tree_node* make_poly_list(vector3d fmax, vector3d fmin, std::vector<pcs_poly
 	return pnode;
 }
 
-bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&unculled)
+boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&unculled)
 {
 //	if (Distance(Max, Min) < 0.01) // we're probably going into infinite recrusion... panic
 //		return NULL;
@@ -584,7 +568,7 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 		)
 	{
 		PCS_Model::BSP_COMPILE_ERROR = true;
-		return NULL; //gone into infinite recursion - truncate geometry
+		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //gone into infinite recursion - truncate geometry
 	}
 	PCS_Model::BSP_CUR_DEPTH++;
 	if(PCS_Model::BSP_MAX_DEPTH < PCS_Model::BSP_CUR_DEPTH)
@@ -592,23 +576,23 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 	if (PCS_Model::BSP_CUR_DEPTH > 500)
 	{
 		PCS_Model::BSP_COMPILE_ERROR = true;
-		return NULL; //WHOA wtf infinite recursion!
+		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //WHOA wtf infinite recursion!
 	}
 
 	//int count = CountContainedPolygons(Max, Min, polygons);
 	std::vector<int> contained = FindContainedPolygons(Max, Min, polygons, unculled);
-	bsp_tree_node* node;
+	boost::shared_ptr<bsp_tree_node> node;
 	vector3d fmax, fmin, bmax, bmin;
 
 
 	if (contained.size() == 0){
 		PCS_Model::BSP_CUR_DEPTH--;
-		return NULL; //nothing to do
+		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //nothing to do
 	}
 	else if (contained.size() == 1)
 	{
 		//we're a polygon.. w00t
-		node = new bsp_tree_node;
+		node.reset(new bsp_tree_node);
 	//	memset(node, 0, sizeof(bsp_tree_node));
 		node->Type = POLY;
 		node->poly_num.push_back(contained[0]);
@@ -620,7 +604,7 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 	else
 	{
 		// we're a sortnorm
-		node = new bsp_tree_node;
+		node.reset(new bsp_tree_node);
 		//memset(node, 0, sizeof(bsp_tree_node));
 		node->Type = SPLIT;
 		
@@ -634,7 +618,6 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 				// if they have the same centeroid we're going to infinite recurse..
 				// kill the sortnorm we were building and return a polynode
 			{
-				delete node;
 				return make_poly_list(Max, Min, polygons, contained);
 			
 			}
@@ -670,7 +653,6 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 		if (!(back_polys && front_polys))
 		{
 			//Something is probably horribly wrong with the model so give up.
-			delete node;
 			PCS_Model::BSP_COMPILE_ERROR = true;
 			return make_poly_list(Max, Min, polygons, contained);
 		}
@@ -713,7 +695,6 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 		*/
 		if(	(flat_box(fmin, fmax) && bmax == Max && bmin == Min) || 
 			(flat_box(bmin, bmax) && fmax == Max && fmin == Min)){
-			delete node;
 			node = make_poly_list(fmax, fmin, polygons, contained);
 		}else{
 			if ((Distance(fmax, Max) < 0.001f && Distance(fmin, Min) < 0.001f)
@@ -740,17 +721,14 @@ bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs
 			//if one of our children died then the other can take our place
 			if(!(node->front || node->back)){
 				PCS_Model::BSP_CUR_DEPTH--;
-				delete node;//don't forget to kill myself, or I'm a memory leak
-				return NULL;
+				return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL);
 				//if both are dead we have no reason to exsist anymore, our parents will have to deal with the shame
 			}
-			bsp_tree_node*old_me = node;
 			if(node->front){
 				node = node->front;
 			}else{
 				node = node->back;
 			}
-			delete old_me;
 		}
 
 		// expand our bounding box to accomodate our children
@@ -1316,15 +1294,15 @@ void MakeDefPoints(BSP_DefPoints& dpnts, std::vector<bsp_vert> &pntslist)
 	dpnts.n_norms = 0;
 	dpnts.offset = 20 + pntslist.size();
 	
-	dpnts.norm_counts = new unsigned char[pntslist.size()];
-	dpnts.vertex_data = new vertdata[pntslist.size()];
+	dpnts.norm_counts.reset(new unsigned char[pntslist.size()]);
+	dpnts.vertex_data.reset(new vertdata[pntslist.size()]);
 
 	for (unsigned int i = 0; i < pntslist.size(); i++)
 	{
 		dpnts.norm_counts[i] = (unsigned char)pntslist[i].norms.size();
 		dpnts.vertex_data[i].vertex = pntslist[i].point;
 
-		dpnts.vertex_data[i].norms = new vector3d[pntslist[i].norms.size()];
+		dpnts.vertex_data[i].norms.reset(new vector3d[pntslist[i].norms.size()]);
 		dpnts.n_norms += pntslist[i].norms.size();
 		for (unsigned int j = 0; j < pntslist[i].norms.size(); j++)
 		{
@@ -1346,7 +1324,7 @@ void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vl
 	dst.green = dst.blue = dst.pad = 0;
 	dst.red = 0xFF;
 
-	dst.verts = new Flat_vertex[dst.nverts];
+	dst.verts.reset(new Flat_vertex[dst.nverts]);
 
 	int vertex_offset;
 	for (unsigned int i = 0; i < (unsigned)dst.nverts; i++)
@@ -1382,7 +1360,7 @@ void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vl
 	dst.nverts = src.verts.size();
 	dst.tmap_num = src.texture_id;
 
-	dst.verts = new Tmap_vertex[dst.nverts];
+	dst.verts.reset(new Tmap_vertex[dst.nverts]);
 	int vertex_offset;
 
 	for (int i = 0; i < dst.nverts; i++)
@@ -1509,7 +1487,6 @@ void TranslateFPoly(unsigned int offset, unsigned char *data,
 	polygons[upolys] = temp_poly;
 	upolys++;
 
-	fpoly.Destroy();
 	BSPTransPMF(offset + blkhdr.size, data, points, polygons, upolys); // continue traversal
 }
 
@@ -1557,7 +1534,6 @@ void TranslateTPoly(unsigned int offset, unsigned char *data,
 
 	}
 
-	tpoly.Destroy();
 
 	if (upolys >= polygons.size())
 	{

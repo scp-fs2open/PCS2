@@ -223,6 +223,8 @@
 #include "BSPHandler.h"
 #include "pcs_pof_bspfuncs.h"
 
+#include <boost/scoped_ptr.hpp>
+
 #include "pcs2.h"
 
 //****************************************************************************
@@ -278,7 +280,6 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 	// --------- Sub object Consversion ---------
 
 	wxLongLong time = wxGetLocalTimeMillis();
-	OBJ2 *obj;
 	bool bsp_compiled = false;
 	for (i = 0; i < subobjects.size(); i++)
 	{
@@ -290,16 +291,13 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 		progress->incrementWithMessage(cstringtemp);
 	
 		//memset((char *)&obj, 0, sizeof(OBJ2)); this is NO LONGER ALLOWED - obj2 now contains an class w/ vtable
-		obj = new OBJ2;
+		boost::scoped_ptr<OBJ2> obj(new OBJ2);
 		obj->submodel_number = i;
 		if (!PMFObj_to_POFObj2(i, *obj, bsp_compiled))
 		{
-			delete[] obj->bsp_data;
 			return 2; // error occured in bsp splitting!
 		}
 		poffile.OBJ2_Add(*obj); // takes over object management - including pointers
-
-		delete obj;
 	}
 	time = wxGetLocalTimeMillis() - time;
 
@@ -336,8 +334,8 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 	for (i = 0; i < model_info.size(); i++)
 		j += model_info[i].length() + 1;
 	
-	char *pinf = new char[j];
-	memset(pinf, 0, j);
+	boost::scoped_ptr<char> pinf(new char[j]);
+	memset(pinf.get(), 0, j);
 	j = 0;
 
 	for (i = 0; i < model_info.size(); i++)
@@ -346,11 +344,10 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 		sprintf(cstringtemp, "Writing String %d", i); 
 		progress->incrementWithMessage(cstringtemp);
 
-		strncpy(pinf+j, model_info[i].c_str(), model_info[i].length());
+		strncpy(pinf.get()+j, model_info[i].c_str(), model_info[i].length());
 		j+= model_info[i].length() + 1;
 	}
-	poffile.PINF_Set(pinf, j);
-	delete[] pinf;
+	poffile.PINF_Set(pinf.get(), j);
 
 	if (found)
 		model_info.resize(idx); // back down to size
@@ -566,19 +563,15 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 		// make the tree
 		vector3d smin, smax;
-		bsp_tree_node *shld_root = MakeTree(shldmesh, smax, smin);
+		boost::shared_ptr<bsp_tree_node> shld_root = MakeTree(shldmesh, smax, smin);
 
 		// pack the tree
 		int sldc_size = CalcSLDCTreeSize(shld_root);
-		char *sldc = new char[sldc_size];
+		boost::scoped_array<char> sldc(new char[sldc_size]);
 		
-		PackTreeInSLDC(shld_root, 0, sldc, sldc_size);
+		PackTreeInSLDC(shld_root, 0, sldc.get(), sldc_size);
 
-		poffile.SLDC_SetTree(sldc, sldc_size); // POFHandler will make it's own copy of the buffer
-
-		// we're done, destroy the tree and buffer
-		DestroyTree(shld_root);
-		delete[] sldc;
+		poffile.SLDC_SetTree(sldc.get(), sldc_size); // POFHandler will make it's own copy of the buffer
 	}
 
 	// --------- insignia --------- 
@@ -1226,17 +1219,17 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 		vector3d AvgNormal;
 
 		// create tree
-		bsp_tree_node* root = MakeTree(clean_list, dst.bounding_box_max_point, dst.bounding_box_min_point);
+		boost::shared_ptr<bsp_tree_node> root = MakeTree(clean_list, dst.bounding_box_max_point, dst.bounding_box_min_point);
 		dst.radius = FindObjectRadius(dst.bounding_box_max_point, dst.bounding_box_min_point, vector3d(0,0,0));
 
 		// calc tree size 
 		dst.bsp_data_size = points.head.size + CalculateTreeSize(root, clean_list) + 8; // extra 8byte padd at the end - an extra BSP::EOF
 
 		// allocate buffer and write the defpoints
-		dst.bsp_data= new char[dst.bsp_data_size];
-		memset(dst.bsp_data, 0, dst.bsp_data_size);
+		dst.bsp_data.reset(new char[dst.bsp_data_size]);
+		memset(dst.bsp_data.get(), 0, dst.bsp_data_size);
 
-		if (points.Write(dst.bsp_data) != points.head.size)
+		if (points.Write(dst.bsp_data.get()) != points.head.size)
 			return false; // calculation error
 
 		//std::ofstream bsp_debug("c:\\bsp.txt");
@@ -1244,15 +1237,11 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 
 		// pack the tree
 		int error_flags = 0;
-		PackTreeInBSP(root, points.head.size, dst.bsp_data, clean_list, points_list, pnts, points, dst.geometric_center, dst.bsp_data_size, error_flags);
+		PackTreeInBSP(root, points.head.size, dst.bsp_data.get(), clean_list, points_list, pnts, points, dst.geometric_center, dst.bsp_data_size, error_flags);
 		
 		// we got errors!
 		if (error_flags != BSP_NOERRORS)
 			return false;
-
-		// erase our tree and other variables
-		DestroyTree(root);
-		points.Destroy();
 
 		// update the bsp_compiled to be true
 		bsp_compiled = true;
@@ -1264,7 +1253,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 			bsp_cache[src_num].decache();
 			bsp_cache[src_num].bsp_size = dst.bsp_data_size;
 			bsp_cache[src_num].bsp_data.reset(new char[dst.bsp_data_size]);
-			memcpy(bsp_cache[src_num].bsp_data.get(), dst.bsp_data, dst.bsp_data_size);
+			memcpy(bsp_cache[src_num].bsp_data.get(), dst.bsp_data.get(), dst.bsp_data_size);
 			bsp_cache[src_num].changed = false;
 		}
 
@@ -1276,8 +1265,8 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 		dst.bsp_data_size = bsp_cache[src_num].bsp_size; // extra 8byte padd at the end - an extra BSP::EOF
 
 		// allocate buffer and write the defpoints
-		dst.bsp_data= new char[dst.bsp_data_size];
-		memcpy(dst.bsp_data, bsp_cache[src_num].bsp_data.get(), dst.bsp_data_size);
+		dst.bsp_data.reset(new char[dst.bsp_data_size]);
+		memcpy(dst.bsp_data.get(), bsp_cache[src_num].bsp_data.get(), dst.bsp_data_size);
 
 		if (src.polygons.size() == 0 || src.polygons[0].verts.size() == 0) {
 			dst.bounding_box_max_point = dst.bounding_box_min_point = vector3d();

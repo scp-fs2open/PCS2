@@ -78,6 +78,8 @@
 #include "POFHandler.h"
 #include "BSPDataStructs.h"
 
+#include <boost/shared_ptr.hpp>
+
 vector3d POFTranslate(vector3d v);
 
 struct bsp_vert
@@ -112,7 +114,7 @@ enum node_type { SPLIT, POLY, INVALID };
 struct bsp_tree_node
 {
 	bsp_tree_node()
-		:Type(INVALID), front(NULL), back(NULL), used(false), counted(false)
+		:Type(INVALID), used(false), counted(false)
 	{};
 	node_type Type;
 
@@ -128,8 +130,8 @@ struct bsp_tree_node
 	vector3d bound_max;
 
 	// tree
-	bsp_tree_node *front; // front recruse
-	bsp_tree_node *back; // back recruse
+	boost::shared_ptr<bsp_tree_node> front; // front recruse
+	boost::shared_ptr<bsp_tree_node> back; // back recruse
 
 	// safety variables - counted is true when calculate size has hit a node, used is true when writing has hit a node
 	bool used;
@@ -142,9 +144,8 @@ struct bsp_tree_node
 //-----------------------------------------------
 
 //shared
-bsp_tree_node* MakeTree(std::vector<pcs_polygon> &polygons, vector3d &Max, vector3d &Min);
-void DestroyTree(bsp_tree_node* root);
-void DebugPrintTree(bsp_tree_node *root, std::ostream &out);
+boost::shared_ptr<bsp_tree_node> MakeTree(std::vector<pcs_polygon> &polygons, vector3d &Max, vector3d &Min);
+void DebugPrintTree(boost::shared_ptr<bsp_tree_node> root, std::ostream &out);
 
 // BSP tree functions
 #define BSP_NOERRORS				0
@@ -165,20 +166,20 @@ void DebugPrintTree(bsp_tree_node *root, std::ostream &out);
 // raised if it detects an overflow in a split before writing
 #define BSP_PACK_PRESPLITOVERFLOW	0x00000040
 
-int CalculateTreeSize(bsp_tree_node *root, std::vector<pcs_polygon> &polygons);
-int PackTreeInBSP(bsp_tree_node *root, int offset, char *buffer, std::vector<pcs_polygon> &polygons, 
+int CalculateTreeSize(boost::shared_ptr<bsp_tree_node> root, std::vector<pcs_polygon> &polygons);
+int PackTreeInBSP(boost::shared_ptr<bsp_tree_node> root, int offset, char *buffer, std::vector<pcs_polygon> &polygons, 
 				   std::vector<bsp_vert> &vlist, std::vector<vector3d> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags);
 
 // closely related functions for SLDC meshes
 
-int CalcSLDCTreeSize(bsp_tree_node *root);
-int PackTreeInSLDC(bsp_tree_node *root, int offset, char *buffer, int bufsz);
+int CalcSLDCTreeSize(boost::shared_ptr<bsp_tree_node> root);
+int PackTreeInSLDC(boost::shared_ptr<bsp_tree_node> root, int offset, char *buffer, int bufsz);
 
 
 //-----------------------------------------------
 // aux functions for generating the BSP tree
 //-----------------------------------------------
-bsp_tree_node* GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&);
+boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&);
 
 void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
 			vector3d &fmax, vector3d &fmin,

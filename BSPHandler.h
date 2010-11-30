@@ -31,6 +31,7 @@
 
 #include "BSPDataStructs.h"
 #include <ios>
+#include <boost/shared_array.hpp>
 
 
 #if !defined(_BSP_HANDLER_H_)
@@ -40,33 +41,18 @@
 class BSP
 {
 	public:
-		BSP_BoundBox	*bounders;
-		BSP_DefPoints	*points;
-		BSP_FlatPoly	*fpolys;
-		BSP_SortNorm	*snorms;
-		BSP_TmapPoly	*tpolys;
+		boost::shared_array<BSP_BoundBox> bounders;
+		boost::shared_array<BSP_DefPoints> points;
+		boost::shared_array<BSP_FlatPoly> fpolys;
+		boost::shared_array<BSP_SortNorm> snorms;
+		boost::shared_array<BSP_TmapPoly> tpolys;
 
 		int numbounders, numpoints, numfpolys, numsnorms, numtpolys;
 		void Clear()
 		{
 			numbounders = numpoints = numfpolys = numsnorms = numtpolys = 0;
-			bounders = NULL;
-			points = NULL;
-			fpolys = NULL;
-			snorms = NULL;
-			tpolys = NULL;
 		}
 
-		void Reset()
-		{
-			delete[] bounders;
-			delete[] points;
-			delete[] fpolys;
-			delete[] snorms;
-			delete[] tpolys;
-			
-			Clear();
-		}
 		BSP()
 			{ Clear(); }
 		BSP(char *buffer, int size)

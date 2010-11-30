@@ -39,6 +39,7 @@
 #include "vector3d.h"
 #include <memory.h>
 #include <string>
+#include <boost/shared_array.hpp>
 
 #if !defined(_BSP_DATA_STRUCTS_H_)
 #define _BSP_DATA_STRUCTS_H_
@@ -64,7 +65,7 @@ struct BSP_BlockHeader
 struct vertdata
 {
 	vector3d vertex;
-	vector3d *norms;
+	boost::shared_array<vector3d> norms;
 };
 
 struct BSP_DefPoints // 1 - Defines Verticies
@@ -73,18 +74,23 @@ struct BSP_DefPoints // 1 - Defines Verticies
 	int n_verts;					//4			|12
 	int n_norms;					//4			|16
 	int offset;						//4			|20			|from start of chunk to vertex data
-	unsigned char *norm_counts;		//n_norms	|20+n_norms	|n_verts in size;
+	boost::shared_array<unsigned char> norm_counts;		//n_norms	|20+n_norms	|n_verts in size;
 	// DM: I don't know WTF data size/format the vertex data is in.. so im GUESSING it's vertex point followed by vertex norms
     // DM: Ok after staring at that insanely bad code written by Knudson i finally made sense of it.. and YES im correct :)
-	vertdata *vertex_data;			//Equasion	|20+n_norms+Equasion
+	boost::shared_array<vertdata> vertex_data;			//Equasion	|20+n_norms+Equasion
 	//char *vertex_data // at startofmemory+BSP::DefPoints.offset; Each vertex n is a point followed by norm_counts[n] normals. 
 
 	//---------------------------------------
-	BSP_DefPoints() { memset(this, 0, sizeof(BSP_DefPoints)); }
+	BSP_DefPoints() {
+		head.id = 0;
+		head.size = 0;
+		n_verts = 0;
+		n_norms = 0;
+		offset = 0;
+	}
 	int Read(char *buffer, BSP_BlockHeader hdr);
 	int Write(char *buffer);
 	int MySize();
-	void Destroy();
 };
 
 //********************************************************************************************************************
@@ -112,15 +118,13 @@ struct BSP_FlatPoly //2 - FLATPOLY - Flat (non-textured) polygon
 	byte green;				//1		|42
 	byte blue;				//1		|43
 	byte pad;				//1		|44
-	Flat_vertex *verts;		
+	boost::shared_array<Flat_vertex> verts;		
 
   	//---------------------------------------
 	int Read(char *buffer, BSP_BlockHeader hdr);
 	int Write(char *buffer);
 	int MySize()
 		{	return 44 + (4 * nverts);  }
-	void Destroy()
-		{ delete[] verts; }
 	float MyRadius(vector3d center, std::vector<vector3d> Verts);
 	vector3d MyCenter(std::vector<vector3d> Verts);
 };
@@ -149,15 +153,13 @@ struct BSP_TmapPoly //3 - TMAPPOLY - Textured polygons
 	float radius;			//4		|36		|32
 	int nverts;				//4		|40		|36
 	int tmap_num;			//4		|44		|40
-	Tmap_vertex *verts;		//12 * nverts
+	boost::shared_array<Tmap_vertex> verts;		//12 * nverts
 
 	//---------------------------------------
 	int Read(char *buffer, BSP_BlockHeader hdr);
 	int Write(char *buffer);
 	int MySize()
 		{ return ((12 * nverts) + 44); }
-	void Destroy()
-		{ delete[] verts; }
 	float MyRadius(vector3d center, std::vector<vector3d> Verts);
 	vector3d MyCenter(std::vector<vector3d> Verts);
 

@@ -54,7 +54,7 @@ using namespace std;
 std::string BSP::DataIn(char *buffer, int size)
 {
 	std::string stats;
-	char *localptr = buffer, *tbuf;
+	char *localptr = buffer;
 	char cstemp[64];
 	bool go = true;
 	BSP_BoundBox	bnd;
@@ -89,8 +89,6 @@ std::string BSP::DataIn(char *buffer, int size)
 				break;
 
 			case 1:
-
-				tbuf = new char[(head.size - 8)]; // doesn't count the BlockHeader
 
 				memset(cstemp, 0, 64);
 				sprintf(cstemp, "[%d bytes (%d bytes unused)]", head.size, head.size - pnt.Read(localptr, head));
@@ -134,13 +132,11 @@ std::string BSP::DataIn(char *buffer, int size)
 				//stats += "\n";
 
 				Add_DefPoints(pnt);
-				delete[] tbuf;
 				break;
 
 			case 2:
 				//stats += "FLATPOLY  ";
 
-				//tbuf = new char[(head.size - 8)];
 				memset(cstemp, 0, 64);
 				sprintf(cstemp, "[%d bytes (%d bytes unused)]", head.size, head.size - fpol.Read(localptr, head));
 				localptr += (head.size - 8);//8 for the already added header
@@ -180,13 +176,11 @@ std::string BSP::DataIn(char *buffer, int size)
 				//stats += "\n";
 
 				Add_FlatPoly(fpol);
-				///delete[] tbuf;
 				break;
 
 			case 3:
 			//	stats += "IMAPPOLY ";
 
-				//tbuf = new char[(head.size - 8)];
 				memset(cstemp, 0, 64);
 				sprintf(cstemp, "[%d bytes (%d bytes unused)]", head.size, head.size - tpol.Read(localptr, head));
 				localptr += (head.size - 8);//8 for the already added header
@@ -225,14 +219,12 @@ std::string BSP::DataIn(char *buffer, int size)
 				//stats += "\n";
 
 				Add_TmapPoly(tpol);
-				//delete[] tbuf;
 				break;
 
 			case 4:
 				stats += "SORTNORM ";
 
 
-				//tbuf = new char[(head.size - 8)];
 				memset(cstemp, 0, 64);
 				sprintf(cstemp, "[%d bytes (%d bytes unused)] ", head.size, head.size - snrm.Read(localptr, head));
 				localptr += (head.size - 8);//8 for the already added header
@@ -277,13 +269,11 @@ std::string BSP::DataIn(char *buffer, int size)
 				stats += "\n";*/
 
 				Add_SortNorm(snrm);
-				//delete[] tbuf;
 				break;
 
 			case 5:
 				//stats += "BOUNDBOX ";
 
-				//tbuf = new char[(head.size - 8)];
 				memset(cstemp, 0, 64);
 				sprintf(cstemp, "[%d bytes (%d bytes unused)]", head.size, head.size - bnd.Read(localptr, head));
 				localptr += (head.size - 8);//8 for the already added header
@@ -303,7 +293,6 @@ std::string BSP::DataIn(char *buffer, int size)
 
 
 				Add_BoundBox(bnd);
-				//delete[] tbuf;
 				break;
 
 			default:
@@ -364,14 +353,13 @@ std::ostream& BSP::BSPDump(std::ostream &os) // dumps human readable BSP informa
 
 void BSP::Add_BoundBox(BSP_BoundBox bound)
 {
-	BSP_BoundBox *temp = new BSP_BoundBox[numbounders + 1];
+	boost::shared_array<BSP_BoundBox> temp(new BSP_BoundBox[numbounders + 1]);
 
 	for (int i = 0; i < numbounders; i++)
 		temp[i] = bounders[i];
 	temp[numbounders] = bound;
 
 	numbounders++;
-	delete[] bounders;
 	bounders = temp;
 
 }
@@ -381,7 +369,7 @@ bool BSP::Del_BoundBox(int index)
 	if (index < 0 || index >= numbounders)
 		return false;
 
-	BSP_BoundBox *temp = new BSP_BoundBox[numbounders - 1];
+	boost::shared_array<BSP_BoundBox> temp(new BSP_BoundBox[numbounders - 1]);
 
 	for (int i = 0; i < numbounders; i++)
 	{
@@ -392,7 +380,6 @@ bool BSP::Del_BoundBox(int index)
 	}
 
 	numbounders--;
-	delete[] bounders;
 	bounders = temp;
 
 	return true;
@@ -403,14 +390,13 @@ bool BSP::Del_BoundBox(int index)
 
 void BSP::Add_DefPoints(BSP_DefPoints pnts)
 {
-	BSP_DefPoints *temp = new BSP_DefPoints[numpoints + 1];
+	boost::shared_array<BSP_DefPoints> temp(new BSP_DefPoints[numpoints + 1]);
 
 	for (int i = 0; i < numpoints; i++)
 		temp[i] = points[i];
 	temp[numpoints] = pnts;
 
 	numpoints++;
-	delete[] points;
 	points = temp;
 
 }
@@ -420,7 +406,7 @@ bool BSP::Del_DefPoints(int index)
 	if (index < 0 || index >= numpoints)
 		return false;
 
-	BSP_DefPoints *temp = new BSP_DefPoints[numpoints - 1];
+	boost::shared_array<BSP_DefPoints> temp(new BSP_DefPoints[numpoints - 1]);
 
 	for (int i = 0; i < numpoints; i++)
 	{
@@ -430,11 +416,10 @@ bool BSP::Del_DefPoints(int index)
 			temp[i-1] = points[i];
 	}
 
-	delete[] points[index].norm_counts;
-	delete[] points[index].vertex_data;
+	points[index].norm_counts.reset(NULL);
+	points[index].vertex_data.reset(NULL);
 
 	numpoints--;
-	delete[] points;
 	points = temp;
 
 	return true;
@@ -444,14 +429,13 @@ bool BSP::Del_DefPoints(int index)
 
 void BSP::Add_FlatPoly(BSP_FlatPoly fpol)
 {
-	BSP_FlatPoly *temp = new BSP_FlatPoly[numfpolys + 1];
+	boost::shared_array<BSP_FlatPoly> temp(new BSP_FlatPoly[numfpolys + 1]);
 
 	for (int i = 0; i < numfpolys; i++)
 		temp[i] = fpolys[i];
 	temp[numfpolys] = fpol;
 
 	numfpolys++;
-	delete[] fpolys;
 	fpolys = temp;
 
 }
@@ -461,7 +445,7 @@ bool BSP::Del_FlatPoly(int index)
 	if (index < 0 || index >= numfpolys)
 		return false;
 
-	BSP_FlatPoly *temp = new BSP_FlatPoly[numfpolys - 1];
+	boost::shared_array<BSP_FlatPoly> temp(new BSP_FlatPoly[numfpolys - 1]);
 
 	for (int i = 0; i < numfpolys; i++)
 	{
@@ -471,10 +455,9 @@ bool BSP::Del_FlatPoly(int index)
 			temp[i-1] = fpolys[i];
 	}
 
-	delete[] fpolys[index].verts;
+	fpolys[index].verts.reset(NULL);
 
 	numfpolys--;
-	delete[] fpolys;
 	fpolys = temp;
 
 	return true;
@@ -484,14 +467,13 @@ bool BSP::Del_FlatPoly(int index)
 
 void BSP::Add_SortNorm(BSP_SortNorm sn)
 {
-	BSP_SortNorm *temp = new BSP_SortNorm[numsnorms + 1];
+	boost::shared_array<BSP_SortNorm> temp(new BSP_SortNorm[numsnorms + 1]);
 
 	for (int i = 0; i < numsnorms; i++)
 		temp[i] = snorms[i];
 	temp[numsnorms] = sn;
 
 	numsnorms++;
-	delete[] snorms;
 	snorms = temp;
 
 }
@@ -501,7 +483,7 @@ bool BSP::Del_SortNorm(int index)
 	if (index < 0 || index >= numsnorms)
 		return false;
 
-	BSP_SortNorm *temp = new BSP_SortNorm[numsnorms - 1];
+	boost::shared_array<BSP_SortNorm> temp(new BSP_SortNorm[numsnorms - 1]);
 
 	for (int i = 0; i < numsnorms; i++)
 	{
@@ -513,7 +495,6 @@ bool BSP::Del_SortNorm(int index)
 
 
 	numsnorms--;
-	delete[] snorms;
 	snorms = temp;
 
 	return true;
@@ -523,14 +504,13 @@ bool BSP::Del_SortNorm(int index)
 
 void BSP::Add_TmapPoly(BSP_TmapPoly tpol)
 {
-	BSP_TmapPoly *temp = new BSP_TmapPoly[numtpolys + 1];
+	boost::shared_array<BSP_TmapPoly> temp(new BSP_TmapPoly[numtpolys + 1]);
 
 	for (int i = 0; i < numtpolys; i++)
 		temp[i] = tpolys[i];
 	temp[numtpolys] = tpol;
 
 	numtpolys++;
-	delete[] tpolys;
 	tpolys = temp;
 
 }
@@ -541,7 +521,7 @@ bool BSP::Del_TmapPoly(int index)
 	if (index < 0 || index >= numtpolys)
 		return false;
 
-	BSP_TmapPoly *temp = new BSP_TmapPoly[numtpolys - 1];
+	boost::shared_array<BSP_TmapPoly> temp(new BSP_TmapPoly[numtpolys - 1]);
 
 	for (int i = 0; i < numtpolys; i++)
 	{
@@ -551,10 +531,9 @@ bool BSP::Del_TmapPoly(int index)
 			temp[i-1] = tpolys[i];
 	}
 
-	delete[] tpolys[index].verts;
+	tpolys[index].verts.reset(NULL);
 
 	numtpolys--;
-	delete[] tpolys;
 	tpolys = temp;
 
 	return true;

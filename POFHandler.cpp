@@ -130,7 +130,7 @@
 
 void POF::Destroy()
 {
-	int i, j;
+	int j;
 
 	while (DOCK_Count_Docks())
 		DOCK_Del_Dock(0);
@@ -158,11 +158,6 @@ void POF::Destroy()
 
 
 	j = OBJ2_Count();
-	for (i = 0; i < j; i++)
-	{
-		//OBJ2_Del_SOBJ(0);
-		delete[] objects[i].bsp_data;
-	}
 	if (objects)
 		delete[] objects;
 
@@ -520,9 +515,9 @@ void POF::Parse_Memory_OBJ2(char *buffer)
 	memcpy(&temp.bsp_data_size, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	temp.bsp_data = new char[temp.bsp_data_size];
+	temp.bsp_data.reset(new char[temp.bsp_data_size]);
 
-	memcpy(temp.bsp_data, localptr, temp.bsp_data_size);
+	memcpy(temp.bsp_data.get(), localptr, temp.bsp_data_size);
 	
 	//done!
 	temp.reserved = 0;
@@ -1360,7 +1355,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &local_sobj->bsp_data_size, sizeof(int)); 
 		outfile.write(temp_buf, sizeof(int));
 
-		outfile.write(local_sobj->bsp_data, local_sobj->bsp_data_size);
+		outfile.write(local_sobj->bsp_data.get(), local_sobj->bsp_data_size);
 	}
 
 	//4  SPCL ----------------------------------------
@@ -2831,9 +2826,6 @@ bool POF::OBJ2_Del_SOBJ					(int SOBJNum)
 
 	}
 
-	if (objects[SOBJNum].bsp_data != NULL)
-		delete[] objects[SOBJNum].bsp_data;
-
 	delete[] objects;
 	numobj2--;
 	objects = temp;
@@ -3096,14 +3088,10 @@ bool POF::OBJ2_Set_BSPData				(int SOBJNum, int size, const char *bsp_data)
 	if ((unsigned)SOBJNum > OBJ2_Count() || SOBJNum < 0)
 		return false;
 
-	if (!(OBJ2_BSP_Datasize(SOBJNum) == 0))
-	{
-		delete[] objects[SOBJNum].bsp_data;
-	}
 
-	objects[SOBJNum].bsp_data = new char[size];
+	objects[SOBJNum].bsp_data.reset(new char[size]);
 
-	memcpy(objects[SOBJNum].bsp_data, bsp_data, size);
+	memcpy(objects[SOBJNum].bsp_data.get(), bsp_data, size);
 
 	return true;
 
@@ -3122,7 +3110,7 @@ bool POF::OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data)
 		return true;
 	}
 
-	bsp_data = objects[SOBJNum].bsp_data;
+	bsp_data = objects[SOBJNum].bsp_data.get();
 
 	return true;
 }
@@ -3141,7 +3129,7 @@ bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char>
 
 	bsp_data.reset(new char[size]);
 
-	memcpy(bsp_data.get(), objects[SOBJNum].bsp_data, size);
+	memcpy(bsp_data.get(), objects[SOBJNum].bsp_data.get(), size);
 
 	return true;
 }

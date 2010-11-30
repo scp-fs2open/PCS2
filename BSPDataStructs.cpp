@@ -69,18 +69,6 @@ int BSP_BlockHeader::Write(char *buffer)
 
 //********************************************************************************************************************
 
-void BSP_DefPoints::Destroy()
-{
-	if (norm_counts)
-		delete[] norm_counts;
-
-	for (int i = 0; i < n_verts; i++)
-		delete[] vertex_data[i].norms;
-
-	if (vertex_data)
-		delete[] vertex_data;
-}
-
 int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 {
 	char *temp = buffer;
@@ -95,12 +83,12 @@ int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 	memcpy(&offset, buffer,sizeof(int));
 	buffer += sizeof(int);
 
-	norm_counts = new unsigned char[n_verts];
-	memcpy(norm_counts, buffer, n_verts);
+	norm_counts.reset(new unsigned char[n_verts]);
+	memcpy(norm_counts.get(), buffer, n_verts);
 	buffer += n_verts;
 
 	// ok this is based off my GUESS .. i hope i guessed correctly
-	vertex_data = new vertdata[n_verts];
+	vertex_data.reset(new vertdata[n_verts]);
 
 	//realign the buffer
 	buffer = temp;
@@ -114,12 +102,12 @@ int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 
 		if (int(norm_counts[i]) > 0)
 		{
-			vertex_data[i].norms = new vector3d[int(norm_counts[i])];
-			memcpy(vertex_data[i].norms, buffer, sizeof(vector3d) * int(norm_counts[i]));
+			vertex_data[i].norms.reset(new vector3d[int(norm_counts[i])]);
+			memcpy(vertex_data[i].norms.get(), buffer, sizeof(vector3d) * int(norm_counts[i]));
 			buffer += (sizeof(vector3d) * norm_counts[i]);
 		}
 		else
-			vertex_data[i].norms = NULL;
+			vertex_data[i].norms.reset(NULL);
 	}
 	//vertex_data
 
@@ -143,7 +131,7 @@ int BSP_DefPoints::Write(char *buffer)
 	memcpy(tbuff, &offset, sizeof(int));
 	tbuff += sizeof(int);
 
-	memcpy(tbuff, norm_counts, n_verts);
+	memcpy(tbuff, norm_counts.get(), n_verts);
 	tbuff += n_verts;
 
 	// ok this is based off my GUESS .. i hope i guessed correctly
@@ -154,7 +142,7 @@ int BSP_DefPoints::Write(char *buffer)
 
 		if (i < n_verts)
 		{
-			memcpy(tbuff, vertex_data[i].norms, sizeof(vector3d) * ((int) (unsigned char)norm_counts[i]));
+			memcpy(tbuff, vertex_data[i].norms.get(), sizeof(vector3d) * ((int) (unsigned char)norm_counts[i]));
 			tbuff += (sizeof(vector3d) * norm_counts[i]);
 			Collector += int(norm_counts[i]);
 		}
@@ -242,7 +230,7 @@ int BSP_FlatPoly::Read(char *buffer, BSP_BlockHeader hdr)
 	memcpy(&pad, buffer, sizeof(byte));
 	buffer += sizeof(byte);
 
-	verts = new Flat_vertex[nverts];
+	verts.reset(new Flat_vertex[nverts]);
 
 	for (int i = 0; i < nverts; i++)
 	{
@@ -412,7 +400,7 @@ int BSP_TmapPoly::Read(char *buffer, BSP_BlockHeader hdr)
 	memcpy(&tmap_num, buffer, sizeof(int));
 	buffer += sizeof(int);
 
-	verts = new Tmap_vertex[nverts];
+	verts.reset(new Tmap_vertex[nverts]);
 
 	for (int i =0; i < nverts; i++)
 	{
