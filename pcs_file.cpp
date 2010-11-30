@@ -873,12 +873,12 @@ float PCS_Model::GetMass()
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void PCS_Model::GetMOI(float **tensor)
+void PCS_Model::GetMOI(std::vector<float>& tensor)
 // float[3][3]
 {
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			tensor[i][j] = header.MOI[i][j];
+			tensor[(3 * i) + j] = header.MOI[i][j];
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-

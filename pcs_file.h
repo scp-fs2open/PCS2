@@ -395,7 +395,7 @@ class PCS_Model
 		void set_header(const header_data&h){header = h;}
 		float GetMaxRadius();
 		float GetMass();
-		void GetMOI(float **tensor); // float[3][3]
+		void GetMOI(std::vector<float>& tensor);
 
 		vector3d GetMinBounding();
 		vector3d GetMaxBounding();

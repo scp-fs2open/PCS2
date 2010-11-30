@@ -24,7 +24,7 @@ class DAEHandler
 		daeElement *root;
 		std::string filename;
 #if LOGGING_DAE
-		std::ostream *log;
+		boost::scoped_ptr<std::ostream> log;
 #endif
 		float scaling_factor;
 		std::string doc;
@@ -32,9 +32,9 @@ class DAEHandler
 		//std::map<char*,int> textures;
 		std::vector<std::string> textures;
 		PCS_Model *model;
-		std::vector<pcs_sobj*> subobjs;
-		std::vector<pcs_special*> specials;
-		std::vector<pcs_dock_point*> docks;
+		std::vector<boost::shared_ptr<pcs_sobj> > subobjs;
+		std::vector<boost::shared_ptr<pcs_special> > specials;
+		std::vector<boost::shared_ptr<pcs_dock_point> > docks;
 		std::vector<pcs_eye_pos> eyes;
 		AsyncProgress *progress;
 
@@ -49,7 +49,7 @@ class DAEHandler
 		// processes a position vector, updating:
 		// - bounding box
 		// - radius
-		void process_vector3d(vector3d vec, pcs_sobj *subobj = NULL);
+		void process_vector3d(vector3d vec, boost::shared_ptr<pcs_sobj> subobj = boost::shared_ptr<pcs_sobj>((pcs_sobj*)NULL));
 
 
 		int find_or_add_texture(std::string name);
@@ -57,7 +57,7 @@ class DAEHandler
 		void subsystem_handler(daeElement *helper, bool isSubsystem);
 		void shield_handler(daeElement *helper);
 		void eyepoint_handler(daeElement *helper);
-		void process_poly_group(daeElement *element, pcs_sobj *subobj, matrix rotation, std::map<std::string, std::string> *texture_mapping);
+		void process_poly_group(daeElement *element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, std::map<std::string, std::string> *texture_mapping);
 		void process_sobj_helpers(daeElement *element,int current_sobj_id, int parent_sobj_id, matrix rotation);
 		void process_special_helpers(daeElement *element, int idx, matrix rotation);
 		void process_properties(daeElement *element,std::string *properties);
@@ -69,7 +69,7 @@ class DAEHandler
 		void process_insignia(daeElement *element);
 		void process_dockpoint(daeElement *element);
 		void process_sobj_vec(daeElement *element, matrix rotation, std::string* properties);
-		void process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed=true);
+		void process_sobj_rotate(daeElement *element, matrix rotation, boost::shared_ptr<pcs_sobj> sobj, bool speed=true);
 		pcs_eye_pos process_eyepoint(daeElement* helper, matrix transform = matrix(), int subobj_idx = -1);
 		pcs_slot process_gunbank(daeElement *helper, int type);
 		void process_mass(daeElement *element);
@@ -84,7 +84,7 @@ class DAEHandler
 		void process_subobj(daeElement* element, int parent = -1, matrix rotation = matrix());
 		void process_dock_helpers(daeElement *element);
 
-		~DAEHandler();
+		virtual ~DAEHandler() {}
 
 		int populate(void);
 

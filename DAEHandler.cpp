@@ -18,7 +18,7 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 #if LOGGING_DAE
 	filename.resize(filename.size() - 4);
 	filename += ".log";
-	log = new std::ofstream(filename.c_str());
+	log.reset(new std::ofstream(filename.c_str()));
 	*log << root->getDocument()->getDocumentURI()->getPath() << endl;
 #endif
 	radius = 0;
@@ -47,12 +47,6 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 
 	this->progress = progress;
 	
-}
-
-DAEHandler::~DAEHandler() {
-#if LOGGING_DAE
-	delete log;
-#endif
 }
 
 int DAEHandler::populate(void) {
@@ -154,18 +148,15 @@ int DAEHandler::populate(void) {
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
 		progress->incrementWithMessage("Finalising " + subobjs[i]->name);
 		final_subobjs[i] = *subobjs[i];
-		delete subobjs[i];
 	}
 	model->set_subobjects(final_subobjs);
 	for (unsigned int i = 0; i < specials.size(); i++) {
 		progress->incrementWithMessage("Finalising " + specials[i]->name);
-		model->AddSpecial(specials[i]);
-		delete specials[i];
+		model->AddSpecial(specials[i].get());
 	}
 	for (unsigned int i = 0; i < docks.size(); i++) {
 		progress->incrementWithMessage("Finalising " + docks[i]->properties);
-		model->AddDocking(docks[i]);
-		delete docks[i];
+		model->AddDocking(docks[i].get());
 	}
 	model->set_eyes(eyes);
 	int num_guns = guns.size();
@@ -217,7 +208,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	uri.setURI(temp.c_str());
 
 	daeElement* mesh = uri.getElement()->getChild("mesh");
-	pcs_sobj *subobj = new pcs_sobj();
+	boost::shared_ptr<pcs_sobj> subobj(new pcs_sobj());
 	subobj->bounding_box_min_point = vector3d(1e30f,1e30f,1e30f);
 	subobj->bounding_box_max_point = vector3d(-1e30f,-1e30f,-1e30f);
 	subobj->name = element->getAttribute("name").c_str();
@@ -229,7 +220,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 
 	// Hope this is right
 	if (subobj->parent_sobj != -1) {
-		subobj->geometric_center = relative_to_absolute(subobj->offset,subobjs[subobj->parent_sobj],&subobjs);
+		subobj->geometric_center = relative_to_absolute(subobj->offset,subobjs[subobj->parent_sobj],subobjs);
 	} else {
 		subobj->geometric_center = vector3d(0,0,0);
 	}
@@ -305,7 +296,7 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 }
 
 void DAEHandler::process_dockpoint(daeElement *helper) {
-	pcs_dock_point *dockpoint = new pcs_dock_point();
+	boost::shared_ptr<pcs_dock_point> dockpoint(new pcs_dock_point());
 	pcs_hardpoint temp;
 	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
@@ -321,7 +312,7 @@ void DAEHandler::process_dockpoint(daeElement *helper) {
 }
 
 
-void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matrix rotation, map<string, string> *texture_mapping) {
+void DAEHandler::process_poly_group(daeElement *element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, map<string, string> *texture_mapping) {
 
 	daeTArray< daeSmartRef<daeElement> > poly_bits = element->getChildren();
 	string temp;
@@ -395,7 +386,7 @@ void DAEHandler::process_poly_group(daeElement *element, pcs_sobj *subobj, matri
 
 // Go through the helpers and hand off work appropriately...
 void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
-	vector3d offset = relative_to_absolute(vector3d(0,0,0),subobjs[current_sobj_id],&subobjs);
+	vector3d offset = relative_to_absolute(vector3d(0,0,0),subobjs[current_sobj_id],subobjs);
 	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
 		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
@@ -554,7 +545,7 @@ void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::str
 	}
 }
 
-void DAEHandler::process_sobj_rotate(daeElement *element, matrix rotation, pcs_sobj* sobj, bool speed) {
+void DAEHandler::process_sobj_rotate(daeElement *element, matrix rotation, boost::shared_ptr<pcs_sobj> sobj, bool speed) {
 	rotation = get_rotation(element, rotation);
 	vector3d rotate = fix_axes(up, rotation);
 	float x, y, z, x_abs, y_abs, z_abs;
@@ -784,7 +775,7 @@ int DAEHandler::find_or_add_texture(string name) {
 }
 
 void DAEHandler::subsystem_handler(daeElement *helper, bool isSubsystem) {
-	pcs_special *special = new pcs_special;
+	boost::shared_ptr<pcs_special> special(new pcs_special);
 	matrix rot = get_rotation(helper);
 	special->name = "$";
 	if (isSubsystem) {
@@ -805,7 +796,6 @@ void DAEHandler::shield_handler(daeElement *helper) {
 	if (geom == NULL) {
 		return;
 	}
-	pcs_shield_triangle *shield_bit;
 
 	string temp = doc;
 	daeURI uri(dae);
@@ -842,19 +832,18 @@ void DAEHandler::shield_handler(daeElement *helper) {
 
 	int position = 0;
 	// add each polygon
-	shield_bit = new pcs_shield_triangle();
+	pcs_shield_triangle shield_bit;
 	for (int j = 0; j < num_polies; j++) {
-		shield_bit->face_normal = vector3d(0,0,0);
+		shield_bit.face_normal = vector3d(0,0,0);
 		for (int k = 2; k >= 0; k--) {
-			shield_bit->corners[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
-			shield_bit->face_normal += fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
+			shield_bit.corners[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
+			shield_bit.face_normal += fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
 
 			position += inputs.max_offset;
 		}
-		shield_bit->face_normal = shield_bit->face_normal / 3;
-		model->AddShldTri(shield_bit);
+		shield_bit.face_normal = shield_bit.face_normal / 3;
+		model->AddShldTri(&shield_bit);
 	}
-	delete(shield_bit);
 }
 
 void DAEHandler::process_insignia(daeElement *element) {
@@ -967,12 +956,12 @@ void parse_int_array(const char* chars, std::vector<int> *result, unsigned int c
 	}
 }
 
-vector<float> *parse_float_array(const char* chars, unsigned int count) {
-	vector<float> *result;
+boost::shared_ptr<vector<float> > parse_float_array(const char* chars, unsigned int count) {
+	boost::shared_ptr<vector<float> > result;
 	if (count != (unsigned)-1) {
-		result = new vector<float>(count);
+		result.reset(new vector<float>(count));
 	} else {
-		result = new vector<float>(VECTOR_INITIAL_SIZE);
+		result.reset(new vector<float>(VECTOR_INITIAL_SIZE));
 	}
 	stringstream in(chars);
 	float temp;
@@ -1023,21 +1012,19 @@ string int_to_string(int i) {
 vector3d DAEHandler::get_translation(daeElement *element, matrix rotation) {
 	daeElement *position = element->getChild("translate");
 	daeElement *matrix = element->getChild("matrix"); 
-	vector<float> *points;
+	boost::shared_ptr<vector<float> > points;
 	vector3d result;
 	if (position != NULL) {
 		points = parse_float_array(position->getCharData().c_str(),3);
 		result = fix_axes(vector3d((*points)[0],(*points)[1],(*points)[2]),rotation);
-		delete points;
 	} else if (matrix != NULL) {
 		points = parse_float_array(matrix->getCharData().c_str(),16);
 		result = fix_axes(vector3d((*points)[3],(*points)[7],(*points)[11]),rotation);
-		delete points;
 	}
 	return result;
 }
 
-void DAEHandler::process_vector3d(vector3d vec, pcs_sobj *subobj) {
+void DAEHandler::process_vector3d(vector3d vec, boost::shared_ptr<pcs_sobj> subobj) {
 	if (subobj != NULL) {
 		if (vec.x > subobj->bounding_box_max_point.x) {
 			subobj->bounding_box_max_point.x = vec.x;
@@ -1060,7 +1047,7 @@ void DAEHandler::process_vector3d(vector3d vec, pcs_sobj *subobj) {
 		if (Magnitude(vec) > subobj->radius) {
 			subobj->radius = Magnitude(vec);
 		}
-		vec = relative_to_absolute(vec, subobj, &subobjs);
+		vec = relative_to_absolute(vec, subobj, subobjs);
 	}
 	if (vec.x > max_bounding_box.x) {
 		max_bounding_box.x = vec.x;
@@ -1085,15 +1072,6 @@ void DAEHandler::process_vector3d(vector3d vec, pcs_sobj *subobj) {
 	}
 }
 
-vector3d relative_to_absolute(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *subobjs) {
-	while (subobj->parent_sobj != -1) {
-		vec += subobj->offset;
-		subobj = subobjs[0][subobj->parent_sobj];
-	}
-	vec += subobj->offset;
-	return vec;
-}
-
 vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *subobjs) {
 	while (subobj->parent_sobj != -1) {
 		vec += subobj->offset * -1;
@@ -1104,7 +1082,6 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 }
 
 DAEInput::DAEInput(daeURI uri) {
-	value = NULL;
 	valid = false;
 	daeElement *element = uri.getElement();
 	string next_uri = uri.getAuthority();
@@ -1118,14 +1095,7 @@ DAEInput::DAEInput(daeURI uri) {
 		next_uri += next->getAttribute("source").c_str();
 		uri.setURI(next_uri.c_str());
 		DAEInput other(uri);
-		if (!other.is_valid()) {
-			return;
-		}
-		x = other.x;
-		y = other.y;
-		z = other.z;
-		strides = other.strides;
-		value = other.value;
+		*this = other;
 	} else {
 		next = element->getChild("technique_common");
 		if (next == NULL) {
@@ -1299,27 +1269,24 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 	matrix rot;
 	matrix base;
 	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
-	vector<float> *temp;
+	boost::shared_ptr<vector<float> > temp;
 	for (unsigned int i = 0; i < children.getCount(); i++) {
 		if (boost::algorithm::equals(children[i]->getTypeName(), "rotate")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),4);
 			rot = matrix((*temp)[3]);
 			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
 			old = base.invert() % rot % base % old;
-			delete temp;
 		} else if (boost::algorithm::equals(children[i]->getTypeName(), "scale")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),3);
 			base = matrix();
 			for (int j = 0; j < 3; j++) {
 				base.a2d[j][j] = (*temp)[j];
 			}
-			delete temp;
 			old = base % old;
 		} else if (boost::algorithm::equals(children[i]->getTypeName(), "matrix")) {
 			temp = parse_float_array(children[i]->getCharData().c_str(),16);
-			rot = matrix(temp);
+			rot = matrix(temp.get());
 			old = old % rot;
-			delete temp;
 		}
 	}
 	return old;
@@ -2192,19 +2159,14 @@ void DAESaver::add_mass() {
 }
 
 void DAESaver::add_moment_of_inertia() {
-	float *numbers[3];
-	for (int i = 0; i < 3; i++) {
-		numbers[i] = new float[3];
-	}
+	std::vector<float> numbers;
 	model->GetMOI(numbers);
 	std::stringstream stream;
 	bool calculated = false;
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			stream << numbers[i][j] << ",";
-			if (numbers[i][j] != 0) {
-				calculated = true;
-			}
+	for (int i = 0; i < 9; i++) {
+		stream << numbers[i] << ",";
+		if (numbers[i] != 0) {
+			calculated = true;
 		}
 	}
 	// let's not bother saving a heap of zeroes.
@@ -2219,9 +2181,6 @@ void DAESaver::add_moment_of_inertia() {
 				moi->setAttribute("name", stream.str().c_str());
 			}
 		}
-	}
-	for (int i = 0; i < 3; i++) {
-		delete[] numbers[i];
 	}
 }
 
@@ -2309,7 +2268,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 	scale = vector3d(1,1,1);
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
 		if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
-			offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),&model_subobjs);
+			offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),model_subobjs);
 			answer = subobjs[i];
 			break;
 		}
@@ -2332,7 +2291,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 		}
 		for (unsigned int i = 0; i < subobjs.size(); i++) {
 			if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
-				offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),&model_subobjs);
+				offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),model_subobjs);
 				answer = subobjs[i];
 				break;
 			}
