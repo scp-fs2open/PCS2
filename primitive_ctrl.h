@@ -542,3 +542,60 @@ public:
 		return l;
 	}
 };
+
+class vector3d_radio_button_ctrl :
+	public primitive_radio_button_ctrl<vector3d>
+{
+protected:
+	vector_ctrl* custom;
+
+public:
+	void set_item(const int&i){combo_box->Select(i);}
+
+	virtual vector3d get_value(){
+		int idx = combo_box->GetSelection();
+
+		if(idx == (int)combo_box->GetCount() - 1)
+			return custom->get_value();
+		if(idx>-1 && idx<(int)combo_box->GetCount())
+			return option[idx];
+		else if(option.size()>=1)
+			return option[0];
+		else 
+			return vector3d();//emergency failure
+	}
+
+	virtual void set_value(const vector3d&i){
+		for(unsigned int a =0; a<option.size() - 1; a++){
+			if(option[a] == i){
+				combo_box->Select(a);
+				custom->Disable();
+				return;
+			}
+		}
+		custom->set_value(i);
+		combo_box->Select(option.size() - 1);
+		custom->Enable();
+	}
+
+	
+	//constructor builds the text box and adds it to editor's static box sizer
+	vector3d_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<vector3d> >&list, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int Flags=0)
+	:primitive_radio_button_ctrl<vector3d>(parent,list,x,y,w,h, Title, orient, Flags)
+	{
+		add_control(custom=new vector_ctrl(this,0,0,60,20,_("")),0,wxEXPAND );
+		custom->Disable();
+	};
+
+	void on_select(wxCommandEvent& event) {
+		if (event.GetSelection() == (int)combo_box->GetCount() - 1) {
+			custom->Enable();
+		} else {
+			custom->Disable();
+		}
+	}
+
+	virtual ~vector3d_radio_button_ctrl(void){};
+	DECLARE_EVENT_TABLE();
+};
+

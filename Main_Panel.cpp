@@ -1918,8 +1918,18 @@ vector3d main_panel::transform_dialog::matrix_transform::get_translation() const
 
 matrix main_panel::transform_dialog::scale_transform::get_transform() const {
 	matrix result;
-	for (int i = 0; i < 3; i++) {
-		result.a2d[i][i] = (float)atof(scale[i]->GetValue().mb_str());
+	if (scale->get_value() == 0) {
+		return result;
+	}
+	vector3d axis_vector = axis->get_value();
+	if (null_vec(axis_vector)) {
+		for (int i = 0; i < 3; i++) {
+			result.a2d[i][i] = scale->get_value();
+		}
+	} else {
+		matrix axis_transform(axis_vector);
+		result.a2d[0][0] = scale->get_value();
+		result = axis_transform.invert() % result % axis_transform;
 	}
 	return result;
 }
@@ -1933,24 +1943,17 @@ matrix main_panel::transform_dialog::translate_transform::get_transform() const 
 }
 
 vector3d main_panel::transform_dialog::translate_transform::get_translation() const {
-	vector3d result;
-	for (int i = 0; i < 3; i++) {
-		result[i] = (float)atof(translate[i]->GetValue().mb_str());
-	}
-	return result;
+	return translation->get_value();
 }
 
 matrix main_panel::transform_dialog::rotate_transform::get_transform() const {
-	vector3d direction;
-	for (int i = 0; i < 3; i++) {
-		direction[i] = (float)atof(rotate[i]->GetValue().mb_str());
-	}
+	vector3d direction = axis->get_value();
 	// Give up if we don't get a valid looking axis.
 	if (Magnitude(direction) < 1e-5) {
 		return matrix();
 	}
 	matrix transform(direction);
-	matrix rotation((float)(atof(rotate[3]->GetValue().mb_str())));
+	matrix rotation(angle->get_value());
 	return transform.invert() % rotation % transform;
 }
 

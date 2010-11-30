@@ -276,7 +276,7 @@ public:
 				matrix_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
 					wxGridSizer* sizer = new wxGridSizer(4);
 					for (int i = 0; i < 16; i++) {
-						matrix_entry[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"));
+						matrix_entry[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"), wxDefaultPosition, wxSize(60, 20));
 						if (i >= 12) {
 							matrix_entry[i]->SetEditable(false);
 						}
@@ -295,15 +295,27 @@ public:
 
 		class scale_transform : public transform_method {
 			private:
-				wxTextCtrl* scale[3];
+				vector3d_radio_button_ctrl* axis;
+				float_ctrl* scale;
 
 			public:
 				scale_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
-					wxGridSizer* sizer = new wxGridSizer(3);
-					for (int i = 0; i < 3; i++) {
-						scale[i] = new wxTextCtrl(this, -1, _("1"));
-						sizer->Add(scale[i]);
-					}
+					std::vector<primitive_list_item<vector3d> > values;
+					values.resize(5);
+					values[0].title = "All axes";
+					values[0].data = vector3d();
+					values[1].title = "X axis";
+					values[1].data = vector3d(1, 0, 0);
+					values[2].title = "Y axis";
+					values[2].data = vector3d(0, 1, 0);
+					values[3].title = "Z axis";
+					values[3].data = vector3d(0, 0, 1);
+					values[4].title = "Custom:";
+					values[4].data = vector3d();
+					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, 0, 0, 60, -1, _("Axis")), 0, wxEXPAND);
+					sizer->Add(scale=new float_ctrl(this,0,0,60,40,_("Scale (negative values flip)")), 0, wxEXPAND);
+					scale->set_value(1.0f);
 					SetSizerAndFit(sizer);
 				}
 
@@ -317,15 +329,12 @@ public:
 
 		class translate_transform : public transform_method {
 			private:
-				wxTextCtrl* translate[3];
+				vector_ctrl* translation;
 
 			public:
 				translate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
-					wxGridSizer* sizer = new wxGridSizer(3);
-					for (int i = 0; i < 3; i++) {
-						translate[i] = new wxTextCtrl(this, -1, _("0"));
-						sizer->Add(translate[i]);
-					}
+					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+					sizer->Add(translation=new vector_ctrl(this,0,0,60,40,_("Translation")), 0, wxEXPAND);
 					SetSizerAndFit(sizer);
 				}
 
@@ -338,26 +347,25 @@ public:
 
 		class rotate_transform : public transform_method {
 			private:
-				wxTextCtrl* rotate[4];
+				vector3d_radio_button_ctrl* axis;
+				float_ctrl* angle;
 
 			public:
 				rotate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
+					std::vector<primitive_list_item<vector3d> > values;
+					values.resize(4);
+					values[0].title = "X axis";
+					values[0].data = vector3d(1, 0, 0);
+					values[1].title = "Y axis";
+					values[1].data = vector3d(0, 1, 0);
+					values[2].title = "Z axis";
+					values[2].data = vector3d(0, 0, 1);
+					values[3].title = "Custom:";
+					values[3].data = vector3d();
 					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-					wxStaticBoxSizer* axis_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Rotation axis"));
-					wxSizerFlags flags;
-					flags.Expand();
-					rotate[0] = new wxTextCtrl(this, -1, _("1"));
-					axis_sizer->Add(rotate[0]);
-					for (int i = 1; i < 3; i++) {
-						rotate[i] = new wxTextCtrl(this, -1, _("0"));
-						axis_sizer->AddStretchSpacer();
-						axis_sizer->Add(rotate[i]);
-					}
-					sizer->Add(axis_sizer, flags);
-					wxStaticBoxSizer* angle_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Rotation angle"));
-					rotate[3] = new wxTextCtrl(this, -1, _("0"));
-					angle_sizer->Add(rotate[3]);
-					sizer->Add(angle_sizer, flags);
+					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, 0, 0, 60, -1, _("Axis")), 0, wxEXPAND);
+					sizer->Add(angle=new float_ctrl(this,0,0,60,40,_("Angle (degrees)")), 0, wxEXPAND);
+					angle->set_value(0.0f);
 					SetSizerAndFit(sizer);
 				}
 				virtual matrix get_transform() const;
