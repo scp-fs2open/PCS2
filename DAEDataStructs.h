@@ -1,4 +1,5 @@
 #include "matrix3d.h"
+#include <boost/shared_ptr.hpp>
 
 #ifndef _DAEDataStructs_H_
 #define _DAEDataStructs_H_
