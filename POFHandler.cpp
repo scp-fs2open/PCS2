@@ -1177,7 +1177,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//+-+-+-+-+-+-+-+-
 
 	
-	write_to_buffer(temp_buf, header.sobj_debris.size()); 
+	write_to_buffer(temp_buf, (int)header.sobj_debris.size()); 
 	outfile.write(temp_buf, sizeof(int));
 
 	// crap the sobj_debris array out
