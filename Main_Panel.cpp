@@ -638,7 +638,7 @@ void add_child_subobjects(PCS_Model&model, int parent_new, int imported_sobj, PC
 }
 
 void main_panel::on_transform_chunk(wxCommandEvent &event){
-	transform_dialog dialog(this, control_panel);
+	transform_dialog dialog(NULL, control_panel);
 	if (dialog.ShowModal() == wxID_OK) {
 		control_panel->transform(dialog.get_transform(), dialog.get_translation());
 	}
