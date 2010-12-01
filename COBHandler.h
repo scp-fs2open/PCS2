@@ -66,12 +66,11 @@ class COB
 
 		//storage variables
 		COB_Header header;
-		COB_Lght *lights;
-		COB_Mat1 *materials;
-		COB_PolH *polymodels;
-		COB_Grou *groups;
+		std::vector<COB_Lght> lights;
+		std::vector<COB_Mat1> materials;
+		std::vector<COB_PolH> polymodels;
+		std::vector<COB_Grou> groups;
 
-		int numlights, nummats, numpolys, numgrous;
 
 		COB_Lght BinParse_Light				(COB_ChunkHeader Head, char *buffer);
 		bool	 BinParse_Material			(COB_ChunkHeader Head, char *buffer, COB_Mat1 *mat);
@@ -88,45 +87,33 @@ class COB
 		COB_Grou& GetGroup(int i) { return groups[i]; }
 
 		int Light_Count()
-			{ return numlights; }
+			{ return lights.size(); }
 
 		int Material_Count()
-			{ return nummats; }
+			{ return materials.size(); }
 
 		int PolyModel_Count()
-			{ return numpolys; }
+			{ return polymodels.size(); }
 
 		int Group_Count()
-			{ return numgrous; }
+			{ return groups.size(); }
 
 		void Add_Lght						(COB_Lght Lght);
-		bool Del_Lght						(int index);
+		bool Del_Lght						(unsigned int index);
 
 		void Add_Mat1						(COB_Mat1 mat);
-		bool Del_Mat1						(int index);
+		bool Del_Mat1						(unsigned int index);
 
 		void Add_PolH						(COB_PolH pol);
-		bool Del_PolH						(int index);
+		bool Del_PolH						(unsigned int index);
 
 		void Add_Grou						(COB_Grou gru);
-		bool Del_Grou						(int index);
+		bool Del_Grou						(unsigned int index);
 
 
 
 		COB()
 		{
-			numlights = 0;
-			lights = NULL;
-
-			nummats = 0;
-			materials = NULL;
-
-			numpolys= 0;
-			polymodels = NULL;
-
-			numgrous = 0;
-			groups = NULL;
-
 			memset(&header, 0, sizeof(header));
 			memset(&header, 0, sizeof(header));
 			strncpy(header.signature, "Caligari ", 9);
@@ -139,9 +126,9 @@ class COB
 		~COB();
 		void Reset();
 		
-		bool IndexGroups(int i, COB_Grou &gr)
+		bool IndexGroups(unsigned int i, COB_Grou &gr)
 		{
-			if (i > -1 && i < numgrous)
+			if (i < groups.size())
 			{
 				gr = groups[i];
 				return true;
@@ -149,10 +136,10 @@ class COB
 			return false;
 		}
 
-		bool IndexPolymodel(int i, COB_PolH &pl)
+		bool IndexPolymodel(unsigned int i, COB_PolH &pl)
 		{
 
-			if (i > -1 && i < numpolys)
+			if (i < polymodels.size())
 			{
 				pl = polymodels[i];
 				return true;
@@ -160,9 +147,9 @@ class COB
 			return false;
 		}
 
-		bool IndexMaterial(int i, COB_Mat1 &mt)
+		bool IndexMaterial(unsigned int i, COB_Mat1 &mt)
 		{
-			if (i > -1 && i < nummats)
+			if (i < materials.size())
 			{
 				mt = materials[i];
 				return true;
@@ -170,9 +157,9 @@ class COB
 			return false;
 		}
 
-		bool IndexLight(int i, COB_Lght &lg)
+		bool IndexLight(unsigned int i, COB_Lght &lg)
 		{
-			if (i > -1 && i < numlights)
+			if (i < lights.size())
 			{
 				lg = lights[i];
 				return true;

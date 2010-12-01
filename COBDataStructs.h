@@ -193,13 +193,12 @@ struct Face_Vert
 struct PolH_Face_Hole
 {
 	char flags;
-	short num_verts; //Number of vertices in face (not including any holes)
 	
 	// F_Hole !set
 	short Material_index; //Reference to a Material ('Mat1')
 	// cont normal
 
-	Face_Vert *verts;	//Face vertices.  Each consists of a long index in 
+	std::vector<Face_Vert> verts;	//Face vertices.  Each consists of a long index in 
 						//the local Vertex list followed by a long index into the UV Vertex list
 };
 
@@ -212,16 +211,13 @@ struct COB_PolH
 	COB_Matrix CurPos;
 	
 	//Local Vertex list
-	int num_verticies;
-	vector3d *verts; // guess what!
+	std::vector<vector3d> verts; // guess what!
 
 	//UV Vertex list
-	int num_uv_verts;
-	UV_Vert *uv_verts;
+	std::vector<UV_Vert> uv_verts;
 
 	//Face list
-	int num_faces_or_holes;
-	PolH_Face_Hole *fhs;
+	std::vector<PolH_Face_Hole> fhs;
 
 	int GetSize();
 };

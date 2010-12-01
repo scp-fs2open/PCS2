@@ -74,15 +74,20 @@
 
 #include <memory.h>
 #include <fstream>
+#include <boost/scoped_array.hpp>
 
+template<typename T>
+void write_to_stream(std::ofstream& out, const T& value) {
+	out.write((const char*)&value, sizeof(T));
+}
 
 int COB_PolH::GetSize()
 {
 	int size = sizeof(COB_Matrix) + sizeof(COB_Axis) + 4 + name.name.length();
-	size += (num_verticies * sizeof(vector3d) ) + ( num_uv_verts * sizeof(UV_Vert));
-	for (int i = 0; i < num_faces_or_holes; i++)
+	size += (verts.size() * sizeof(vector3d) ) + ( uv_verts.size() * sizeof(UV_Vert));
+	for (unsigned int i = 0; i < fhs.size(); i++)
 	{
-		size += 5 + (fhs[i].num_verts * sizeof(Face_Vert));
+		size += 5 + (fhs[i].verts.size() * sizeof(Face_Vert));
 	}
 	return size;
 }
@@ -90,7 +95,8 @@ int COB_PolH::GetSize()
 //****************************************************************************************************************
 int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 {
-	int i, j, UChunkID = 1, itemp;
+	unsigned int i, j;
+	int UChunkID = 1, itemp;
 	COB_ChunkHeader end;
 	end.ChunkID = 0;
 	end.ParentID = 0;
@@ -142,7 +148,7 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 */
 	//Groups first
 	
-	for (i = 0; i < numgrous; i++)
+	for (i = 0; i < groups.size(); i++)
 	{
 		OutFile.write((const char *)&groups[i].head, sizeof(COB_ChunkHeader));
 		OutFile.write((const char *)&groups[i].name.DupCount, sizeof(short));
@@ -154,7 +160,7 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 	}
 
 	// Lights Second
-	for (i = 0; i < numlights; i++)
+	for (i = 0; i < lights.size(); i++)
 	{
 		lights[i].head.size = 4; // COB_Name DupCount and COB_Name::std::string length;
 		lights[i].head.size += lights[i].name.name.length();
@@ -215,13 +221,13 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 	}
 
 	// Polymodels Third
-	for (i = 0; i < numpolys; i++)
+	for (i = 0; i < polymodels.size(); i++)
 	{
 		polymodels[i].head.size = 8 + polymodels[i].name.name.length() + sizeof(COB_Axis) + sizeof(COB_Matrix);
-		polymodels[i].head.size += (4 + (sizeof(vector3d) * polymodels[i].num_verticies));
-		polymodels[i].head.size += (4 + (sizeof(UV_Vert) * polymodels[i].num_uv_verts));
+		polymodels[i].head.size += (4 + (sizeof(vector3d) * polymodels[i].verts.size()));
+		polymodels[i].head.size += (4 + (sizeof(UV_Vert) * polymodels[i].uv_verts.size()));
 
-		for (j = 0; j < polymodels[i].num_faces_or_holes; j++)
+		for (j = 0; j < polymodels[i].fhs.size(); j++)
 		{
 			polymodels[i].head.size += 3; //flags and num_verts
 
@@ -229,7 +235,7 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 			{
 				polymodels[i].head.size += 2; //Material_index
 			}
-			polymodels[i].head.size += (sizeof(Face_Vert) * polymodels[i].fhs[j].num_verts);
+			polymodels[i].head.size += (sizeof(Face_Vert) * polymodels[i].fhs[j].verts.size());
 
 		}
 
@@ -245,24 +251,24 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 
 		OutFile.write((const char *)&polymodels[i].CurPos, sizeof(COB_Matrix));
 
-		OutFile.write((const char *)&polymodels[i].num_verticies, sizeof(int));
-		OutFile.write((const char *)polymodels[i].verts, sizeof(vector3d) * polymodels[i].num_verticies);
+		write_to_stream(OutFile, (int)polymodels[i].verts.size());
+		OutFile.write((const char *)&polymodels[i].verts.front(), sizeof(vector3d) * polymodels[i].verts.size());
 
-		OutFile.write((const char *)&polymodels[i].num_uv_verts, sizeof(int));
-		OutFile.write((const char *)polymodels[i].uv_verts, sizeof(UV_Vert) * polymodels[i].num_uv_verts);
+		write_to_stream(OutFile, (int)polymodels[i].uv_verts.size());
+		OutFile.write((const char *)&polymodels[i].uv_verts.front(), sizeof(UV_Vert) * polymodels[i].uv_verts.size());
 
-		OutFile.write((const char *)&polymodels[i].num_faces_or_holes, sizeof(int));
+		write_to_stream(OutFile, (int)polymodels[i].fhs.size());
 
-		for (j = 0; j < polymodels[i].num_faces_or_holes; j++)
+		for (j = 0; j < polymodels[i].fhs.size(); j++)
 		{
 			OutFile.write((const char *)&polymodels[i].fhs[j].flags, sizeof(char));
-			OutFile.write((const char *)&polymodels[i].fhs[j].num_verts, sizeof(short));
+			write_to_stream(OutFile, (short)polymodels[i].fhs[j].verts.size());
 
 			if (polymodels[i].fhs[j].flags != F_HOLE && polymodels[i].fhs[j].flags != (F_HOLE | F_BACKCULL))
 			{
 				OutFile.write((const char *)&polymodels[i].fhs[j].Material_index, sizeof(short));
 			}
-			OutFile.write((const char *)polymodels[i].fhs[j].verts, sizeof(Face_Vert) * polymodels[i].fhs[j].num_verts);
+			OutFile.write((const char *)&polymodels[i].fhs[j].verts.front(), sizeof(Face_Vert) * polymodels[i].fhs[j].verts.size());
 
 		}
 
@@ -276,7 +282,7 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 	}
 	// Textures last
 
-	for (i = 0; i < nummats; i++)
+	for (i = 0; i < materials.size(); i++)
 	{
 		OutFile.write((const char *)&materials[i].head, sizeof(COB_ChunkHeader));
 		OutFile.write((const char *)&materials[i].Mat_num, sizeof(short));
@@ -317,7 +323,8 @@ int COB::LoadCOB(std::string filename)
 {
 
 	int FileSize;
-	char *Membuffer, *MemWalker;
+	boost::scoped_array<char> Membuffer;
+	char *MemWalker;
 
 	//int fhan;
 	//if ((fhan = open(filename.c_str(), O_RDONLY)) == -1)
@@ -337,9 +344,9 @@ int COB::LoadCOB(std::string filename)
 	FileSize = InFile.tellg();
 	InFile.seekg(0, std::ios::beg);
 
-	Membuffer = new char[FileSize];
-	MemWalker = Membuffer;
-	InFile.read(Membuffer, FileSize);
+	Membuffer.reset(new char[FileSize]);
+	MemWalker = Membuffer.get();
+	InFile.read(Membuffer.get(), FileSize);
 	InFile.close();
 
 	COB_ChunkHeader CHead;
@@ -364,7 +371,7 @@ int COB::LoadCOB(std::string filename)
 
 	while (1)
 	{
-		if (MemWalker - Membuffer >= FileSize)
+		if (MemWalker - Membuffer.get() >= FileSize)
 			break; //hit filesize end
 
 		memcpy(&CHead, MemWalker, sizeof(COB_ChunkHeader));
@@ -418,7 +425,6 @@ int COB::LoadCOB(std::string filename)
 		
 	}
 	
-	delete[] Membuffer;
 	return 0; // No Error
 
 }
@@ -432,15 +438,14 @@ std::string Parse_COBBString(char *&localptr)
 	memcpy(&len, localptr, sizeof(short));
 	localptr += sizeof(short);
 
-	char *str = new char[len+1];
+	boost::scoped_array<char> str(new char[len+1]);
 	
-	memcpy(str, localptr, len);
+	memcpy(str.get(), localptr, len);
 	localptr += len;
 
 	str[len] = '\0';
 	
-	retval = str;
-	delete[] str;
+	retval = str.get();
 	return retval;
 
 }
@@ -608,38 +613,42 @@ COB_PolH COB::BinParse_Polys(COB_ChunkHeader Head, char *buffer)
 	localptr += sizeof(COB_Matrix);
 
 	// Start ----------- Poly Verts
-	memcpy(&polh.num_verticies, localptr, sizeof(int));
+	unsigned int num_verticies;
+	memcpy(&num_verticies, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	polh.verts = new vector3d[polh.num_verticies];
+	polh.verts.resize(num_verticies);
 
 	// woohoo blit the memory in one op :)
-	memcpy(polh.verts, localptr, (sizeof(vector3d) * polh.num_verticies));
-	localptr += (sizeof(vector3d) * polh.num_verticies);
+	memcpy(&polh.verts.front(), localptr, (sizeof(vector3d) * num_verticies));
+	localptr += (sizeof(vector3d) * num_verticies);
 	// End ----------- Poly Verts
 
 	// Start ----------- UV Verts
-	memcpy(&polh.num_uv_verts, localptr, sizeof(int));
+	unsigned int num_uv_verts;
+	memcpy(&num_uv_verts, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	polh.uv_verts = new UV_Vert[polh.num_uv_verts];
+	polh.uv_verts.resize(num_uv_verts);
 
 	// woohoo blit the memory in one op :)
-	memcpy(polh.uv_verts, localptr, (sizeof(UV_Vert) * polh.num_uv_verts));
-	localptr += (sizeof(UV_Vert) * polh.num_uv_verts);
+	memcpy(&polh.uv_verts.front(), localptr, (sizeof(UV_Vert) * num_uv_verts));
+	localptr += (sizeof(UV_Vert) * num_uv_verts);
 	// End ----------- UV Verts
 
-	memcpy(&polh.num_faces_or_holes, localptr, sizeof(int));
+	unsigned int num_faces_or_holes;
+	memcpy(&num_faces_or_holes, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	polh.fhs = new PolH_Face_Hole[polh.num_faces_or_holes];
+	polh.fhs.resize(num_faces_or_holes);
 
-	for (int i = 0; i < polh.num_faces_or_holes; i++)
+	for (unsigned int i = 0; i < num_faces_or_holes; i++)
 	{
 		memcpy(&polh.fhs[i].flags, localptr, 1);
 		localptr++;
 		
-		memcpy(&polh.fhs[i].num_verts, localptr, sizeof(short));
+		unsigned int num_verts;
+		memcpy(&num_verts, localptr, sizeof(short));
 		localptr += sizeof(short);
 
 		if (polh.fhs[i].flags != F_HOLE && polh.fhs[i].flags != (F_HOLE | F_BACKCULL))
@@ -650,10 +659,10 @@ COB_PolH COB::BinParse_Polys(COB_ChunkHeader Head, char *buffer)
 		}
 		else polh.fhs[i].Material_index = -1; //give it a value
 
-		polh.fhs[i].verts = new Face_Vert[polh.fhs[i].num_verts];
+		polh.fhs[i].verts.resize(num_verts);
 
-		memcpy(polh.fhs[i].verts, localptr, sizeof(Face_Vert) * polh.fhs[i].num_verts);
-		localptr += (sizeof(Face_Vert) * polh.fhs[i].num_verts);
+		memcpy(&polh.fhs[i].verts.front(), localptr, sizeof(Face_Vert) * num_verts);
+		localptr += (sizeof(Face_Vert) * num_verts);
 	}
 	return polh;
 }
@@ -691,39 +700,14 @@ COB_Grou COB::BinParse_Grous(COB_ChunkHeader Head, char *buffer)
 
 void COB::Add_Lght(COB_Lght Lght)
 {
-	COB_Lght *temp = new COB_Lght[numlights + 1];
-
-	for (int i = 0; i < numlights; i++)
-		temp[i] = lights[i];
-	temp[numlights] = Lght;
-	numlights++;
-
-	delete[] lights;
-	lights = temp;
+	lights.push_back(Lght);
 }
 
-bool COB::Del_Lght(int index)
+bool COB::Del_Lght(unsigned int index)
 {
-	if (index >= numlights)
+	if (index >= lights.size())
 		return false;
-
-	COB_Lght *temp = new COB_Lght[numlights - 1];
-
-	for (int i = 0; i < numlights; i++)
-	{
-		if (i < index)
-			temp[i] = lights[i];
-		if (i > index)
-			temp[i-1] = lights[i];
-
-	}
-	
-	//delete[] lights[index].name.name.str;
-
-	numlights--;
-	delete[] lights;
-	lights = temp;
-
+	lights.erase(lights.begin() + index);
 	return true;
 }
 
@@ -731,38 +715,14 @@ bool COB::Del_Lght(int index)
 
 void COB::Add_Mat1(COB_Mat1 mat)
 {
-	COB_Mat1 *temp = new COB_Mat1[nummats + 1];
-
-	for (int i = 0; i < nummats; i++)
-		temp[i] = materials[i];
-	temp[nummats] = mat;
-	nummats++;
-
-	delete[] materials;
-	materials = temp;
+	materials.push_back(mat);
 }
 
-bool COB::Del_Mat1(int index)
+bool COB::Del_Mat1(unsigned int index)
 {	
-	if (index >= nummats)
+	if (index >= materials.size())
 		return false;
-
-	COB_Mat1 *temp = new COB_Mat1[nummats - 1];
-
-	for (int i = 0; i < nummats; i++)
-	{
-		if (i < index)
-			temp[i] = materials[i];
-		if (i > index)
-			temp[i-1] = materials[i];
-
-	}
-	//delete[] materials[index].TexMap_Fname.str;
-
-	nummats--;
-	delete[] materials;
-	materials = temp;
-
+	materials.erase(materials.begin() + index);
 	return true;
 }
 
@@ -770,88 +730,29 @@ bool COB::Del_Mat1(int index)
 
 void COB::Add_PolH(COB_PolH pol)
 {
-	COB_PolH *temp = new COB_PolH[numpolys + 1];
-
-	for (int i = 0; i < numpolys; i++)
-		temp[i] = polymodels[i];
-	temp[numpolys] = pol;
-	numpolys++;
-
-	delete[] polymodels;
-	polymodels = temp;
+	polymodels.push_back(pol);
 }
 
-bool COB::Del_PolH(int index)
+bool COB::Del_PolH(unsigned int index)
 {
-	if (index >= numpolys)
+	if (index >= polymodels.size())
 		return false;
-
-	COB_PolH *temp = new COB_PolH[numpolys - 1];
-	int i;
-	for (i = 0; i < numpolys; i++)
-	{
-		if (i < index)
-			temp[i] = polymodels[i];
-		if (i > index)
-			temp[i-1] = polymodels[i];
-
-	}
-	
-	//found out where the error was coming from.. accidentally blitting the uv_vert data intos verts
-	delete[] polymodels[index].verts; //- WARNING - MEMORY LEAK - WARNING - with delete[] call was causing assertion failures
-	delete[] polymodels[index].uv_verts;
-	//delete[] polymodels[index].name.name.str;
-
-	for (i = 0; i < polymodels[index].num_faces_or_holes; i++)
-	{
-		delete[] polymodels[index].fhs[i].verts;	
-	}
-	delete[] polymodels[index].fhs;
-
-	numpolys--;
-	delete[] polymodels;
-	polymodels = temp;
-
+	polymodels.erase(polymodels.begin() + index);
 	return true;
 }
 //****************************************************************************************************************
 
 void COB::Add_Grou(COB_Grou gru)
 {
-	COB_Grou *temp = new COB_Grou[numgrous + 1];
-
-	for (int i = 0; i < numgrous; i++)
-		temp[i] = groups[i];
-	temp[numgrous] = gru;
-	numgrous++;
-
-	delete[] groups;
-	groups = temp;
+	groups.push_back(gru);
 }
 
 
-bool COB::Del_Grou(int index)
+bool COB::Del_Grou(unsigned int index)
 {
-	if (index >= numgrous)
+	if (index >= groups.size())
 		return false;
-
-	COB_Grou *temp = new COB_Grou[numgrous - 1];
-
-	for (int i = 0; i < numgrous; i++)
-	{
-		if (i < index)
-			temp[i] = groups[i];
-		if (i > index)
-			temp[i-1] = groups[i];
-
-	}
-		
-	//delete[] groups[index].name.name.str;
-
-	numgrous--;
-	delete[] groups;
-	groups = temp;
-
+	groups.erase(groups.begin() + index);
 	return true;
 }
 
@@ -930,9 +831,9 @@ std::string COBStringtoAPS(std::string cstr)
 
 std::ostream& COB::WriteStats(std::ostream &os)
 {
-	int i;
+	unsigned int i;
 
-	for (i = 0; i < nummats; i++)
+	for (i = 0; i < materials.size(); i++)
 	{
 		os << "@Texture[" << i << "]: " << COBStringtoAPS(materials[i].TexMap_Fname) << std::endl;
 		os << "     +ParentID: " << materials[i].head.ParentID << ", ChunkID: " << materials[i].head.ChunkID << std::endl;
@@ -940,20 +841,20 @@ std::ostream& COB::WriteStats(std::ostream &os)
 
 	}
 
-	for (i = 0; i < numlights; i++)
+	for (i = 0; i < lights.size(); i++)
 	{
 		os << "@Light[" << i << "]: " << COBStringtoAPS(lights[i].name.name) << std::endl;
 		os << "     +ParentID: " << lights[i].head.ParentID << ", ChunkID: " << lights[i].head.ChunkID << std::endl;
 	}
 
-	for (i = 0; i < numpolys; i++)
+	for (i = 0; i < polymodels.size(); i++)
 	{
-		os << "@PolyModel[" << i << "]: " << COBStringtoAPS(polymodels[i].name.name) << " #Faces: " << polymodels[i].num_faces_or_holes << std::endl;
+		os << "@PolyModel[" << i << "]: " << COBStringtoAPS(polymodels[i].name.name) << " #Faces: " << polymodels[i].fhs.size() << std::endl;
 		os << "     +ParentID: " << polymodels[i].head.ParentID << ", ChunkID: " << polymodels[i].head.ChunkID << std::endl;
-		os << "     +NumVerticies: " << polymodels[i].num_verticies << std::endl;
-		os << "     +NumUVVerts: " << polymodels[i].num_uv_verts << std::endl;
+		os << "     +NumVerticies: " << polymodels[i].verts.size() << std::endl;
+		os << "     +NumUVVerts: " << polymodels[i].uv_verts.size() << std::endl;
 
-		for (int j = 0; j < polymodels[i].num_faces_or_holes; j++)
+		for (unsigned int j = 0; j < polymodels[i].fhs.size(); j++)
 		{
 			if (polymodels[i].fhs[j].flags != F_HOLE && polymodels[i].fhs[j].flags != (F_HOLE | F_BACKCULL))
 			{
@@ -963,7 +864,7 @@ std::ostream& COB::WriteStats(std::ostream &os)
 		}
 	}
 
-	for (i = 0; i < numgrous; i++)
+	for (i = 0; i < groups.size(); i++)
 	{
 		os << "@Group[" << i << "]: " << COBStringtoAPS(groups[i].name.name) << std::endl;
 		os << "     +ParentID: " << groups[i].head.ParentID << ", ChunkID: " << groups[i].head.ChunkID << std::endl;
@@ -987,53 +888,17 @@ COB::~COB()
 
 void COB::Reset()
 {
-	int i;
-
-	for (i = 0; i < this->nummats; i++)
-	{
-		//delete[] this->materials[i].TexMap_Fname.str;
-	}
-	delete[] this->materials;
-	this->materials = NULL;
-	this->nummats = 0;
-
-	for (i = 0; i < this->numgrous; i++)
-	{
-		//delete[] this->groups[i].name.name.str;
-
-	}
-	delete[] this->groups;
-	this->groups = NULL;
-	this->numgrous = 0;
-
-	this->numlights = 0;
-	delete[] this->lights;
-	this->lights = NULL;
-
-
-	for (i = 0; i < this->numpolys; i++)
-	{
-		delete[] this->polymodels[i].verts;
-		delete[] this->polymodels[i].uv_verts;
-
-		for (int j = 0; j < this->polymodels[i].num_faces_or_holes; j++)
-		{
-			delete[] this->polymodels[i].fhs[j].verts;
-		}
-		delete[] this->polymodels[i].fhs;
-	}
-	delete[] this->polymodels;
-	this->polymodels = NULL;
-	this->numpolys = 0;
-
-
+	materials.clear();
+	groups.clear();
+	lights.clear();
+	polymodels.clear();
 }
 
 //****************************************************************************************************************
 int COB::FindParentGrou(int ParentID)
 {
 
-	for (int i = 0; i < numgrous; i++)
+	for (unsigned int i = 0; i < groups.size(); i++)
 	{
 		if (ParentID == groups[i].head.ChunkID)
 			return i;
@@ -1093,7 +958,7 @@ int COB::FindMatchingMatl(int ParentID, int MatNum)
 // finds the material index with the correct matnum and parent ID in the
 // COB::materials array
 {
-	for (int i = 0; i < nummats; i++)
+	for (unsigned int i = 0; i < materials.size(); i++)
 	{
 		if (materials[i].head.ParentID == ParentID && materials[i].Mat_num == MatNum)
 			return i; // found it :)

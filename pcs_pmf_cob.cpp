@@ -303,14 +303,14 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 		for (i = 0; i < temp_index_list.size(); i++)
 		{
 			pmtemp = &InputFile.GetPolymodel(temp_index_list[i]);
-			for (j = 0; j < (unsigned)pmtemp->num_faces_or_holes; j++)
+			for (j = 0; j < (unsigned)pmtemp->fhs.size(); j++)
 			{
 				/*
 				if(pmtemp->fhs[j].num_verts > 3)
 					return -2; // error.. shield face with more than 3 corners
 					*/
 				//I think we can handel this better
-				for(int v = 0; v<pmtemp->fhs[j].num_verts-2; v++ ){
+				for(unsigned int v = 0; v<pmtemp->fhs[j].verts.size()-2; v++ ){
 					//triangulate the source into the dest
 
 					temp_vertex = pmtemp->verts[pmtemp->fhs[j].verts[0].local_vert];
@@ -366,10 +366,10 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 				
 				insig.lod = lodnum;
 				offset = insig.faces.size();
-				insig.faces.resize(offset + pmtemp->num_faces_or_holes);
-				for (k = 0; k < (unsigned)pmtemp->num_faces_or_holes; k++)
+				insig.faces.resize(offset + pmtemp->fhs.size());
+				for (k = 0; k < (unsigned)pmtemp->fhs.size(); k++)
 				{
-					if(pmtemp->fhs[k].num_verts > 3)
+					if(pmtemp->fhs[k].verts.size() > 3)
 						return -3; // error.. insig face with more than 3 corners
 
 					MatNum = InputFile.FindMatchingMatl(pmtemp->head.ChunkID, pmtemp->fhs[j].Material_index);
@@ -450,7 +450,6 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 
 		sprintf(CStringTemp, "Processing Objects (%d/%d) [Typing]", i, InputFile.Group_Count());
 		progress->incrementWithMessage(CStringTemp);
-		SleepFunc(10); // 10 ms sleep for drawing
 
 		temp_group = &InputFile.GetGroup(i);
 		tempobj.parent_sobj = InputFile.FindParentGrou(temp_group->head.ParentID);
@@ -546,7 +545,6 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 		
 		sprintf(CStringTemp, "Processing Objects (%d/%d) [Polygons]", i, InputFile.Group_Count());
 		progress->incrementWithMessage(CStringTemp);
-		SleepFunc(10); // 10 ms sleep for drawing
 
 		temp_index_list = GroupPolymodels(InputFile, i); 
 		if (temp_index_list.size() < 1)
@@ -555,8 +553,8 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 		{
 				pmtemp = &InputFile.GetPolymodel(temp_index_list[j]);
 				offset = tempobj.polygons.size();
-				tempobj.polygons.resize(offset + pmtemp->num_faces_or_holes);
-				for (k = 0; k < (unsigned)pmtemp->num_faces_or_holes; k++)
+				tempobj.polygons.resize(offset + pmtemp->fhs.size());
+				for (k = 0; k < (unsigned)pmtemp->fhs.size(); k++)
 				{
 				//	if (pmtemp->fhs[k].num_verts > 20)
 				//		return -4; // error, verts > 20
@@ -573,7 +571,7 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 						else
 							tempobj.polygons[offset+k].texture_id = -1;
 
-						tempobj.polygons[offset+k].verts.resize(pmtemp->fhs[k].num_verts);
+						tempobj.polygons[offset+k].verts.resize(pmtemp->fhs[k].verts.size());
 			
 
 						for (l = 0; l < tempobj.polygons[offset+k].verts.size(); l++)
@@ -641,7 +639,6 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 		int csize = 0;
 		sprintf(CStringTemp, "Processing Objects (%d/%d) [Smoothing/Bounding]", i, InputFile.Group_Count());
 		progress->incrementWithMessage(CStringTemp);
-		SleepFunc(10); // 10 ms sleep for drawing
 
 		for (j = 0; j < tempobj.polygons.size(); j++)
 		{
@@ -691,7 +688,6 @@ int PCS_Model::LoadFromCOB(std::string filename, AsyncProgress* progress, float 
 
 		sprintf(CStringTemp, "Processing Objects (%d/%d) [Adding]", i, InputFile.Group_Count());
 		progress->incrementWithMessage(CStringTemp);
-		SleepFunc(10); // 10 ms sleep for drawing
 		// add object
 		this->AddSOBJ(&tempobj);
 
@@ -1209,7 +1205,6 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 
 	std::vector<int> object_grou_chunkids;
 	std::vector<int> object_pol_chunkids;
-	std::vector<UV_Vert> UV_verts;
 	std::vector<COB_Mat1> materials;
 
 	ostringstream outstring;
@@ -1284,25 +1279,21 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 		}
 		points.resize(l);
 
-		pol_temp.num_verticies = l;
-		pol_temp.verts = new vector3d[l];
+		pol_temp.verts.resize(l);
 	
-		for (i = 0; i < (unsigned)pol_temp.num_verticies; i++)
+		for (i = 0; i < pol_temp.verts.size(); i++)
 		{
 			pol_temp.verts[i] = StandardToCOB(points[i]);
 			pol_temp.verts[i] = pol_temp.verts[i] / scaler;
 		}
 
-		pol_temp.num_faces_or_holes = this->shield_mesh.size();
-		pol_temp.fhs = new PolH_Face_Hole[pol_temp.num_faces_or_holes];
+		pol_temp.fhs.resize(this->shield_mesh.size());
 
-		for (i = 0; i < (unsigned)pol_temp.num_faces_or_holes; i++)
+		for (i = 0; i < pol_temp.fhs.size(); i++)
 		{
 			pol_temp.fhs[i].flags = 0;
-			pol_temp.fhs[i].num_verts = 3;
 			pol_temp.fhs[i].Material_index = 0;
-			pol_temp.fhs[i].verts = new Face_Vert[3];
-			pol_temp.num_uv_verts = 1;
+			pol_temp.fhs[i].verts.resize(3);
 
 			for (j = 0; j < 3; j++)
 			{
@@ -1310,7 +1301,7 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 				pol_temp.fhs[i].verts[j].uv_vert = 0;
 			}
 
-			pol_temp.uv_verts = new UV_Vert[1];
+			pol_temp.uv_verts.resize(1);
 			pol_temp.uv_verts[0].u = pol_temp.uv_verts[0].v = 0.0f;
 		}
 
@@ -1368,29 +1359,25 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 		}
 		points.resize(m);
 
-		pol_temp.num_verticies = m;
-		pol_temp.verts = new vector3d[m];
+		pol_temp.verts.resize(m);
 	
-		for (j = 0; j < (unsigned)pol_temp.num_verticies; j++)
+		for (j = 0; j < pol_temp.verts.size(); j++)
 		{
 			pol_temp.verts[j] = StandardToCOB(points[j]);
 			pol_temp.verts[j] = pol_temp.verts[j] / scaler;
 		}
 
-		pol_temp.num_faces_or_holes = this->insignia[i].faces.size();
-		pol_temp.fhs = new PolH_Face_Hole[pol_temp.num_faces_or_holes];
+		pol_temp.fhs.resize(this->insignia[i].faces.size());
 
 		// this shortcut only works for meshes we KNOW are triangulated
-		pol_temp.num_uv_verts = pol_temp.num_faces_or_holes * 3;
-		pol_temp.uv_verts = new UV_Vert[pol_temp.num_uv_verts];
-		//UV_verts.resize(pol_temp.num_faces_or_holes * 3); // max bound
+		pol_temp.uv_verts.resize(pol_temp.fhs.size() * 3);
+		//UV_verts.resize(pol_temp.num_fhs * 3); // max bound
 
-		for (j = 0; j < (unsigned)pol_temp.num_faces_or_holes; j++)
+		for (j = 0; j < pol_temp.fhs.size(); j++)
 		{
 			pol_temp.fhs[j].flags = 0;
-			pol_temp.fhs[j].num_verts = 3;
 			pol_temp.fhs[j].Material_index = 0;
-			pol_temp.fhs[j].verts = new Face_Vert[3];
+			pol_temp.fhs[j].verts.resize(3);
 			
 
 			for (k = 0; k < 3; k++)
@@ -1476,40 +1463,34 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 		points.resize(m);
 
 		// make COB polygon chunk
-		UV_verts.resize(0);
+		pol_temp.uv_verts.resize(0);
 		materials.resize(0);
 
-		pol_temp.num_verticies = m;
-		pol_temp.verts = new vector3d[m];
+		pol_temp.verts.resize(m);
 	
-		for (j = 0; j < (unsigned)pol_temp.num_verticies; j++)
+		for (j = 0; j < (unsigned)pol_temp.verts.size(); j++)
 		{
 			pol_temp.verts[j] = StandardToCOB(points[j]+this->get_model_offset(i));
 			pol_temp.verts[j] = pol_temp.verts[j] / scaler;
 		}
 
-		pol_temp.num_faces_or_holes = this->subobjects[i].polygons.size();
-		pol_temp.fhs = new PolH_Face_Hole[pol_temp.num_faces_or_holes];
+		pol_temp.fhs.resize(this->subobjects[i].polygons.size());
 
-		pol_temp.num_uv_verts = 0;
-		UV_verts.resize(points.size()); // a fairly decent guess
-		for (j = 0; j < (unsigned)pol_temp.num_faces_or_holes; j++)
+		pol_temp.uv_verts.reserve(points.size()); // a fairly decent guess
+		for (j = 0; j < pol_temp.fhs.size(); j++)
 		{
 			pol_temp.fhs[j].flags = 0;
-			pol_temp.fhs[j].num_verts = this->subobjects[i].polygons[j].verts.size();
-			pol_temp.fhs[j].verts = new Face_Vert[pol_temp.fhs[j].num_verts];
+			pol_temp.fhs[j].verts.resize(this->subobjects[i].polygons[j].verts.size());
 			
 
-			for (k = 0; k < (unsigned)pol_temp.fhs[j].num_verts; k++)
+			for (k = 0; k < pol_temp.fhs[j].verts.size(); k++)
 			{
 				pol_temp.fhs[j].verts[k].local_vert = FindInList(points, this->subobjects[i].polygons[j].verts[k].point);
-				pol_temp.fhs[j].verts[k].uv_vert = pol_temp.num_uv_verts;
+				pol_temp.fhs[j].verts[k].uv_vert = pol_temp.uv_verts.size();
 
-				if ((unsigned)pol_temp.num_uv_verts >= UV_verts.size())
-					UV_verts.resize(UV_verts.size()*2);
-				UV_verts[pol_temp.num_uv_verts].u = this->subobjects[i].polygons[j].verts[k].u;
-				UV_verts[pol_temp.num_uv_verts].v = 1-this->subobjects[i].polygons[j].verts[k].v;
-				pol_temp.num_uv_verts++;
+				pol_temp.uv_verts.resize(pol_temp.uv_verts.size()+1);
+				pol_temp.uv_verts[pol_temp.uv_verts.size() - 1].u = this->subobjects[i].polygons[j].verts[k].u;
+				pol_temp.uv_verts[pol_temp.uv_verts.size() - 1].v = 1-this->subobjects[i].polygons[j].verts[k].v;
 			}
 
 			// ok.. let's figure out our material index - we need #1 our texname, #2 our facet_angle (all verts in a face should have the same facet_angle
@@ -1524,12 +1505,6 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 					pol_temp.head.ChunkID, ChunkID, this->subobjects[i].polygons[j].verts[0].facet_angle); 
 			}
 		}
-		pol_temp.uv_verts = new UV_Vert[pol_temp.num_uv_verts];
-		for (j = 0; j < (unsigned)pol_temp.num_uv_verts; j++)
-		{
-			pol_temp.uv_verts[j] = UV_verts[j];
-		}
-
 		pol_temp.head.size = pol_temp.GetSize();
 		
 		if (i != (unsigned)this->LOD(0))
