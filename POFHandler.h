@@ -80,8 +80,7 @@ class POF {
 		TXTR textures;
 		HDR2 header;
 
-		OBJ2 *objects;
-		int numobj2;
+		std::vector<OBJ2> objects;
 
 		SPCL specials;
 		GPNT_MPNT gunpoints;
@@ -164,7 +163,6 @@ class POF {
 		bool T_Get_FirePoint			(int mode, int bank, int point, vector3d &pos);
 
 		void ClearAllData();
-		void Destroy();
 
 		GPNT_MPNT* PNT_Alias(int mode); //hehe
 		TGUN_TMIS* T_Alias(int mode); //hehe
@@ -179,7 +177,6 @@ class POF {
 		void Reset() // reset the class to it's initial state [changing files]
 		{
 			version = 2117;
-			Destroy();
 			ClearAllData();
 		}
 
@@ -202,13 +199,13 @@ class POF {
 			{ ClearAllData(); version = 2117; }
 		//POF(COB cob); These two are for later use - reference to a Caligari Object File Handler
 		//POF(3DS 3ds); Reference to a 3D Studio Max file handler
-		~POF() // i almost forgot to do this;
-			{ Destroy(); }
+		virtual ~POF() // i almost forgot to do this;
+			{}
 
 		// Shield collision tree
 		int SLDC_GetSize() { return shield_collision.tree_size; }
-		const char* SLDC_GetTree() { return shield_collision.tree_data; }
-		void SLDC_SetTree(char* sldc_tree, unsigned int sz); // setting this to NULL will empty the tree
+		boost::shared_array<char> SLDC_GetTree() { return shield_collision.tree_data; }
+		void SLDC_SetTree(boost::shared_array<char> sldc_tree, unsigned int sz); // setting this to NULL will empty the tree
 
 		// Texture Functions
 		int TXTR_AddTexture(std::string texname);
@@ -218,7 +215,7 @@ class POF {
 		std::string TXTR_GetTextures(int texture);
 
 		unsigned int TXTR_Count_Textures()
-			{ return textures.num_textures; }
+			{ return textures.tex_filename.size(); }
 
 
 		// Header Functions
@@ -493,7 +490,7 @@ class POF {
 		bool GLOW_Add_GlowPoint			(int group, float radius, vector3d pos, vector3d norm);
 
 		unsigned int GLOW_Count_LightGroups		()
-			{	return hull_lights.num_glows_arrays; }
+			{	return hull_lights.lights.size(); }
 
 		unsigned int GLOW_Count_Glows			(int group);
 

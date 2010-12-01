@@ -164,11 +164,9 @@ struct HDR2
 	vector3d min_bounding;       // min bounding box point, "vector"
     vector3d max_bounding;         // max bounding box point, "vector"
 
-	unsigned int num_detaillevels;        // number of detail levels
-    int *sobj_detaillevels;		// subobject number for detail level I, 0 being highest
+    std::vector<int> sobj_detaillevels;		// subobject number for detail level I, 0 being highest
 								// this is a OBJ2 segment it points to
-	unsigned int num_debris;              // number of debris pieces that model explodes into
-    int *sobj_debris;            // subobject number for debris piece 
+    std::vector<int> sobj_debris;            // subobject number for debris piece 
 								 // this is a OBJ2 segment it points to
 
     float mass;                // see notes below
@@ -177,11 +175,12 @@ struct HDR2
 
 
    
-    int num_cross_sections;     // number of cross sections (used for exploding ship) (*)
-	cross_section *cross_sections; // the depth/radius of each cross section 
+	std::vector<cross_section> cross_sections; // the depth/radius of each cross section 
 
-    unsigned int num_lights;             // number of precalculated muzzle flash lights
-	muzzle_light *lights;		// the lights
+	std::vector<muzzle_light> lights;		// the lights
+	HDR2() : max_radius(0), obj_flags(0), num_subobjects(0), mass(0) {
+		memset(moment_inertia, 0, sizeof(moment_inertia));
+	}
 };
 
 /*Notes:
@@ -198,8 +197,7 @@ struct HDR2
 
 struct TXTR
 {
-  unsigned int num_textures;
-  std::string *tex_filename;    // texture filename <string> type.. has int/char[]
+  std::vector<std::string> tex_filename;    // texture filename <string> type.. has int/char[]
 };
 
 //****************************************************************************************************
@@ -207,7 +205,7 @@ struct TXTR
 //Dnet: Contains a block of NULL-terminated strings. Just read chunk size bytes and stuff it into a string
 struct PINF
 {
-	char *strings; //a buffer that will contains sets of null-terminated strings
+	std::vector<char> strings; //a buffer that will contains sets of null-terminated strings
 };
 
 
@@ -217,23 +215,20 @@ struct path_vert
 {
 	vector3d pos;
 	float radius;
-	unsigned int num_turrets;
-	int *sobj_number; //the SOBJ number for each turret
+	std::vector<int> sobj_number; //the SOBJ number for each turret
 };
 
 struct a_path //lame name because PATH is already taken
 {
 	std::string name;
 	std::string parent;
-	unsigned int num_verts;
-	path_vert *verts; //the actual verts;
+	std::vector<path_vert> verts; //the actual verts;
 };
 
 //'PATH' -  Paths for docking and AI ships to follow
 struct PATH
 {
-	unsigned int num_paths;
-	a_path *paths; //the paths
+	std::vector<a_path> paths; //the paths
 };
 
 //****************************************************************************************************
@@ -250,8 +245,7 @@ struct special_point
 //'SPCL' - Data for special points
 struct SPCL
 {
-	unsigned int num_special_points;
-	special_point *special_points; //the points
+	std::vector<special_point> special_points; //the points
 
 };
 
@@ -268,10 +262,8 @@ struct shield_face
 //'SHLD' - Data for the shield mesh
 struct SHLD
 {
-    unsigned int num_vertices;
-	vector3d *vertecies; // the vertex locations
-	unsigned int num_faces;
-	shield_face *shield_faces;
+	std::vector<vector3d> vertecies; // the vertex locations
+	std::vector<shield_face> shield_faces;
 };
 
 
@@ -306,7 +298,7 @@ struct SLDC_node_leaf // sz = 33 + num_polygons*4
 struct SLDC
 {
       unsigned int tree_size;
-      char *tree_data; // = new char[tree_size]
+	  boost::shared_array<char> tree_data; // = new char[tree_size]
 
 	  SLDC() : tree_size(0), tree_data(NULL) {}
 };
@@ -323,8 +315,7 @@ struct  eye_pos
 // DNet: Note the space in front of EYE. -it is in the signature for a chunk
 struct EYE
 {
-	unsigned int num_eye_positions;
-	eye_pos *eye_positions;
+	std::vector<eye_pos> eye_positions;
 };
 
 //****************************************************************************************************
@@ -337,16 +328,14 @@ struct gun
 
 struct slot
 {
-	unsigned int num_guns;
-	gun *guns;                   
+	std::vector<gun> guns;                   
   
 };
 
 //'GPNT' and 'MPNT' - Gun and Missile firing points
 struct GPNT_MPNT
 {
-	unsigned int num_slots;
-	slot *slots;
+	std::vector<slot> slots;
 };
 
 /*DNet
@@ -367,16 +356,14 @@ struct Turret_bank
     int sobj_par_phys;     // physical parent subobject (the subobject to which the turret rotates) (*)
 
     vector3d turret_normal;
-	unsigned int num_firing_points;
-	vector3d *position; // firing positions
+	std::vector<vector3d> position; // firing positions
 
 
 };
 
 // 'TGUN' and 'TMIS' - Turret Gun and Turret Missile firing points.
 struct TGUN_TMIS {
-	unsigned int num_banks;
-	Turret_bank *banks;
+	std::vector<Turret_bank> banks;
 };
 
 /* DNet
@@ -393,19 +380,16 @@ struct dock_point
 {
 	std::string properties; // notes below
 
-	unsigned int num_spline_paths;
-	int *path_number;
+	std::vector<int> path_number;
 
-	unsigned int num_points;
-	gun *points;
+	std::vector<gun> points;
 };
 
 
 //'DOCK' - Data for docking points
 struct DOCK
 {
-	unsigned int num_docks;
-	dock_point *points;
+	std::vector<dock_point> points;
 };
 
 //DNet: Note: Properties if $name= found, then this is name. If name is cargo then this is a cargo bay. 
@@ -421,21 +405,19 @@ struct glow_point
 
 struct thruster
 {
-	unsigned int num_glows; // number of glow points for each thrust
                       
 	//WARNING: version >= 2117 // FreeSpace 2 change
 	// FreeSpace 2 also has sone 2116 pof so i have to code this
 	std::string properties;
 	// End version >= 2117
                       
-	glow_point *points;
+	std::vector<glow_point> points;
 };
 
 //'FUEL' - Data for engine thruster glows
 struct FUEL
 {
-	unsigned int num_thrusters;
-	thruster *thrusters;
+	std::vector<thruster> thrusters;
 };
 
 //****************************************************************************************************
@@ -497,21 +479,18 @@ struct insig
 {
 
 	int detail_level; //ship detail level
-	unsigned int num_faces;
-	unsigned int num_verticies;
-	vector3d *vertex_pos; // the verticy array
+	std::vector<vector3d> vertex_pos; // the verticy array
 
 	vector3d offset; //offset of the insignnia in model coords
 
-	insg_face *faces; //data for each face
+	std::vector<insg_face> faces; //data for each face
 };
 
 
 //'INSG' - Squad logo/Insignia data chunk (FreeSpace 2 only)
 struct INSG
 {
-	unsigned int num_insignias;
-	insig *insignias;
+	std::vector<insig> insignias;
 };
 
 
@@ -546,16 +525,14 @@ struct HullLights
 	int obj_parent;  
 	int LOD; 
 	int type; 
-	unsigned int num_Lights; 
 	std::string properties;
-	HullLightPoint* lights;
-	HullLights() : disp_time(0), on_time(0), off_time(0), obj_parent(0), LOD(0), type(0), num_Lights(0), lights(0) {}
+	std::vector<HullLightPoint> lights;
+	HullLights() : disp_time(0), on_time(0), off_time(0), obj_parent(0), LOD(0), type(0), lights(0) {}
 }; 
 
 struct GLOW 
 { 
-	unsigned int num_glows_arrays; 
-	HullLights *lights; 
+	std::vector<HullLights> lights; 
 }; 
 
 #endif //_POF_TYPES_H_

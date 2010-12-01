@@ -567,11 +567,11 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 		// pack the tree
 		int sldc_size = CalcSLDCTreeSize(shld_root);
-		boost::scoped_array<char> sldc(new char[sldc_size]);
+		boost::shared_array<char> sldc(new char[sldc_size]);
 		
 		PackTreeInSLDC(shld_root, 0, sldc.get(), sldc_size);
 
-		poffile.SLDC_SetTree(sldc.get(), sldc_size); // POFHandler will make it's own copy of the buffer
+		poffile.SLDC_SetTree(sldc, sldc_size); // POFHandler will make it's own copy of the buffer
 	}
 
 	// --------- insignia --------- 
