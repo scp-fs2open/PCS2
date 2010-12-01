@@ -1113,7 +1113,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		outfile.write(temp_buf, sizeof(int));
 
 		// write num_textures
-		write_to_buffer(temp_buf, textures.tex_filename.size());
+		write_to_buffer(temp_buf, (int)textures.tex_filename.size());
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < textures.tex_filename.size(); i++)
@@ -1164,7 +1164,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 
 
 
-	write_to_buffer(temp_buf, header.sobj_detaillevels.size()); 
+	write_to_buffer(temp_buf, (int)header.sobj_detaillevels.size()); 
 	outfile.write(temp_buf, sizeof(int));
 
 	// crap the sobj_detaillevels array out
@@ -1204,7 +1204,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 
 	//+-+-+-+-+-+-+-+-
 
-	write_to_buffer(temp_buf, header.cross_sections.size()); 
+	write_to_buffer(temp_buf, (int)header.cross_sections.size()); 
 	outfile.write(temp_buf, sizeof(int));
 
 	large_buf.reset(new char[sizeof(cross_section)]);
@@ -1219,7 +1219,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//+-+-+-+-+-+-+-+-
 
 	
-	write_to_buffer(temp_buf, header.lights.size()); 
+	write_to_buffer(temp_buf, (int)header.lights.size()); 
 	outfile.write(temp_buf, sizeof(int));
 
 	large_buf.reset(new char[sizeof(muzzle_light)]);
@@ -1308,7 +1308,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
 		
-		write_to_buffer(temp_buf, specials.special_points.size()); 
+		write_to_buffer(temp_buf, (int)specials.special_points.size()); 
 		outfile.write(temp_buf, sizeof(int));
 	
 		for (i = 0; i < SPCL_Count(); i++)
@@ -1353,12 +1353,12 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
 
-		write_to_buffer(temp_buf, PNT_Alias(0)->slots.size()); 
+		write_to_buffer(temp_buf, (int)PNT_Alias(0)->slots.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < GPNT_SlotCount(); i++)
 		{
-			write_to_buffer(temp_buf, PNT_Alias(0)->slots[i].guns.size()); 
+			write_to_buffer(temp_buf, (int)PNT_Alias(0)->slots[i].guns.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < PNT_Alias(0)->slots[i].guns.size(); j++)
@@ -1394,12 +1394,12 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
 
-		write_to_buffer(temp_buf, PNT_Alias(1)->slots.size()); 
+		write_to_buffer(temp_buf, (int)PNT_Alias(1)->slots.size()); 
 		outfile.write(temp_buf, sizeof(int));		
 
 		for (i = 0; i < MPNT_SlotCount(); i++)
 		{
-			write_to_buffer(temp_buf, PNT_Alias(1)->slots[i].guns.size()); 
+			write_to_buffer(temp_buf, (int)PNT_Alias(1)->slots[i].guns.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < PNT_Alias(1)->slots[i].guns.size(); j++)
@@ -1433,7 +1433,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
 
-		write_to_buffer(temp_buf, T_Alias(0)->banks.size()); 
+		write_to_buffer(temp_buf, (int)T_Alias(0)->banks.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < T_Alias(0)->banks.size(); i++)
@@ -1448,7 +1448,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			write_to_buffer(vector_buf, T_Alias(0)->banks[i].turret_normal); 
 			outfile.write(vector_buf, sizeof(vector3d));
 
-			write_to_buffer(temp_buf, T_Alias(0)->banks[i].position.size()); 
+			write_to_buffer(temp_buf, (int)T_Alias(0)->banks[i].position.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < T_Alias(0)->banks[i].position.size(); j++)
@@ -1478,7 +1478,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
 
-		write_to_buffer(temp_buf, T_Alias(1)->banks.size()); 
+		write_to_buffer(temp_buf, (int)T_Alias(1)->banks.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < T_Alias(1)->banks.size(); i++)
@@ -1493,7 +1493,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			write_to_buffer(vector_buf, T_Alias(1)->banks[i].turret_normal); 
 			outfile.write(vector_buf, sizeof(vector3d));
 
-			write_to_buffer(temp_buf, T_Alias(1)->banks[i].position.size()); 
+			write_to_buffer(temp_buf, (int)T_Alias(1)->banks[i].position.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < T_Alias(1)->banks[i].position.size(); j++)
@@ -1526,7 +1526,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, size); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, docking.points.size()); 
+		write_to_buffer(temp_buf, (int)docking.points.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < docking.points.size(); i++)
@@ -1536,7 +1536,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			outfile.write(temp_buf, sizeof(int));
 			outfile.write(docking.points[i].properties.c_str(), docking.points[i].properties.length());
 
-			write_to_buffer(temp_buf, docking.points[i].path_number.size()); 
+			write_to_buffer(temp_buf, (int)docking.points[i].path_number.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < docking.points[i].path_number.size(); j++)
@@ -1545,7 +1545,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 				outfile.write(temp_buf, sizeof(int));
 			}
 
-			write_to_buffer(temp_buf, docking.points[i].points.size()); 
+			write_to_buffer(temp_buf, (int)docking.points[i].points.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (k = 0; k < docking.points[i].points.size(); k++)
@@ -1578,12 +1578,12 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, size); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, thrusters.thrusters.size()); 
+		write_to_buffer(temp_buf, (int)thrusters.thrusters.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < FUEL_Count_Thrusters(); i++)
 		{
-			write_to_buffer(temp_buf, thrusters.thrusters[i].points.size()); 
+			write_to_buffer(temp_buf, (int)thrusters.thrusters[i].points.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			itemp = thrusters.thrusters[i].properties.length();
@@ -1615,7 +1615,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, size); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, shields.vertecies.size()); 
+		write_to_buffer(temp_buf, (int)shields.vertecies.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < shields.vertecies.size(); i++)
@@ -1624,7 +1624,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			outfile.write(vector_buf, sizeof(vector3d));
 		}
 
-		write_to_buffer(temp_buf, shields.shield_faces.size()); 
+		write_to_buffer(temp_buf, (int)shields.shield_faces.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 
@@ -1646,7 +1646,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, size); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, eyes.eye_positions.size()); 
+		write_to_buffer(temp_buf, (int)eyes.eye_positions.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < eyes.eye_positions.size(); i++)
@@ -1689,7 +1689,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, size); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, insignia.insignias.size()); 
+		write_to_buffer(temp_buf, (int)insignia.insignias.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
 		for (i = 0; i < insignia.insignias.size(); i++)
@@ -1697,10 +1697,10 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			write_to_buffer(temp_buf, insignia.insignias[i].detail_level); 
 			outfile.write(temp_buf, sizeof(int));
 
-			write_to_buffer(temp_buf, insignia.insignias[i].faces.size()); 
+			write_to_buffer(temp_buf, (int)insignia.insignias[i].faces.size()); 
 			outfile.write(temp_buf, sizeof(int));
 	
-			write_to_buffer(temp_buf, insignia.insignias[i].vertex_pos.size()); 
+			write_to_buffer(temp_buf, (int)insignia.insignias[i].vertex_pos.size()); 
 			outfile.write(temp_buf, sizeof(int));
 			
 			for (j = 0; j < insignia.insignias[i].vertex_pos.size(); j++)
@@ -1754,7 +1754,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		outfile.write(temp_buf, sizeof(int));
 		outfile.flush();
 
-		write_to_buffer(temp_buf, paths.paths.size()); 
+		write_to_buffer(temp_buf, (int)paths.paths.size()); 
 		outfile.write(temp_buf, sizeof(int));
 		outfile.flush();
 
@@ -1776,7 +1776,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			outfile.write(paths.paths[i].parent.c_str(), paths.paths[i].parent.length());
 			outfile.flush();
 
-			write_to_buffer(temp_buf, paths.paths[i].verts.size()); 
+			write_to_buffer(temp_buf, (int)paths.paths[i].verts.size()); 
 			outfile.write(temp_buf, sizeof(int));
 
 			for (j = 0; j < paths.paths[i].verts.size(); j++)
@@ -1787,7 +1787,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 				write_to_buffer(temp_buf, paths.paths[i].verts[j].radius); 
 				outfile.write(temp_buf, sizeof(float));		
 			
-				write_to_buffer(temp_buf, paths.paths[i].verts[j].sobj_number.size()); 
+				write_to_buffer(temp_buf, (int)paths.paths[i].verts[j].sobj_number.size()); 
 				outfile.write(temp_buf, sizeof(int));		
 
 				for (k = 0; k < paths.paths[i].verts[j].sobj_number.size(); k++)
@@ -1822,7 +1822,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 
 		// write data
 		
-		write_to_buffer(temp_buf, hull_lights.lights.size());
+		write_to_buffer(temp_buf, (int)hull_lights.lights.size());
 		outfile.write(temp_buf, sizeof(int));
 		outfile.flush();
 
@@ -1853,7 +1853,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			outfile.write(temp_buf, sizeof(int));
 			outfile.flush();
 			
-			write_to_buffer(temp_buf, hull_lights.lights[i].lights.size());
+			write_to_buffer(temp_buf, (int)hull_lights.lights[i].lights.size());
 			outfile.write(temp_buf, sizeof(int));
 			outfile.flush();
 
