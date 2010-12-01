@@ -54,6 +54,7 @@
 #include <string>
 #include "FileList.h"
 #include <memory.h>
+#include <boost/scoped_array.hpp>
 
 
 struct Read_VPHeader
@@ -122,7 +123,7 @@ class VolitionPackfileReader
 		size_t NumFiles()
 			{ return Files.size(); }
 
-		int LoadFile(int fileno, char* &membuffer); // reference to a pointer - Data is ALLOCED AT READ
+		int LoadFile(int fileno, boost::scoped_array<char> &membuffer); // reference to a pointer - Data is ALLOCED AT READ
 		
 		bool OpenFile(int fileno, std::ifstream &infile);
 

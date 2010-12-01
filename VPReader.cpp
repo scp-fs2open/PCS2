@@ -137,22 +137,22 @@ int VolitionPackfileReader::FindFile(std::string filename)
 
 //***********************************************************************************************************************
 
-int VolitionPackfileReader::LoadFile(int fileno, char* &membuffer)
+int VolitionPackfileReader::LoadFile(int fileno, boost::scoped_array<char> &membuffer)
 {
 	std::ifstream readfile(lfname.c_str(), std::ios::binary);
 
 	if (!readfile)
 		return -2; //cannot open file
 
-	membuffer = NULL;
+	membuffer.reset(NULL);
 	if (fileno < 0 || fileno > HeaderData.direntries)
 		return -1; // bad index;
 
-	membuffer = new char[Files[fileno].size];
+	membuffer.reset(new char[Files[fileno].size]);
 	readfile.seekg(0, std::ios::beg);
 	readfile.seekg(Files[fileno].offset, std::ios::beg);
 
-	readfile.read(membuffer, Files[fileno].size);
+	readfile.read(membuffer.get(), Files[fileno].size);
 
 	readfile.close();
 	return Files[fileno].size;
@@ -190,14 +190,12 @@ bool VolitionPackfileReader::ReadFromVP(std::string vp, std::string filename, st
 	int filenum = VPR.FindFile(filename);
 	if (filenum != -1)
     {
-	    char *membuffer;
+		boost::scoped_array<char> membuffer;
 		VPR.LoadFile(filenum, membuffer); // loadfile allocates the required size of memory
       
 		ofstream outfile(destination.c_str(), ios::out | ios::binary);
-	    outfile.write(membuffer, VPR.FileSize(filenum));
+	    outfile.write(membuffer.get(), VPR.FileSize(filenum));
 	    outfile.close();
-
-		delete[] membuffer;
 	    return true;
     }
 	return false;

@@ -436,7 +436,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 	size_t curvp;
 
 	size_t size;
-	char *buffer = NULL;
+	boost::scoped_array<char> buffer;
 
 #if defined(_DEBUG) && defined(_ENABLE_TEXTUREPATH_DEBUG_)
 	texture_log << "-------- Searching for texture: " << texname << " --------" << endl;
@@ -499,7 +499,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 		{
 			filenum = FileList::new_search;
 			img_type = IL_TYPE_UNKNOWN;
-			buffer = NULL;
+			buffer.reset(NULL);
 			fname = texname;
 			curvp = 0; // curvp is used for resuming search
 
@@ -528,11 +528,10 @@ GLuint TextureControl::LoadTexture(std::string texname,
 #endif
 				}
 				
-				if (img_type == IL_TYPE_UNKNOWN && buffer)
+				if (img_type == IL_TYPE_UNKNOWN && buffer.get())
 				{
 					rfname = "";
-					delete[] buffer;
-					buffer = NULL;
+					buffer.reset(NULL);
 					fname=texname;
 				}
 
@@ -548,7 +547,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 
 			
 
-			if (load(img_type, buffer, (int)size))
+			if (load(img_type, buffer.get(), (int)size))
 			{
 				iluGetImageInfo(&imginfo);
 #ifdef UNIX
@@ -568,8 +567,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 			}
 			ilDeleteImages(1, &ImageName);
 
-			delete[] buffer; // whew.. in PCS 1.x i wasn't doing this i think... bad bad
-			buffer = NULL;			
+			buffer.reset(NULL);
 		}
 	}
 
@@ -580,7 +578,7 @@ GLuint TextureControl::LoadTexture(std::string texname,
 }
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t &curvp, size_t searchpos)
+size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t &curvp, size_t searchpos)
 {	
 	//FileList vp_list(directory, "*.vp");
 	std::string File;
@@ -612,7 +610,7 @@ size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory,
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-int TextureControl::SearchAVP(std::string &vp, std::string &filename, size_t &size, char* &buffer, std::string &rfname, size_t searchpos)
+int TextureControl::SearchAVP(std::string &vp, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t searchpos)
 {
 	VolitionPackfileReader VPR(vp);
 	int fileno = VPR.FindFileWild(filename + ".*", (int)searchpos);
