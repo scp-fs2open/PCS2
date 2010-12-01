@@ -2159,7 +2159,7 @@ void DAESaver::add_mass() {
 }
 
 void DAESaver::add_moment_of_inertia() {
-	std::vector<float> numbers;
+	std::vector<float> numbers(9, 0);
 	model->GetMOI(numbers);
 	std::stringstream stream;
 	bool calculated = false;
