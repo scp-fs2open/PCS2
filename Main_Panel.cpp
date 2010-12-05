@@ -764,11 +764,11 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 			}
 		}
 
-		control_panel->set_item(path);
-		control_panel->set_data(model);
 		model.set_textures(textures);
 		glcanvas->reload_textures();
 		glcanvas->FreezeRender = false;
+		control_panel->set_item(path);
+		control_panel->set_data(model);
 	}else{
 		control_panel->set_data(import_model);
 		//set the data in the control to the data in the import model
