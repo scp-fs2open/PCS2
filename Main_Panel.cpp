@@ -618,21 +618,56 @@ void main_panel::on_del_sobj(wxCommandEvent &event){
 	on_update_tree(event);
 }
 
+void remap_texture_ids(pcs_sobj& sobj, std::vector<std::string>& textures, const std::vector<std::string>& other_textures, std::map<std::string, int>& texture_map, std::vector<int>& texture_id_map) {
+	for (std::vector<pcs_polygon>::iterator it = sobj.polygons.begin(); it < sobj.polygons.end(); ++it) {
+		if (it->texture_id != -1) {
+			if (texture_id_map[it->texture_id] == -1) {
+				if (texture_map.find(other_textures[it->texture_id]) == texture_map.end()) {
+					texture_map[other_textures[it->texture_id]] = textures.size();
+					textures.push_back(other_textures[it->texture_id]);
+				}
+				texture_id_map[it->texture_id] = texture_map[other_textures[it->texture_id]];
+			}
+			it->texture_id = texture_id_map[it->texture_id];
+		}
+	}
+}
 
-//add all decendents of subobject number imported_sobj in import_model
-//to model with parent_new being imported_sobj's place in model
-void add_child_subobjects(PCS_Model&model, int parent_new, int imported_sobj, PCS_Model&import_model){
-	for(int i = 0; i<import_model.GetSOBJCount(); i++){
-		if(import_model.SOBJ(i).parent_sobj == imported_sobj){
-			import_model.SOBJ(i).parent_sobj = parent_new;
-			//set to the imported object's new position
-			model.AddSOBJ(&import_model.SOBJ(i));
-			add_child_subobjects(model, model.GetSOBJCount()-1, i, import_model);
+void copy_subobjects(PCS_Model& destination, PCS_Model& source, int sobj, int parent, bool children, bool turret, bool path, std::vector<std::string>& textures, const std::vector<std::string>& other_textures, std::map<std::string, int>& texture_map, std::vector<int>& texture_id_map) {
+	remap_texture_ids(source.SOBJ(sobj), textures, other_textures, texture_map, texture_id_map);
+	int dest_id = destination.GetSOBJCount();
+	destination.AddSOBJ(&source.SOBJ(sobj));
+	destination.SOBJ(dest_id).parent_sobj = parent;
+	if (path) {
+		for(int i = 0; i<source.GetPathCount(); i++){
+			if(wxString(source.Path(i).parent.c_str(), wxConvUTF8).Contains(wxString(source.SOBJ(sobj).name.c_str(), wxConvUTF8))){
+				destination.AddPath(&source.Path(i));
+			}
+		}
+	}
+	std::map<int, int> old_children_to_new;
+	if (children) {
+		for (int i = 0; i < source.GetSOBJCount(); i++) {
+			if (source.SOBJ(i).parent_sobj == sobj) {
+				old_children_to_new[i] = destination.GetSOBJCount();
+				copy_subobjects(destination, source, i, dest_id, children, turret, path, textures, other_textures, texture_map, texture_id_map);
+			}
+		}
+	}
+	if (turret) {
+		for(int i = 0; i<source.GetTurretCount(); i++){
+			if(source.Turret(i).sobj_parent == sobj){
+				int dest_turret_id = destination.GetTurretCount();;
+				destination.AddTurret(&source.Turret(i));
+				destination.Turret(dest_turret_id).sobj_parent = dest_id;
 
-			//this is so I can find it in the new model later
-			//after this point I no longer need higherarchy data, 
-			//and I'd rather not add a member to pcs_sobj just for this
-			import_model.SOBJ(i).parent_sobj = model.GetSOBJCount()-1;
+				// Try guessing the right barrels subobject id to use.
+				if (source.Turret(i).sobj_par_phys != source.Turret(i).sobj_parent && old_children_to_new.find(source.Turret(i).sobj_par_phys) != old_children_to_new.end()) {
+					destination.Turret(dest_turret_id).sobj_par_phys = old_children_to_new[source.Turret(i).sobj_par_phys];
+				} else {
+					destination.Turret(dest_turret_id).sobj_par_phys = dest_id;
+				}
+			}
 		}
 	}
 }
@@ -687,16 +722,31 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 
 		//the number we started out with
 		//will be the index of the (first) new subobject
-		int subobj_base_count = path[0] = model.GetSOBJCount();
+		path[0] = model.GetSOBJCount();
 
+		glcanvas->FreezeRender = true;
+		std::map<std::string, int> texture_map;
+		std::vector<std::string> textures = model.get_textures();
+		std::vector<std::string> other_textures = import_model.get_textures();
+		std::vector<int> texture_id_map(other_textures.size(), -1);
+		for (std::vector<std::string>::iterator it = textures.begin(); it < textures.end(); ++it) {
+			texture_map[*it] = (int)(it - textures.begin());
+		}
+		bool turret_import = false;
+		bool path_import = false;
+		//turret/path import
+		if(wxMessageBox(_("Import associated turrets?"), _("Subobject Import"), wxYES_NO) == wxYES)
+		{
+			turret_import = true;
+		}
+
+		//path import
+		if(wxMessageBox(_("Import associated paths?"), _("Subobject Import"), wxYES_NO) == wxYES)
+		{
+			path_import = true;
+		}
 		if(imported_sobj){
 			imported_sobj--;
-			import_model.SOBJ(imported_sobj).parent_sobj = -1;
-			//set the subobject to be wild
-			model.AddSOBJ(&import_model.SOBJ(imported_sobj));
-
-			//import children if we have any
-			//and the user wants to
 			bool child_import = false;
 			for( i = 0; i<import_model.GetSOBJCount(); i++){
 				if(import_model.SOBJ(i).parent_sobj == imported_sobj){
@@ -705,54 +755,20 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 					break;
 				}
 			}
-			if(child_import){
-				add_child_subobjects(model, subobj_base_count, imported_sobj, import_model);
-			}
-
-			bool path_import = false;
-			//turret/path import
-			if(wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$fov=")) && 
-				wxMessageBox(_("The subobject you have imported seems like it might be a turret, \nwould you like to import the pertenent turret and path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES)
-			{
-				path_import = true;
-				//turrets first, then paths
-				for( i = 0; i<import_model.GetTurretCount(); i++){
-					if(import_model.Turret(i).sobj_parent == imported_sobj){
-						model.AddTurret(&import_model.Turret(i));
-						model.Turret(model.GetTurretCount()-1).sobj_parent = subobj_base_count;
-
-						//add children changes parent_sobj to be the new location of the subobject in the model
-						model.Turret(model.GetTurretCount()-1).sobj_par_phys = import_model.SOBJ(model.Turret(model.GetTurretCount()-1).sobj_par_phys).parent_sobj;
-					}
-				}
-			}
-
-			//path import
-			if(path_import || 
-				(wxString(import_model.SOBJ(imported_sobj).properties.c_str(), wxConvUTF8).Contains(_("$special=subsystem")) && 
-				wxMessageBox(_("The subobject you have imported seems like it might be a subsystem, \nwould you like to import the pertenent path data if it exsists?"), _("Subobject Import"), wxYES_NO) == wxYES))
-			{
-				for( i = 0; i<import_model.GetPathCount(); i++){
-					if(wxString(import_model.Path(i).parent.c_str(), wxConvUTF8).Contains(wxString(import_model.SOBJ(imported_sobj).name.c_str(), wxConvUTF8))){
-						model.AddPath(&import_model.Path(i));
-					}
-				}
-			}
-
+			copy_subobjects(model, import_model, imported_sobj, -1, child_import, turret_import, path_import, textures, other_textures, texture_map, texture_id_map);
 		}else{
-
 			for( i = 0; i<import_model.GetSOBJCount(); i++){
-				//for all subobjects
-				pcs_sobj*next = &import_model.SOBJ(i);
-				//modify the parent to reflect that all subobjects are further down the line
-				if(next->parent_sobj >-1)
-					next->parent_sobj += subobj_base_count;
-				model.AddSOBJ(next);
+				if (import_model.SOBJ(i).parent_sobj == -1) {
+					copy_subobjects(model, import_model, i, -1, turret_import, path_import, true, textures, other_textures, texture_map, texture_id_map);
+				}
 			}
 		}
 
 		control_panel->set_item(path);
 		control_panel->set_data(model);
+		model.set_textures(textures);
+		glcanvas->reload_textures();
+		glcanvas->FreezeRender = false;
 	}else{
 		control_panel->set_data(import_model);
 		//set the data in the control to the data in the import model
@@ -1040,7 +1056,7 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 	wxConfigBase *pConfig = wxConfigBase::Get();
 	pConfig->SetPath(_T("/gr_options/"));
 	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
-	model.make_vertex_buffers(itemp != 0);
+	model.init_vertex_buffers(itemp != 0);
 
 	//reset the editor, would be nice if I could keep the old one, 
 	//but there could be hidden data from the old model, so to be safe

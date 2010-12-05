@@ -4,9 +4,13 @@
 #include <GL/glu.h>
 
 //sets up all vertex buffers for this model
-void PCS_Model::make_vertex_buffers(bool enabled){
+void PCS_Model::init_vertex_buffers(bool enabled){
 //	return;
 	vbos_enabled = enabled;
+	make_vertex_buffers();
+}
+
+void PCS_Model::make_vertex_buffers(){
 	if (vbos_enabled) {
 		for(unsigned int i = 0; i<subobjects.size(); i++){
 			make_vertex_buffer(i);

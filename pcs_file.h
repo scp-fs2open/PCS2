@@ -504,7 +504,14 @@ class PCS_Model
 
 		//interface accessors
 			std::vector<std::string> get_textures(){return textures;}
-			void set_textures(const std::vector<std::string> &t){textures = t;}
+			void set_textures(const std::vector<std::string> &t){
+				if (t.size() != textures.size()) {
+					textures = t;
+					make_vertex_buffers();
+				} else {
+					textures = t;
+				}
+			}
 
 			std::vector<pcs_sobj> get_subobjects(){return subobjects;}
 			void set_subobjects(const std::vector<pcs_sobj> &t){subobjects = t;}
@@ -611,7 +618,8 @@ class PCS_Model
 				return avg;
 			}
 
-	void make_vertex_buffers(bool enabled);//sets up all vertex buffers for this model
+	void init_vertex_buffers(bool enabled);//sets up all vertex buffers for this model
+	void make_vertex_buffers();//sets up all vertex buffers for this model
 	void make_vertex_buffer(int sobj);//sets up vertex buffers for a subobject
 
 };

@@ -335,7 +335,7 @@ void wxGL_PMFCanvas::Reinit(bool should_reset_view)
 	pConfig->SetPath(_T("/gr_options/"));
 	pConfig->Read(_("use_vertex_buffer_objects"), &itemp, 0); // default to off
 	UseVBOs = (itemp == 1);
-	model.make_vertex_buffers(itemp == 1);
+	model.init_vertex_buffers(itemp == 1);
 	if (model.GetSOBJCount())
 	{
 		if (should_reset_view) {
