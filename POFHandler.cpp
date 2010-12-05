@@ -1899,22 +1899,15 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	}
 
 	//18 PINF ----------------------------------------
-	if (!pofinfo.strings.empty() || strlen(&pofinfo.strings.front()) > 0)
+	if (!pofinfo.strings.empty())
 	{
 		//always terminated with a double null
 		outfile.write("PINF", 4);
-		k = strlen(&pofinfo.strings.front()) + 2; //for the double null
 
-		write_to_buffer(temp_buf, k); 
+		write_to_buffer(temp_buf, (int)pofinfo.strings.size()); 
 		outfile.write(temp_buf, sizeof(int));
 
-		outfile.write(&pofinfo.strings.front(), (k - 2));
-
-		// double null
-		k = 0;
-		write_to_buffer(temp_buf, k); 
-		outfile.write(temp_buf, 2);
-
+		outfile.write(&pofinfo.strings.front(), pofinfo.strings.size());
 	}
 	
 	return true;

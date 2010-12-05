@@ -2249,6 +2249,8 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 			glColor3ub( (GLubyte)255, (GLubyte)255, (GLubyte)255);
 		else
 			glColor4ubv( (GLubyte*) get_SOBJ_color().col);
+		if (highlight_active_model && active_submodel == sobj)
+			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point, subobjects[sobj].bounding_box_max_point);
 		for(unsigned int t = 0; t<textures.size(); t++){
 			if (subobjects[sobj].line_vertex_buffer[t].buffer != 0)
 			{
