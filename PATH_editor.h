@@ -271,16 +271,35 @@ public:
 		pcs_path path;
 		pcs_turret & turret = get_main_window()->get_model().Turret(turret_idx);
 		pcs_sobj & model = get_main_window()->get_model().SOBJ(turret.sobj_parent);
+		vector3d offset = get_main_window()->get_model().get_model_offset(turret.sobj_parent);
 
 		path.parent = model.name;
 
 		path.verts.resize(2);
 
 		path.verts[0].radius = MIN(model.radius*30.0f, 1000.0f);
-		path.verts[1].radius = MIN(model.radius*0.7f,100);
+		path.verts[1].radius = MIN(model.radius*2.0f,100);
 
-		path.verts[0].pos = model.offset + turret.turret_normal * (path.verts[0].radius*1.2f);
-		path.verts[1].pos = model.offset + turret.turret_normal * (model.radius*4.0f);
+		path.verts[0].pos = offset + turret.turret_normal * (path.verts[0].radius*1.2f);
+		path.verts[1].pos = offset + turret.turret_normal * (model.radius*4.0f);
+
+		return path;
+	}
+
+	//make a path for a subobject
+	pcs_path auto_gen_sobj(int sobj_idx){
+		pcs_path path;
+		pcs_sobj & sobj = get_main_window()->get_model().SOBJ(sobj_idx);
+		vector3d offset = get_main_window()->get_model().get_model_offset(sobj_idx);
+
+		path.parent = sobj.name;
+
+		path.verts.resize(2);
+		path.verts[0].radius = MIN(sobj.radius*30.0f,1000.0f);
+		path.verts[1].radius = MIN(sobj.radius*2.0f,100.0f);
+		vector3d n = MakeUnitVector(offset);
+		path.verts[0].pos = offset + n * (path.verts[0].radius*1.2f);
+		path.verts[1].pos = offset + n * (sobj.radius*4.0f);
 
 		return path;
 	}
@@ -333,12 +352,20 @@ public:
 		std::vector<pcs_path> paths = get_value();
 		std::map<std::string, int> sobj_to_turret;
 		std::map<std::string, int> special_map;
+		std::map<std::string, int> subobject_map;
 		std::vector<bool> turrets(model.GetTurretCount(), false);
 		std::vector<bool> specials(model.GetSpecialCount(), false);
+		std::vector<bool> subobjects(model.GetSOBJCount(), false);
 		for (int i = 0; i < model.GetSpecialCount(); i++) {
 			special_map[model.Special(i).name] = i;
 			if (model.Special(i).properties.find("$special=subsystem") == std::string::npos) {
 				specials[i] = true;
+			}
+		}
+		for (int i = 0; i < model.GetSOBJCount(); i++) {
+			subobject_map[model.SOBJ(i).name] = i;
+			if (model.SOBJ(i).properties.find("$special=subsystem") == std::string::npos) {
+				subobjects[i] = true;
 			}
 		}
 		for (int i = 0; i < model.GetTurretCount(); i++) {
@@ -357,6 +384,10 @@ public:
 				if (it != special_map.end()) {
 					specials[it->second] = true;
 				}
+				it = subobject_map.find(parent);
+				if (it != subobject_map.end()) {
+					subobjects[it->second] = true;
+				}
 			}
 			if (sscanf(paths[i].name.c_str(), "$path%d", &current_path) == 1 ||
 					sscanf(paths[i].name.c_str(), "$Path%d", &current_path) == 1) {
@@ -368,6 +399,13 @@ public:
 		for(int i = 0; i<model.GetTurretCount(); i++){
 			if (!turrets[i]) {
 				paths.push_back(auto_gen_turret(i));
+				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				subobjects[model.Turret(i).sobj_parent] = true;
+			}
+		}
+		for(int i = 0; i<model.GetSOBJCount(); i++){
+			if (!subobjects[i]) {
+				paths.push_back(auto_gen_sobj(i));
 				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
 			}
 		}
@@ -386,6 +424,9 @@ public:
 			}
 		}
 		set_value(paths);
+		wxCommandEvent edit_event(EDIT_DONE);
+		GetEventHandler()->ProcessEvent(edit_event);
+		reset_undo();
 	}
 
 	wxSizer* get_transform_options(wxWindow* parent) {
