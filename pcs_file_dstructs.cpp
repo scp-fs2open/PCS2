@@ -574,7 +574,6 @@ void pcs_sobj::TransformBefore(PCS_Model& model, int idx) {
 }
 
 void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot) {
-	// TODO: bounding box and radius.
 	// TODO: uvec, fvec
 	// TODO: rotation axis...
 	vector3d subtranslation = translation;
@@ -585,19 +584,38 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 		offset += subtranslation;
 		subtranslation = vector3d();
 	}
+	vector3d global_offset(model.OffsetFromParent(idx));
 	bool should_reverse = transform.determinant() < 0.0f;
+	header_data header = model.get_header();
 
+	if (!polygons.empty()) {
+		bounding_box_min_point = vector3d(FLT_MAX, FLT_MAX, FLT_MAX);
+		bounding_box_max_point = vector3d(FLT_MIN, FLT_MIN, FLT_MIN);
+		radius = 0.0f;
+	}
 	for (std::vector<pcs_polygon>::iterator it = polygons.begin(); it < polygons.end(); ++it) {
 		it->norm = SafeMakeUnitVector(transform * it->norm);
 		it->centeroid = transform * it->centeroid + subtranslation;
 		for (std::vector<pcs_vertex>::iterator jt = it->verts.begin(); jt < it->verts.end(); ++jt) {
 			jt->point = transform * jt->point + subtranslation;
+			ExpandBoundingBoxes(bounding_box_max_point, bounding_box_min_point, jt->point);
+			float point_radius = Magnitude(jt->point);
+			if (point_radius > radius) {
+				radius = point_radius;
+			}
+			// N.B.: Only expands global bounding boxes and radius.
+			float point_global_radius = Magnitude(jt->point + global_offset);
+			if (point_global_radius > header.max_radius) {
+				header.max_radius = point_global_radius;
+			}
+			ExpandBoundingBoxes(header.max_bounding, header.min_bounding, jt->point + global_offset);
 			jt->norm = SafeMakeUnitVector(transform * jt->norm);
 		}
 		if (should_reverse) {
 			std::reverse(it->verts.begin(), it->verts.end());
 		}
 	}
+	model.set_header(header);
 	// So OffsetFromParent works correctly.
 	model.SOBJ(idx) = *this;
 	// Child subobjects:
@@ -621,7 +639,6 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 			eye.Transform(transform, subtranslation);
 		}
 	}
-	vector3d global_offset(model.OffsetFromParent(idx));
 	// Paths:
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);

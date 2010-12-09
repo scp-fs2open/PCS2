@@ -269,6 +269,7 @@
 #include "pcs_pof_bspfuncs.h"
 #include <fstream>
 #include <set>
+#include <cfloat>
 #include "color.h"
 #include "omnipoints.h"
 #include <wx/msgdlg.h>
@@ -2465,10 +2466,17 @@ bool PCS_Model::moi_colide(std::vector<vector3d>&cpoints, float x, float z){
 
 void PCS_Model::Transform(const matrix& transform, const vector3d& translation) {
 	std::set<int> dock_paths;
+	header.min_bounding = vector3d(FLT_MAX, FLT_MAX, FLT_MAX);
+	header.max_bounding = vector3d(FLT_MIN, FLT_MIN, FLT_MIN);
+	header.max_radius = 0.0f;
 	for (std::vector<pcs_sobj>::iterator it = subobjects.begin(); it < subobjects.end(); ++it) {
 		if (it->parent_sobj == -1) {
 			it->Transform(*this, (int)(it - subobjects.begin()), transform, translation, true, true);
 		}
+	}
+	if (header.max_radius == 0.0f) {
+		header.min_bounding = vector3d(0.0f, 0.0f, 0.0f);
+		header.max_bounding = vector3d(0.0f, 0.0f, 0.0f);
 	}
 	for (std::vector<pcs_special>::iterator it = special.begin(); it < special.end(); ++it) {
 		it->Transform(*this, transform, translation);

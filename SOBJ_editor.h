@@ -115,7 +115,6 @@ public:
 	virtual void transform(const matrix& transform, const vector3d& translation, int sobj_num) {
 		pcs_sobj sobj = get_value();
 		sobj.Transform(get_main_window()->get_model(), sobj_num, transform, translation, false, false);
-		set_value(sobj);
 	}
 };
 
@@ -191,7 +190,7 @@ public:
 				data.bounding_box_min_point.x,data.bounding_box_min_point.y,data.bounding_box_min_point.z, 
 				data.bounding_box_max_point.x,data.bounding_box_max_point.y,data.bounding_box_max_point.z));
 			info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  "),
-				abs(size.y), abs(size.x), abs(size.z),
+				fabs(size.y), fabs(size.x), fabs(size.z),
 				data.radius);
 			if (data.parent_sobj > -1) {
 				info += wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8);
@@ -254,5 +253,6 @@ public:
 
 	virtual void transform(const matrix& transform, const vector3d& translation) {
 		sobj->transform(transform, translation, sobj_num);
+		set_data(get_main_window()->get_model());
 	}
 };
