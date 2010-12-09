@@ -3668,12 +3668,11 @@ bool POF::PINF_Del()
 
 std::vector<std::string> POF::PINF_Get				()
 {
-	int pos = 0;
 	std::vector<std::string> strings;
 	if (pofinfo.strings.empty())
 		return strings;
 
-	for (pos = 0; pofinfo.strings[pos] != '\0'; pos += strlen(&pofinfo.strings.front()+pos)+1)
+	for (size_t pos = 0; pos < pofinfo.strings.size() && pofinfo.strings[pos] != '\0'; pos += strlen(&pofinfo.strings.front()+pos)+1)
 	{
 			strings.resize(strings.size()+1);
 			strings[strings.size()-1] = (char*)(&pofinfo.strings.front()+pos);
