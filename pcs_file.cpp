@@ -1378,7 +1378,9 @@ void PCS_Model::DelSOBJ(int idx)
 	if(active_submodel < 0 && header.detail_levels.size() > 0)
 		active_submodel = header.detail_levels[0];
 
-	bsp_cache.erase(bsp_cache.begin() + idx);
+	if (bsp_cache.size() > (unsigned)idx) {
+		bsp_cache.erase(bsp_cache.begin() + idx);
+	}
 	RemoveIndex(subobjects, idx);
 }
 
