@@ -301,7 +301,7 @@ class PCS_Model
 		int FindTexture(std::string name);
 
 
-		bool PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled);
+		bool PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, float& model_radius);
 
 		inline void POFTranslateBoundingBoxes(vector3d& min, vector3d& max) {
 			float temp = -min.x;

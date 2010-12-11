@@ -218,6 +218,7 @@
 #pragma warning(disable:4786)
 
 #include <fstream>
+#include <cfloat>
 #include "pcs_file.h"
 #include "POFHandler.h"
 #include "BSPHandler.h"
@@ -281,6 +282,7 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 	wxLongLong time = wxGetLocalTimeMillis();
 	bool bsp_compiled = false;
+	header.max_radius = 0.0f;
 	for (i = 0; i < subobjects.size(); i++)
 	{
 		// Update Progress
@@ -293,7 +295,7 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 		//memset((char *)&obj, 0, sizeof(OBJ2)); this is NO LONGER ALLOWED - obj2 now contains an class w/ vtable
 		boost::scoped_ptr<OBJ2> obj(new OBJ2);
 		obj->submodel_number = i;
-		if (!PMFObj_to_POFObj2(i, *obj, bsp_compiled))
+		if (!PMFObj_to_POFObj2(i, *obj, bsp_compiled, header.max_radius))
 		{
 			return 2; // error occured in bsp splitting!
 		}
@@ -663,7 +665,7 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 	this->header.max_bounding = minbox;
 	this->header.min_bounding = maxbox;
 
-	poffile.HDR2_Set_MaxRadius(FindObjectRadius(maxbox, minbox, POFTranslate(header.mass_center)));
+	poffile.HDR2_Set_MaxRadius(header.max_radius);
 	poffile.HDR2_Set_Details(header.detail_levels.size(), header.detail_levels);
 	poffile.HDR2_Set_Debris(header.debris_pieces.size(), header.debris_pieces);
 	poffile.HDR2_Set_Mass(header.mass);
@@ -1124,7 +1126,7 @@ bool Neighbor(pcs_shield_triangle &face1, pcs_shield_triangle &face2)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
+bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, float& model_radius)
 {
 
 	pcs_sobj &src = subobjects[src_num];
@@ -1220,7 +1222,6 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 
 		// create tree
 		boost::shared_ptr<bsp_tree_node> root = MakeTree(clean_list, dst.bounding_box_max_point, dst.bounding_box_min_point);
-		dst.radius = FindObjectRadius(dst.bounding_box_max_point, dst.bounding_box_min_point, vector3d(0,0,0));
 
 		// calc tree size 
 		dst.bsp_data_size = points.head.size + CalculateTreeSize(root, clean_list) + 8; // extra 8byte padd at the end - an extra BSP::EOF
@@ -1268,22 +1269,31 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled)
 		dst.bsp_data.reset(new char[dst.bsp_data_size]);
 		memcpy(dst.bsp_data.get(), bsp_cache[src_num].bsp_data.get(), dst.bsp_data_size);
 
-		if (src.polygons.size() == 0 || src.polygons[0].verts.size() == 0) {
-			dst.bounding_box_max_point = dst.bounding_box_min_point = vector3d();
-		} else {
-			dst.bounding_box_max_point = dst.bounding_box_min_point = src.polygons[0].verts[0].point;
-		}
 
-		for(unsigned int i = 0; i<src.polygons.size(); i++){
-			for(unsigned int j = 0; j<src.polygons[i].verts.size(); j++){
-				ExpandBoundingBoxes(dst.bounding_box_max_point, dst.bounding_box_min_point,  src.polygons[i].verts[j].point);
-			}
-		}
-		dst.bounding_box_max_point += vector3d(0.1f, 0.1f, 0.1f);
-		dst.bounding_box_min_point -= vector3d(0.1f, 0.1f, 0.1f);
-		POFTranslateBoundingBoxes(dst.bounding_box_min_point, dst.bounding_box_max_point);
-
-		dst.radius = FindObjectRadius(dst.bounding_box_max_point, dst.bounding_box_min_point, vector3d(0,0,0));
 	}
+	dst.radius = 0.0f;
+	dst.bounding_box_max_point = vector3d(FLT_MIN, FLT_MIN, FLT_MIN);
+	dst.bounding_box_min_point = vector3d(FLT_MAX, FLT_MAX, FLT_MAX);
+
+	vector3d global_offset(OffsetFromParent(src_num));
+	for(unsigned int i = 0; i<src.polygons.size(); i++){
+		for(unsigned int j = 0; j<src.polygons[i].verts.size(); j++){
+			ExpandBoundingBoxes(dst.bounding_box_max_point, dst.bounding_box_min_point,  src.polygons[i].verts[j].point);
+			float norm = Magnitude(src.polygons[i].verts[j].point);
+			if (norm > dst.radius) {
+				dst.radius = norm;
+			}
+			float global_norm = Magnitude(src.polygons[i].verts[j].point + global_offset);
+			if (global_norm > model_radius) {
+				model_radius = global_norm;
+			}
+
+		}
+	}
+	if (dst.radius == 0.0f) {
+		dst.bounding_box_max_point = vector3d();
+		dst.bounding_box_min_point = vector3d();
+	}
+	POFTranslateBoundingBoxes(dst.bounding_box_min_point, dst.bounding_box_max_point);
 	return true;
 }
