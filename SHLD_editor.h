@@ -64,7 +64,7 @@ public:
 	void transform(const matrix& transform, const vector3d& translation) {
 		std::vector<pcs_shield_triangle> shields = get_value();
 		for (std::vector<pcs_shield_triangle>::iterator it = shields.begin(); it < shields.end(); ++it) {
-			it->Transform(transform, translation);
+			it->Transform(get_main_window()->get_model(), transform, translation);
 		}
 		set_value(shields);
 	}

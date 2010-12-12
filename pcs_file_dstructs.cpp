@@ -739,14 +739,17 @@ void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const 
 		}
 }
 
-void pcs_shield_triangle::Transform(const matrix& transform, const vector3d& translation) {
+void pcs_shield_triangle::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
 	face_normal = SafeMakeUnitVector(transform * face_normal);
+	header_data header = model.get_header();
 	for (int i = 0; i < 3; i++) {
 		corners[i] = transform * corners[i] + translation;
+		ExpandBoundingBoxes(header.max_bounding, header.min_bounding, corners[i]);
 	}
 	if (transform.determinant() < 0.0f) {
 		std::reverse(corners, corners + 3);
 	}
+	model.set_header(header);
 }
 
 void pcs_hardpoint::Transform(const matrix& transform, const vector3d& translation) {

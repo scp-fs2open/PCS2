@@ -455,7 +455,7 @@ struct pcs_shield_triangle
 {
 	vector3d face_normal;
 	vector3d corners[3];
-	void Transform(const matrix& transform, const vector3d& translation);
+	void Transform(PCS_Model& model, const matrix& transform, const vector3d& translation);
 };
 
 inline bool operator==(const pcs_shield_triangle&t, const pcs_shield_triangle&o){

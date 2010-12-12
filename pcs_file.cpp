@@ -2494,7 +2494,7 @@ void PCS_Model::Transform(const matrix& transform, const vector3d& translation) 
 		it->Transform(transform, translation);
 	}
 	for (std::vector<pcs_shield_triangle>::iterator it = shield_mesh.begin(); it < shield_mesh.end(); ++it) {
-		it->Transform(transform, translation);
+		it->Transform(*this, transform, translation);
 	}
 	for (std::vector<pcs_insig>::iterator it = insignia.begin(); it < insignia.end(); ++it) {
 		it->Transform(transform, translation);
