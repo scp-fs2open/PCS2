@@ -645,10 +645,11 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 	for (i = 1; i < poffile.OBJ2_Count(); i++)
 	{
+		vector3d sobj_offset(POFTranslate(OffsetFromParent(i)));
 		poffile.OBJ2_Get_BoundingMax(i, tmpmax);
 		poffile.OBJ2_Get_BoundingMin(i, tmpmin);
-		ExpandBoundingBoxes(maxbox, minbox, tmpmax);
-		ExpandBoundingBoxes(maxbox, minbox, tmpmin);
+		ExpandBoundingBoxes(maxbox, minbox, tmpmax + sobj_offset);
+		ExpandBoundingBoxes(maxbox, minbox, tmpmin + sobj_offset);
 
 	}
 
@@ -708,6 +709,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 	header.max_radius = poffile.HDR2_Get_MaxRadius();
 	header.min_bounding = poffile.HDR2_Get_MinBound();
 	header.max_bounding = poffile.HDR2_Get_MaxBound();
+	POFTranslateBoundingBoxes(header.min_bounding, header.max_bounding);
 
 	unsigned int i, j, k;
 	int scratch; // useless variable - for legacy remnant argument
