@@ -129,6 +129,10 @@ int DAEHandler::populate(void) {
 				process_mass(helpers[i]);
 			} else if (boost::algorithm::istarts_with(name, "moi")) {
 				process_moment_of_inertia(helpers[i]);
+			} else if (boost::algorithm::istarts_with(name, "com")) {
+				model->SetCenterOfMass(get_translation(helpers[i]));
+			} else if (boost::algorithm::istarts_with(name, "acen")) {
+				model->SetAutoCenter(get_translation(helpers[i]));
 			}
 		}
 
@@ -1335,7 +1339,7 @@ DAESaver::DAESaver(string name, PCS_Model *model, int helpers, int props_as_help
 
 int DAESaver::save(void) {
 	if (export_helpers) {
-		progress->setTarget(subobjs.size() + 16);
+		progress->setTarget(subobjs.size() + 18);
 	} else {
 		progress->setTarget(subobjs.size() + 4);
 	}
@@ -1371,6 +1375,10 @@ int DAESaver::save(void) {
 		add_mass();
 		progress->incrementWithMessage( "Adding moment of inertia");
 		add_moment_of_inertia();
+		progress->incrementWithMessage( "Adding center of mass");
+		add_center_of_mass();
+		progress->incrementWithMessage( "Adding autocentering");
+		add_autocentering();
 	}
 
 
@@ -2140,6 +2148,38 @@ void DAESaver::add_insignia() {
 		daeElement *vert_input = verts->add("input");
 		vert_input->setAttribute("semantic", "POSITION");
 		vert_input->setAttribute("source", (string("#") + name.str().c_str() + "-position").c_str());
+	}
+}
+
+void DAESaver::add_center_of_mass() {
+	const vector3d& com = model->GetCenterOfMass();
+	if (com == vector3d())
+		return;
+	daeElement *center_of_mass = scene->add("node");
+	if (center_of_mass != NULL) {
+		center_of_mass->setAttribute("id", "com");
+		center_of_mass->setAttribute("name", "com");
+		daeElement* translate = center_of_mass->add("translate");
+		if (translate != NULL) {
+			translate->setAttribute("sid","translate");
+			translate->setCharData(write_vector3d(com));
+		}
+	}
+}
+
+void DAESaver::add_autocentering() {
+	const vector3d& acen = model->GetAutoCenter();
+	if (acen == vector3d())
+		return;
+	daeElement *autocentering = scene->add("node");
+	if (autocentering != NULL) {
+		autocentering->setAttribute("id", "acen");
+		autocentering->setAttribute("name", "acen");
+		daeElement* translate = autocentering->add("translate");
+		if (translate != NULL) {
+			translate->setAttribute("sid","translate");
+			translate->setCharData(write_vector3d(acen));
+		}
 	}
 }
 

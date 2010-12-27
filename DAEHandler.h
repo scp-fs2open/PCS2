@@ -135,6 +135,8 @@ private:
 	std::string add_material(int idx,daeElement *node);
 	void add_glows();
 	void add_insignia();
+	void add_center_of_mass();
+	void add_autocentering();
 	void add_mass();
 	void add_moment_of_inertia();
 	static void write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale=1.0f, float external_scale=1.0f);
