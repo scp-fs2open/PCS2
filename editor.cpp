@@ -17,6 +17,7 @@ DEFINE_EVENT_TYPE(REDO_ENABLE)
 
 BEGIN_EVENT_TABLE (path_array_ctrl,resizeable_array_ctrl<pcs_path>)
 	EVT_COMMAND(wxID_ANY, ARRAY_NEW, path_array_ctrl::on_new)
+	EVT_COMMAND(wxID_ANY, ARRAY_DEL, path_array_ctrl::on_delete)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE (PATH_ctrl,editor_ctrl<std::vector<pcs_path> >)

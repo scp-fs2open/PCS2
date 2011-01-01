@@ -168,6 +168,26 @@ public:
 		array[event.GetInt()].name = str;
 		ctrl->set_value(array[index]);
 	}
+	
+	void on_delete(wxCommandEvent& event){
+		if(event.GetId() != GetId())
+			return;
+		//only proccess our own delete events
+
+		PCS_Model& model = get_main_window()->get_model();
+		for (int i = 0; i < model.GetDockingCount(); i++) {
+			pcs_dock_point& dock = model.Dock(i);
+			for (size_t j = 0; j < dock.paths.size(); j++) {
+				if (dock.paths[j] == index) {
+					dock.paths.erase(dock.paths.begin() + j--);
+				} else if (dock.paths[j] > index) {
+					dock.paths[j]--;
+				}
+			}
+		}
+		event.Skip();
+		//we are just adding functionality, not replaceing it
+	}
 };
 
 
