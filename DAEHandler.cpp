@@ -651,15 +651,20 @@ void DAEHandler::process_path(daeElement *element,string parent,matrix rotation_
 #endif
 	path.parent = parent;
 	daeTArray< daeSmartRef<daeElement> > paths = element->getChildren();
+	std::multimap<std::string, pcs_pvert> ordered_paths;
 	pcs_pvert vert;
 
 	for (unsigned int i = 0; i < paths.getCount(); i++) {
 		if (boost::algorithm::equals(paths[i]->getTypeName(), "node")) {
-			vert.pos = get_translation(paths[i],rotation_matrix) + offset;
+			vert.pos = get_translation(paths[i], rotation_matrix) + offset;
 			vert.radius = get_rotation(paths[i], rotation_matrix).scale();
-			path.verts.push_back(vert);
+			ordered_paths.insert(std::pair<std::string, pcs_pvert>(paths[i]->getAttribute("name"), vert));
 		}
 	}
+	for (std::multimap<string, pcs_pvert>::iterator it = ordered_paths.begin(); it != ordered_paths.end(); ++it) {
+		path.verts.push_back(it->second);
+	}
+
 	if (dock > -1) {
 		docks[dock]->paths.push_back(model->GetPathCount());
 	}
@@ -1303,12 +1308,17 @@ pcs_slot DAEHandler::process_gunbank(daeElement *helper, int type) {
 	matrix rot = get_rotation(helper);
 	vector3d translation = get_translation(helper);
 	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
+	std::multimap<std::string, pcs_hardpoint> ordered_gunpoints;
+
 	for (unsigned int i = 0; i < helpers.getCount(); i++) {
 		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
 			temp.norm = fix_axes(up,get_rotation(helpers[i], rot));
 			temp.point = get_translation(helpers[i], rot) + translation;
-			bank.muzzles.push_back(temp);
+			ordered_gunpoints.insert(std::pair<std::string, pcs_hardpoint>(helpers[i]->getAttribute("name"), temp));
 		}
+	}
+	for (std::multimap<string, pcs_hardpoint>::iterator it = ordered_gunpoints.begin(); it != ordered_gunpoints.end(); ++it) {
+		bank.muzzles.push_back(it->second);
 	}
 	return bank;
 }
