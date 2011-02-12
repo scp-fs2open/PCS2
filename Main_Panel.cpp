@@ -769,6 +769,9 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 		glcanvas->FreezeRender = false;
 		control_panel->set_item(path);
 		control_panel->set_data(model);
+	} else if (control_panel->chunk_type == TGUN) {
+		import_turrets(import_model);
+		control_panel->set_data(model);
 	}else{
 		control_panel->set_data(import_model);
 		//set the data in the control to the data in the import model
@@ -777,6 +780,43 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 	}
 	on_update_tree(event);
 }
+
+void main_panel::import_turrets(PCS_Model& import_model) {
+	typedef std::map<std::string, int> NameIdMap;
+	NameIdMap local_map;
+	for (std::vector<pcs_sobj>::iterator it = model.get_subobjects().begin(); it < model.get_subobjects().end(); ++it) {
+		local_map[it->name] = it - model.get_subobjects().begin();
+	}
+	std::vector<pcs_turret> turrets;
+	for (int i = 0; i < import_model.GetTurretCount(); i++) {
+		pcs_turret& import_turret = import_model.Turret(i);
+		if (import_turret.sobj_parent > 0 &&
+			import_turret.sobj_parent < import_model.GetSOBJCount() &&
+			import_turret.sobj_par_phys > 0 &&
+			import_turret.sobj_par_phys < import_model.GetSOBJCount()) {
+			int local_parent = -1;
+			int local_phys_parent = -1;
+			NameIdMap::iterator jt;
+			if ((jt = local_map.find(import_model.SOBJ(import_turret.sobj_parent).name)) !=
+			   	local_map.end()) {
+				local_parent = jt->second;
+			}
+			if ((jt =
+					local_map.find(import_model.SOBJ(import_turret.sobj_par_phys).name)) !=
+				local_map.end()) {
+				local_phys_parent = jt->second;
+			}
+			if (local_phys_parent != -1 && local_parent != -1) {
+				pcs_turret turret(import_turret);
+				turret.sobj_parent = local_parent;
+				turret.sobj_par_phys = local_phys_parent;
+				turrets.push_back(turret);
+			}
+		}
+	}
+	model.set_turrets(turrets);
+}
+
 void main_panel::on_save_chunk(wxCommandEvent &event){
 //	control_panel->save_chunk();
 }
@@ -910,8 +950,8 @@ void main_panel::global_import(std::string filename){
 	model.set_shield_mesh(import_model.get_shield_mesh());
 	model.set_special(import_model.get_special());
 	model.set_thrusters(import_model.get_thrusters());
-	model.set_turrets(import_model.get_turrets());
 	model.set_weapons(import_model.get_weapons());
+	import_turrets(import_model);
 
 	wxCommandEvent event;
 	on_update_tree(event);

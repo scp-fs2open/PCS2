@@ -165,6 +165,7 @@ class main_panel
 		bool LoadImportModel(std::string filename, PCS_Model*import_model);
 
 		void global_import(std::string filename); 
+		void import_turrets(PCS_Model& import_model); 
 
 		//when a new model is loaded this will 
 		//erase the exsisting tree and make a new one
