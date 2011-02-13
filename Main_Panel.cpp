@@ -784,8 +784,8 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 void main_panel::import_turrets(PCS_Model& import_model) {
 	typedef std::map<std::string, int> NameIdMap;
 	NameIdMap local_map;
-	for (std::vector<pcs_sobj>::iterator it = model.get_subobjects().begin(); it < model.get_subobjects().end(); ++it) {
-		local_map[it->name] = it - model.get_subobjects().begin();
+	for (int i = 0; i < model.GetSOBJCount(); i++) {
+		local_map[model.SOBJ(i).name] = i;
 	}
 	std::vector<pcs_turret> turrets;
 	for (int i = 0; i < import_model.GetTurretCount(); i++) {
