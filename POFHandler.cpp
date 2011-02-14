@@ -824,7 +824,9 @@ void POF::Parse_Memory_SLDC(char *buffer)
 void POF::Parse_Memory_PINF (char *buffer, int size)
 {
 	pofinfo.strings.resize(size);
-	memcpy(&pofinfo.strings.front(), buffer, size);
+	if (size) {
+		memcpy(&pofinfo.strings.front(), buffer, size);
+	}
 
 }
 
