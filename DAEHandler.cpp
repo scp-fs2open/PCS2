@@ -3,12 +3,14 @@
 #include "BSPHandler.h"
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <map>
 #include <boost/tr1/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
 #define VECTOR_GROWTH_FACTOR 4
 #define VECTOR_INITIAL_SIZE 100
+#undef max
 
 using namespace std;
 
@@ -1214,6 +1216,7 @@ DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
 	int vert_offset;
 	max_offset = 0;
 	daeTArray< daeSmartRef<daeElement> > poly_bits = element->getChildren();
+	int uv_set_id = std::numeric_limits<int>::max();
 	for (unsigned int k = 0; k < poly_bits.getCount(); k++) {
 		if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "VERTEX")) {
 			vert_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
@@ -1246,13 +1249,21 @@ DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
 			uri.setURI(temp.c_str());
 			norm = DAEInput(uri);
 		} else if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "TEXCOORD")) {
-			uv_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
-			max_offset = max(max_offset,uv_offset);
+			int current_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
+			max_offset = max(max_offset, current_offset);
+			if (poly_bits[k]->hasAttribute("set")) {
+				int current_uv_set_id = atoi(poly_bits[k]->getAttribute("set").c_str());
+				if (current_uv_set_id >= uv_set_id) {
+					continue;
+				}
+				uv_set_id = current_uv_set_id;
+			}
+			uv_offset = current_offset;
 			temp = doc;
 			temp += poly_bits[k]->getAttribute("source").c_str();
 			uri.setURI(temp.c_str());
 			uv = DAEInput(uri);
-		} else if (!boost::algorithm::equals(poly_bits[k]->getAttribute("offset"), "")) {
+		} else if (!poly_bits[k]->getAttribute("offset").empty()) {
 			max_offset = max(max_offset,atoi(poly_bits[k]->getAttribute("offset").c_str()));
 		}
 	}
