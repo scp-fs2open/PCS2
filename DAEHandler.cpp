@@ -383,8 +383,10 @@ void DAEHandler::process_poly_group(daeElement *element, boost::shared_ptr<pcs_s
 			subobj->polygons[j].verts[k].facet_angle = 180;
 			position += inputs.max_offset;
 		}
-		//subobj->polygons[j].norm = subobj->polygons[j].norm / subobj->polygons[j].verts.size();
-		subobj->polygons[j].norm = MakeUnitVector(subobj->polygons[j].norm);
+		subobj->polygons[j].norm = MakeUnitVector(FigureNormal(
+					subobj->polygons[j].verts[0].point,
+					subobj->polygons[j].verts[1].point,
+				   	subobj->polygons[j].verts[2].point));
 		subobj->polygons[j].centeroid = subobj->polygons[j].centeroid / subobj->polygons[j].verts.size();
 		subobj->polygons[j].texture_id = texture_id;
 	}
@@ -852,6 +854,10 @@ void DAEHandler::shield_handler(daeElement *helper) {
 
 			position += inputs.max_offset;
 		}
+		shield_bit.face_normal = MakeUnitVector(FigureNormal(
+					shield_bit.corners[0],
+					shield_bit.corners[1],
+					shield_bit.corners[2]));
 		shield_bit.face_normal = shield_bit.face_normal / 3;
 		model->AddShldTri(&shield_bit);
 	}
