@@ -97,8 +97,8 @@ struct BSP_DefPoints // 1 - Defines Verticies
 
 struct Flat_vertex
 {
-   short vertnum; //these are indecies into the vertex arrays
-   short normnum;
+   unsigned short vertnum; //these are indecies into the vertex arrays
+   unsigned short normnum;
 
 	//---------------------------------------
 	int Read(char *buffer);
@@ -132,8 +132,8 @@ struct BSP_FlatPoly //2 - FLATPOLY - Flat (non-textured) polygon
 //********************************************************************************************************************
 struct Tmap_vertex
 {
-	short vertnum; //these are indecies into the vertex arrays
-	short normnum;
+	unsigned short vertnum; //these are indecies into the vertex arrays
+	unsigned short normnum;
 	float u;
 	float v;
 
