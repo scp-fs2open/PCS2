@@ -702,6 +702,7 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 		//get all the available subobjects
 		wxArrayString sobj_names;
 
+		sobj_names.Add(_("Metadata"));
 		sobj_names.Add(_("All Subobjects"));
 
 		for( i = 0; i<import_model.GetSOBJCount(); i++){
@@ -716,59 +717,64 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 		if(imported_sobj <0)
 			return;
 
-		std::vector<int> path;
-
-		path.resize(1);
-
-		//the number we started out with
-		//will be the index of the (first) new subobject
-		path[0] = model.GetSOBJCount();
-
-		glcanvas->FreezeRender = true;
-		std::map<std::string, int> texture_map;
-		std::vector<std::string> textures = model.get_textures();
-		std::vector<std::string> other_textures = import_model.get_textures();
-		std::vector<int> texture_id_map(other_textures.size(), -1);
-		for (std::vector<std::string>::iterator it = textures.begin(); it < textures.end(); ++it) {
-			texture_map[*it] = (int)(it - textures.begin());
-		}
-		bool turret_import = false;
-		bool path_import = false;
-		//turret/path import
-		if(wxMessageBox(_("Import associated turrets?"), _("Subobject Import"), wxYES_NO) == wxYES)
-		{
-			turret_import = true;
-		}
-
-		//path import
-		if(wxMessageBox(_("Import associated paths?"), _("Subobject Import"), wxYES_NO) == wxYES)
-		{
-			path_import = true;
-		}
-		if(imported_sobj){
+		if (imported_sobj == 0) {
+			import_sobj_metadata(import_model);
+		} else {
 			imported_sobj--;
-			bool child_import = false;
-			for( i = 0; i<import_model.GetSOBJCount(); i++){
-				if(import_model.SOBJ(i).parent_sobj == imported_sobj){
-					if(wxMessageBox(_("This subobject has children, would you like to import them as well?"), _("Subobject Import"), wxYES_NO) == wxYES)
-						child_import = true;
-					break;
-				}
-			}
-			copy_subobjects(model, import_model, imported_sobj, -1, child_import, turret_import, path_import, textures, other_textures, texture_map, texture_id_map);
-		}else{
-			for( i = 0; i<import_model.GetSOBJCount(); i++){
-				if (import_model.SOBJ(i).parent_sobj == -1) {
-					copy_subobjects(model, import_model, i, -1, turret_import, path_import, true, textures, other_textures, texture_map, texture_id_map);
-				}
-			}
-		}
+			std::vector<int> path;
 
-		model.set_textures(textures);
-		glcanvas->reload_textures();
-		glcanvas->FreezeRender = false;
-		control_panel->set_item(path);
-		control_panel->set_data(model);
+			path.resize(1);
+
+			//the number we started out with
+			//will be the index of the (first) new subobject
+			path[0] = model.GetSOBJCount();
+
+			glcanvas->FreezeRender = true;
+			std::map<std::string, int> texture_map;
+			std::vector<std::string> textures = model.get_textures();
+			std::vector<std::string> other_textures = import_model.get_textures();
+			std::vector<int> texture_id_map(other_textures.size(), -1);
+			for (std::vector<std::string>::iterator it = textures.begin(); it < textures.end(); ++it) {
+				texture_map[*it] = (int)(it - textures.begin());
+			}
+			bool turret_import = false;
+			bool path_import = false;
+			//turret/path import
+			if(wxMessageBox(_("Import associated turrets?"), _("Subobject Import"), wxYES_NO) == wxYES)
+			{
+				turret_import = true;
+			}
+
+			//path import
+			if(wxMessageBox(_("Import associated paths?"), _("Subobject Import"), wxYES_NO) == wxYES)
+			{
+				path_import = true;
+			}
+			if(imported_sobj){
+				imported_sobj--;
+				bool child_import = false;
+				for( i = 0; i<import_model.GetSOBJCount(); i++){
+					if(import_model.SOBJ(i).parent_sobj == imported_sobj){
+						if(wxMessageBox(_("This subobject has children, would you like to import them as well?"), _("Subobject Import"), wxYES_NO) == wxYES)
+							child_import = true;
+						break;
+					}
+				}
+				copy_subobjects(model, import_model, imported_sobj, -1, child_import, turret_import, path_import, textures, other_textures, texture_map, texture_id_map);
+			}else{
+				for( i = 0; i<import_model.GetSOBJCount(); i++){
+					if (import_model.SOBJ(i).parent_sobj == -1) {
+						copy_subobjects(model, import_model, i, -1, turret_import, path_import, true, textures, other_textures, texture_map, texture_id_map);
+					}
+				}
+			}
+
+			model.set_textures(textures);
+			glcanvas->reload_textures();
+			glcanvas->FreezeRender = false;
+			control_panel->set_item(path);
+			control_panel->set_data(model);
+		}
 	} else if (control_panel->chunk_type == TGUN) {
 		import_turrets(import_model);
 		control_panel->set_data(model);
@@ -779,6 +785,24 @@ void main_panel::on_load_chunk(wxCommandEvent &event){
 		//apply the data in the control (which was from the import model) to our model
 	}
 	on_update_tree(event);
+}
+
+void main_panel::import_sobj_metadata(PCS_Model& import_model) {
+	typedef std::map<std::string, int> NameIdMap;
+	NameIdMap local_map;
+	for (int i = 0; i < model.GetSOBJCount(); i++) {
+		local_map[model.SOBJ(i).name] = i;
+	}
+	for (int i = 0; i < import_model.GetSOBJCount(); i++) {
+		pcs_sobj& sobj = import_model.SOBJ(i);
+		NameIdMap::iterator it = local_map.find(sobj.name);
+		if (it != local_map.end()) {
+			pcs_sobj& local_sobj = model.SOBJ(it->second);
+			local_sobj.properties = sobj.properties;
+			local_sobj.movement_type = sobj.movement_type;
+			local_sobj.movement_axis = sobj.movement_axis;
+		}
+	}
 }
 
 void main_panel::import_turrets(PCS_Model& import_model) {
@@ -952,6 +976,7 @@ void main_panel::global_import(std::string filename){
 	model.set_thrusters(import_model.get_thrusters());
 	model.set_weapons(import_model.get_weapons());
 	import_turrets(import_model);
+	import_sobj_metadata(import_model);
 
 	wxCommandEvent event;
 	on_update_tree(event);
