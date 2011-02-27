@@ -318,7 +318,7 @@ class PCS_Model
 		vector3d OffsetFromParent(int ObjNum);
 		void Transform(const matrix& transform, const vector3d& translation);
 
-		PCS_Model() : header(), can_bsp_cache(false), has_fullsmoothing_data(false), active_submodel(0), Wireframe(false), Textureless(false), draw_bsp(false)
+		PCS_Model() : header(), can_bsp_cache(false), has_fullsmoothing_data(false), active_submodel(0), Wireframe(false), Textureless(false), vbos_enabled(false), draw_bsp(false)
 		{
 
 		}

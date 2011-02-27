@@ -822,6 +822,7 @@ void PCS_Model::Reset()
 	//Textureless = false;
 	can_bsp_cache = false;
 	has_fullsmoothing_data = false;
+	vbos_enabled = false;
 
 	
 	header.max_radius = 0;

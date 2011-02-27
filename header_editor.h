@@ -62,6 +62,7 @@ class header_ctrl
 	vector_ctrl*cent_mass;
 
 	float_disp*max_rad;
+	float_ctrl*max_rad_override;
 	float_ctrl*mass;
 
 	model_array_ctrl*detail_levels;
@@ -84,10 +85,11 @@ public:
 
 		wxBoxSizer*f_sizer = new wxBoxSizer(wxHORIZONTAL);
 		max_rad = new float_disp(this,0,90,30,40,_("Max Radius"));
-		mass = new float_ctrl(this,30,90,30,40,_("Mass"));
-		f_sizer->Add(max_rad,2);
-		f_sizer->Add(mass,1);
+		max_rad_override = new float_ctrl(this,0,90,30,40,_("Radius override"));
+		f_sizer->Add(max_rad,1);
+		f_sizer->Add(max_rad_override,1);
 		add_sizer(f_sizer,0,wxEXPAND);
+		add_control(mass = new float_ctrl(this,0,90,60,40,_("Mass")), 0, wxEXPAND);
 
 		add_control(detail_levels=new model_array_ctrl(this,0,120,90,90,_("LOD"), _("Model#")),0,wxEXPAND );
 		add_control(debris_pieces=new model_array_ctrl(this,0,210,90,90,_("Debris"), _("Model#")),0,wxEXPAND );
@@ -111,6 +113,7 @@ public:
 		cent_mass->set_value(data.mass_center);
 
 		max_rad->set_value(data.max_radius);
+		max_rad_override->set_value(data.max_radius_override);
 		mass->set_value(data.mass);
 		
 		detail_levels->set_value(data.detail_levels);
@@ -127,6 +130,7 @@ public:
 
 		data.mass = mass->get_value();
 		data.max_radius = max_rad->get_value();
+		data.max_radius_override = max_rad_override->get_value();
 		
 		data.detail_levels = detail_levels->get_value();
 		data.debris_pieces = debris_pieces->get_value();

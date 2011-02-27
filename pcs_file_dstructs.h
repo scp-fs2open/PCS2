@@ -597,7 +597,7 @@ inline bool operator==(const pcs_glow_array&t, const pcs_glow_array&o){
 
 struct header_data{
 	header_data()
-		:max_radius(0.0f),min_bounding(0,0,0),max_bounding(0,0,0),mass(0.0f),mass_center(0,0,0)
+		:max_radius(0.0f),max_radius_override(0.0f),min_bounding(0,0,0),max_bounding(0,0,0),mass(0.0f),mass_center(0,0,0)
 	{
 		memset(MOI,0,sizeof(float)*9);
 		MOI[0][0]=1.0f;
@@ -614,6 +614,7 @@ struct header_data{
 	}
 	const header_data&operator=(const header_data&h){
 		max_radius = h.max_radius;
+		max_radius_override = h.max_radius_override;
 		min_bounding = h.min_bounding;
 		max_bounding = h.max_bounding;
 		detail_levels = h.detail_levels;
@@ -626,6 +627,7 @@ struct header_data{
 	}
 		// ++++ "header" information ++++ //HDR2
 		float max_radius;           // maximum radius of entire ship
+		float max_radius_override;  // custom maximum radius of entire ship
 
 		vector3d min_bounding;       // min bounding box point
 		vector3d max_bounding;         // max bounding box point
@@ -646,6 +648,7 @@ struct header_data{
 };
 inline bool operator == (const header_data&t, const header_data&h){
 	return t.max_radius == h.max_radius &&
+		t.max_radius_override == h.max_radius_override &&
 		t.min_bounding == h.min_bounding &&
 		t.max_bounding == h.max_bounding &&
 		t.detail_levels == h.detail_levels &&
