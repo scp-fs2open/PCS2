@@ -733,7 +733,7 @@ void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const 
 		it->Transform(transform, translation);
 	}
 		for (std::vector<int>::iterator it = paths.begin(); it < paths.end(); ++it) {
-			if (*it < model.GetPathCount()) {
+			if (*it < model.GetPathCount() && *it >= 0) {
 				model.Path(*it).Transform(transform, translation);
 			}
 		}
