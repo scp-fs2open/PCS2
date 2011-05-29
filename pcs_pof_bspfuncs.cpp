@@ -129,9 +129,12 @@
 
 #include "pcs_pof_bspfuncs.h"
 #include <cmath>
+#include <limits>
 #include <wx/stopwatch.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+
+#undef max
 
 vector3d POFTranslate(vector3d v)
 {
@@ -509,67 +512,35 @@ boost::shared_ptr<bsp_tree_node> MakeTree(std::vector<pcs_polygon> &polygons, ve
 	Max = Max +vector3d(0.1f, 0.1f, 0.1f);
 	Min = Min -vector3d(0.1f, 0.1f, 0.1f);
 
+	if (polygons.empty()) {
+		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL);
+	}
+
 	wxLongLong time = wxGetLocalTimeMillis();
 	PCS_Model::BSP_CUR_DEPTH = 0;
-	boost::shared_ptr<bsp_tree_node> node = GenerateTreeRecursion(Max, Min, polygons, polylist);
-	PCS_Model::BSP_TREE_TIME += (wxGetLocalTimeMillis() - time).ToLong();
+	boost::shared_ptr<bsp_tree_node> node = GenerateTreeRecursion(polygons, polylist);
 
-	if (node != NULL)
-	{
-		ExpandBoundingBoxes(Max, Min, node->bound_max);
-		ExpandBoundingBoxes(Max, Min, node->bound_min);
-		Max = Max +vector3d(0.1f, 0.1f, 0.1f);
-		Min = Min -vector3d(0.1f, 0.1f, 0.1f);
-	}
+	PCS_Model::BSP_TREE_TIME += (wxGetLocalTimeMillis() - time).ToLong();
 	return node;
 }
 
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-bool flat_box(vector3d min, vector3d max){
-	if(min.x >= max.x)return true;
-	if(min.y >= max.y)return true;
-	if(min.z >= max.z)return true;
-	return false;
-}
-
-void split_at_point(vector3d Max, vector3d Min, vector3d &point, vector3d &norm,vector3d &fmax, vector3d &fmin,vector3d &bmax, vector3d &bmin);
-
-boost::shared_ptr<bsp_tree_node> make_poly_list(vector3d fmax, vector3d fmin, std::vector<pcs_polygon> &polygons, std::vector<int> unculled){
-
-
-	std::vector<int> pcontained = FindContainedPolygons(fmax, fmin, polygons, unculled);
-
-	if(PCS_Model::BSP_NODE_POLYS < pcontained.size())
-		PCS_Model::BSP_NODE_POLYS = pcontained.size();
-
-	boost::shared_ptr<bsp_tree_node> pnode(new bsp_tree_node);
-
-	//invalid bounding front riegon, make a poly out of it
-	//memset(pnode, 0, sizeof(bsp_tree_node));
-	pnode->Type = POLY;
-	for(unsigned int i = 0; i<pcontained.size(); i++){
-		pnode->poly_num.push_back(pcontained[i]);
+class polylist_comparator {
+public:
+	polylist_comparator(const std::vector<pcs_polygon> *polygons, int axis)
+		: polygons(polygons), axis(axis) {}
+	bool operator()(int a, int b) {
+		return (*polygons)[a].centeroid[axis] < (*polygons)[b].centeroid[axis];
 	}
-	MakeBound(pnode->bound_max, pnode->bound_min, pnode->poly_num, polygons);
-			
-	return pnode;
-}
+private:
+	const std::vector<pcs_polygon>* polygons;
+	int axis;
+};
 
-boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&unculled)
+boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(std::vector<pcs_polygon> &polygons, std::vector<int>&contained)
 {
-//	if (Distance(Max, Min) < 0.01) // we're probably going into infinite recrusion... panic
-//		return NULL;
-	// better version of above
-	if ( fabs(double(Max.x-Min.x)) < 0.0001 ||
-		fabs(double(Max.y-Min.y)) < 0.0001 ||
-		fabs(double(Max.z-Min.z)) < 0.0001 
-		)
-	{
-		PCS_Model::BSP_COMPILE_ERROR = true;
-		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //gone into infinite recursion - truncate geometry
-	}
 	PCS_Model::BSP_CUR_DEPTH++;
 	if(PCS_Model::BSP_MAX_DEPTH < PCS_Model::BSP_CUR_DEPTH)
 		PCS_Model::BSP_MAX_DEPTH = PCS_Model::BSP_CUR_DEPTH;
@@ -578,204 +549,57 @@ boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(vector3d Max, vector3d Mi
 		PCS_Model::BSP_COMPILE_ERROR = true;
 		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //WHOA wtf infinite recursion!
 	}
-
-	//int count = CountContainedPolygons(Max, Min, polygons);
-	std::vector<int> contained = FindContainedPolygons(Max, Min, polygons, unculled);
-	boost::shared_ptr<bsp_tree_node> node;
-	vector3d fmax, fmin, bmax, bmin;
-
-
-	if (contained.size() == 0){
-		PCS_Model::BSP_CUR_DEPTH--;
-		return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL); //nothing to do
-	}
-	else if (contained.size() == 1)
+	boost::shared_ptr<bsp_tree_node> node(new bsp_tree_node);
+	MakeBound(node->bound_max, node->bound_min, contained, polygons);
+	if (contained.size() == 1)
 	{
 		//we're a polygon.. w00t
-		node.reset(new bsp_tree_node);
-	//	memset(node, 0, sizeof(bsp_tree_node));
 		node->Type = POLY;
-		node->poly_num.push_back(contained[0]);
-		BoundPolygon(node->bound_max, node->bound_min, contained[0], polygons);
-			
-		PCS_Model::BSP_CUR_DEPTH--;
-		return node;
+		node->poly_num = contained;
 	}
 	else
 	{
 		// we're a sortnorm
-		node.reset(new bsp_tree_node);
-		//memset(node, 0, sizeof(bsp_tree_node));
-		node->Type = SPLIT;
-		
-		node->bound_max = Max;
-		node->bound_min = Min;
-
-		if (contained.size() == 2) // if we contain exactly two... we cheat and create the split and bounding boxes based on them
-		{
-			vector3d centera = polygons[contained[0]].centeroid, centerb = polygons[contained[1]].centeroid;
-			if (centera == centerb) 
-				// if they have the same centeroid we're going to infinite recurse..
-				// kill the sortnorm we were building and return a polynode
-			{
-				return make_poly_list(Max, Min, polygons, contained);
-			
-			}
-			else
-				Bisect(Max, Min, node->point, node->normal, fmax, fmin, bmax, bmin, &centera, &centerb);
+		vector3d cmax = polygons[contained[0]].centeroid;
+		vector3d cmin = polygons[contained[0]].centeroid;
+		for (std::vector<int>::iterator it = contained.begin() + 1; it < contained.end(); ++it) {
+			ExpandBoundingBoxes(cmax, cmin, polygons[*it].centeroid);
 		}
-		else
-		{
-			Bisect(Max, Min, node->point, node->normal, fmax, fmin, bmax, bmin);
+		std::vector<int> front, back;
+		if (!Bisect(cmax, cmin, node->point, node->normal, polygons, contained, front, back)) {
+			node->Type = POLY;
+			node->poly_num = contained;
+		} else {
+			node->Type = SPLIT;
+			node->front = GenerateTreeRecursion(polygons, front);
+			node->back = GenerateTreeRecursion(polygons, back);
 		}
-
-		// somethings wrong.. it keeps splitting them over and over infinitely it seems
-		//SplitIntersecting(polygons, node->point, node->normal);
-
-		//lets try to split the bbox such that there are an equal number of polys 
-		//on the front as there are on back, or as close as we can get to it
-		int max_trys = 15;//max number of times we try before we assume it's good enough
-		int front_polys = CountContainedPolygons(fmax,fmin, polygons, contained);
-		int back_polys = CountContainedPolygons(bmax,bmin, polygons, contained);
-
-		//try to fix invalid bboxes
-		for (int trys = 0; !(back_polys&&front_polys) && trys < 1000; trys++) //without this.. we go infinite recurse
-		{
-			//if one of them does not have any polys it's bad
-			if(back_polys)
-				Bisect(bmax, bmin, node->point, node->normal, fmax, fmin, bmax, bmin);
-			else
-				Bisect(fmax, fmin, node->point, node->normal, fmax, fmin, bmax, bmin);
-
-			front_polys = CountContainedPolygons(fmax,fmin, polygons, contained);
-			back_polys = CountContainedPolygons(bmax,bmin, polygons, contained);
-		}
-		if (!(back_polys && front_polys))
-		{
-			//Something is probably horribly wrong with the model so give up.
-			PCS_Model::BSP_COMPILE_ERROR = true;
-			return make_poly_list(Max, Min, polygons, contained);
-		}
-
-		//lets allow for 5% diference to be consitered 
-		//so trivial it doesn't warent trying to find anything better
-		//and allways add one poly just in case
-
-		//absolutely do not allow any split that 
-		//results in more polys in fron+back than is in contained
-		//EVER! even if you have to sit here and fiddle with it forever
-
-		for(int trys = 1; 
-				(
-				 (unsigned)(front_polys+back_polys) != contained.size() || 
-				 abs(front_polys - back_polys) > 0.05f*(front_polys+back_polys)+1
-				) && trys <= max_trys; 
-			trys++)
-		{
-			vector3d delta = node->normal * (dot(node->normal, Max) - dot(node->normal, Min));//divide by 2, 4, 8, 16 ect
-			delta = delta / float((trys+1)*(trys+1));
-			//move the split by ever shinking amounts tward which ever box has the most polys
-			if(front_polys < back_polys)
-				delta = delta * -1.0f;
-
-			node->point = node->point + delta;
-
-			split_at_point(Max, Min, node->point, node->normal, fmax, fmin, bmax, bmin);
-
-			front_polys = CountContainedPolygons(fmax,fmin, polygons, contained);
-			back_polys = CountContainedPolygons(bmax,bmin, polygons, contained);
-		}
-		/*
-		abort conditions, 
-		if there is some sort of problem that could result in an infinite recursion
-		then we abort splitting and just dump all polys into an unsorted list
-		this usualy happens with colocated polys
-		if either the front or back list is zero
-		if either box is flat and unchanged
-		*/
-		if(	(flat_box(fmin, fmax) && bmax == Max && bmin == Min) || 
-			(flat_box(bmin, bmax) && fmax == Max && fmin == Min)){
-			node = make_poly_list(fmax, fmin, polygons, contained);
-		}else{
-			if ((Distance(fmax, Max) < 0.001f && Distance(fmin, Min) < 0.001f)
-			||fabs(double(fmax.x-fmin.x)) < 0.0001 || fabs(double(fmax.y-fmin.y)) < 0.0001 || fabs(double(fmax.z-fmin.z)) < 0.0001)
-			{
-				//infinite split
-				node->front = make_poly_list(fmax, fmin, polygons, contained);
-			}else{
-				node->front = GenerateTreeRecursion(fmax, fmin, polygons, contained);
-			}
-
-			if ((Distance(bmax, Max) < 0.001f && Distance(bmin, Min) < 0.001f)
-			||fabs(double(bmax.x-bmin.x)) < 0.0001 || fabs(double(bmax.y-bmin.y)) < 0.0001 || fabs(double(bmax.z-bmin.z)) < 0.0001)
-			{
-				//infinite split
-				node->back = make_poly_list(bmax, bmin, polygons, contained);
-			}else{
-				node->back = GenerateTreeRecursion(bmax, bmin, polygons, contained);
-			}
-		}
-
-		//this should ensure that we have both a front and a back
-		if(!(node->front && node->back)){
-			//if one of our children died then the other can take our place
-			if(!(node->front || node->back)){
-				PCS_Model::BSP_CUR_DEPTH--;
-				return boost::shared_ptr<bsp_tree_node>((bsp_tree_node*)NULL);
-				//if both are dead we have no reason to exsist anymore, our parents will have to deal with the shame
-			}
-			if(node->front){
-				node = node->front;
-			}else{
-				node = node->back;
-			}
-		}
-
-		// expand our bounding box to accomodate our children
-		//we only need to be as big as our combind children, 
-		//BoundPoly adds all the fudge we could ever want
-		if (node->front)
-		{
-			node->bound_max = node->front->bound_max;
-			node->bound_min = node->front->bound_min;
-			if (node->back)
-			{
-				ExpandBoundingBoxes(node->bound_max, node->bound_min, node->back->bound_max);
-				ExpandBoundingBoxes(node->bound_max, node->bound_min, node->back->bound_min);
-			}
-		}else if (node->back)
-		{
-			node->bound_max = node->back->bound_max;
-			node->bound_min = node->back->bound_min;
-		}
-		//it should be eceedingly rare that we don't have both a front and a back
-
-		PCS_Model::BSP_CUR_DEPTH--;
-		return node;
 	}
+	PCS_Model::BSP_CUR_DEPTH--;
+	return node;
 }
-
-
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
-			vector3d &fmax, vector3d &fmin,
-			vector3d &bmax, vector3d &bmin, vector3d *centera, vector3d *centerb)
+bool Bisect(const vector3d& cmax, const vector3d& cmin, 
+			vector3d &p_point, vector3d &p_norm,
+			const std::vector<pcs_polygon>& polygons,
+			std::vector<int>& contained,
+			std::vector<int>& front,
+			std::vector<int>& back,
+			vector3d *centera, vector3d *centerb)
 {
 	float x,y,z;
+	vector3d difference;
 	if (centera==NULL || centerb==NULL)
 	{
-		x = (float)fabs(double(Max.x-Min.x));
-		y = (float)fabs(double(Max.y-Min.y));
-		z = (float)fabs(double(Max.z-Min.z));
+		x = (float)fabs(double(cmax.x-cmin.x));
+		y = (float)fabs(double(cmax.y-cmin.y));
+		z = (float)fabs(double(cmax.z-cmin.z));
 
-		// center is always the average
-		//p_point = Max + Min;
-		//p_point = p_point/2;
-		vector3d temp(x,y,z);
-		temp = temp / 2;
-		p_point = Min + (temp);
+		difference = vector3d(x,y,z);
+		difference = difference / 2;
+		p_point = cmin + (difference);
 	}
 	else
 	{
@@ -783,75 +607,41 @@ void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
 		y = (float)fabs((double)centera->y-centerb->y);
 		z = (float)fabs((double)centera->z-centerb->z);
 
-		vector3d temp(*centera + *centerb);
-		p_point = temp / 2;
+		difference = *centera + *centerb;
+		p_point = difference / 2;
 	}
 
-	fmax = Max;
-	fmin = Min;
-
-	bmin = Min;
-	bmax = Max;
+	int axis;
 
 	if (x >= y && x >= z)
 	{
+		axis = 0;
 		p_norm = MakeVector(1.0, 0.0, 0.0); // facing +X
-		fmin.x = p_point.x;
-		bmax.x = p_point.x;
 	}
 	else if (y >= z)
 	{
+		axis = 1;
 		p_norm = MakeVector(0.0, 1.0, 0.0);
-		fmin.y = p_point.y;
-		bmax.y = p_point.y;
 	}
 	else
 	{
+		axis = 2;
 		p_norm = MakeVector(0.0, 0.0, 1.0);
-		fmin.z = p_point.z;
-		bmax.z = p_point.z;
 	}
-}
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-//like above, but assumes the passed point is were you want to split at
-//and the norm is the direction you want to split at
-//also assumes the passed norm is pointing in one of the principal directions
-void split_at_point(vector3d Max, vector3d Min, 
-					vector3d &point, vector3d &norm,
-			vector3d &fmax, vector3d &fmin,
-			vector3d &bmax, vector3d &bmin)
-{
-	fmax = Max;
-	fmin = Min;
-
-	bmin = Min;
-	bmax = Max;
-
-	if(norm.x != 0.0f){
-		if(norm.x>0.0f){
-			bmax.x = fmin.x = point.x;
-		}else{
-			bmin.x = fmax.x = point.x;
-		}
-	}else if(norm.y != 0.0f){
-		if(norm.y>0.0f){
-			bmax.y = fmin.y = point.y;
-		}else{
-			bmin.y = fmax.y = point.y;
-		}
-	}else{
-		//it MUST be z, or we had a NULL vec
-		if(norm.z>0.0f){
-			bmax.z = fmin.z = point.z;
-		}else{
-			bmin.z = fmax.z = point.z;
-		}
+	if (difference[axis] < 10 * std::numeric_limits<float>::epsilon() * std::max(fabs(cmax[axis]), fabs(cmin[axis]))) {
+		return false;
 	}
-
+	polylist_comparator comparator(&polygons, axis);
+	std::sort(contained.begin(), contained.end(), comparator);
+	int median = contained.size() / 2;
+	const pcs_polygon& before = polygons[contained[median - 1]];
+	const pcs_polygon& after = polygons[contained[median]];
+	float split = (before.centeroid[axis] + after.centeroid[axis]) / 2;
+	p_point[axis] = split;
+	front.assign(contained.begin(), contained.begin() + median);
+	back.assign(contained.begin() + median, contained.end());
+	return true;
 }
-
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
@@ -1099,88 +889,6 @@ void SplitIntersecting(std::vector<pcs_polygon> &polygons, vector3d plane_point,
 }
 
 
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-
-
-int CountContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons)
-{
-	int used = 0;
-
-	for (unsigned int i = 0; i < polygons.size(); i++)
-	{
-		if (polygons[i].centeroid >= Min && polygons[i].centeroid <= Max)
-		{
-			used++;
-		}
-	}
-	return used;
-}
-
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-int CountContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&unculled)
-{
-	int used = 0;
-
-	for (unsigned int i = 0; i < unculled.size(); i++)
-	{
-		if (polygons[unculled[i]].centeroid >= Min && polygons[unculled[i]].centeroid <= Max)
-		{
-			used++;
-		}
-	}
-	return used;
-}
-
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-std::vector<int> FindContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons)
-{
-	std::vector<int> polys(100);
-	unsigned int used = 0;
-
-	for (unsigned int i = 0; i < polygons.size(); i++)
-	{
-		if (polygons[i].centeroid >= Min && polygons[i].centeroid <= Max)
-		{
-			polys[used] = i;
-			used++;
-
-			if (used >= polys.size()-1)
-				polys.resize(polys.size() * 2);
-		}
-	}
-	polys.resize(used);
-	return polys;
-}
-
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-//this version takes a list of indexes to polys that have already been filtered
-std::vector<int> FindContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&unculled)
-{
-	std::vector<int> polys(100);
-	unsigned int used = 0;
-
-	for (unsigned int i = 0; i < unculled.size(); i++)
-	{
-		if (polygons[unculled[i]].centeroid >= Min && polygons[unculled[i]].centeroid <= Max)
-		{
-			polys[used] = unculled[i];
-			used++;
-
-			if (used >= polys.size()-1)
-				polys.resize(polys.size() * 2);
-		}
-	}
-	polys.resize(used);
-	return polys;
-}
-
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
@@ -1271,16 +979,6 @@ void MakeBound(vector3d &Max, vector3d &Min, std::vector<int> &polylist, std::ve
 	Max = Max + maxbuf;
 	Min = Min + minbuf;
 }
-
-//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-std::vector<bsp_vert> MakePointsList(std::vector<pcs_polygon> &polygons)
-{
-	std::vector<bsp_vert> retval;
-	return retval;
-}
-
-
 
 
 //****************************************************************************

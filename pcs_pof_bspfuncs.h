@@ -179,21 +179,18 @@ int PackTreeInSLDC(boost::shared_ptr<bsp_tree_node> root, int offset, char *buff
 //-----------------------------------------------
 // aux functions for generating the BSP tree
 //-----------------------------------------------
-boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&);
+boost::shared_ptr<bsp_tree_node> GenerateTreeRecursion(std::vector<pcs_polygon> &polygons, std::vector<int>&);
 
-void Bisect(vector3d Max, vector3d Min, vector3d &p_point, vector3d &p_norm,
-			vector3d &fmax, vector3d &fmin,
-			vector3d &bmax, vector3d &bmin, vector3d *centera=NULL, vector3d *centerb=NULL);
-std::vector<int> FindContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons);
-std::vector<int> FindContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&);
-int CountContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons);
-int CountContainedPolygons(vector3d Max, vector3d Min, std::vector<pcs_polygon> &polygons, std::vector<int>&);
+bool Bisect(const vector3d& cmax, const vector3d& cmin,
+			vector3d &p_point, vector3d &p_norm,
+			const std::vector<pcs_polygon>& polygons,
+			std::vector<int>& contained,
+			std::vector<int>& front,
+			std::vector<int>& back,
+			vector3d *centera=NULL, vector3d *centerb=NULL);
 vector3d PolygonCenter(pcs_polygon &polygon);
 void BoundPolygon(vector3d &Max, vector3d &Min, int polygon, std::vector<pcs_polygon> &polygons);
 void MakeBound(vector3d &Max, vector3d &Min, std::vector<int> &polylist, std::vector<pcs_polygon> &polygons);
-std::vector<bsp_vert> MakePointsList(std::vector<pcs_polygon> &polygons);
-
-
 
 void AddIfNotInList(std::vector<pcs_vertex> &list, pcs_vertex &point);
 
