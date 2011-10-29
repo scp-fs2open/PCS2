@@ -818,12 +818,18 @@ void DAEHandler::shield_handler(daeElement *helper) {
 #endif
 	uri.setURI(temp.c_str());
 
-	daeElement* mesh = uri.getElement()->getChild("mesh")->getChild("triangles");
+	daeElement* mesh = uri.getElement()->getChild("mesh");
+	bool use_triangles = false;
+	daeElement* triangles = mesh->getChild("triangles");
+	if (triangles) {
+		use_triangles = true;
+		mesh = triangles;
+	} else {
+		mesh = mesh->getChild("polylist");
+	}
 
 	matrix rotation = get_rotation(helper);
 	
-	daeTArray< daeSmartRef<daeElement> > poly_bits = mesh->getChildren();
-
 	vector<int> refs;
 
 	DAEInputs inputs(mesh,doc,&dae);
@@ -843,6 +849,11 @@ void DAEHandler::shield_handler(daeElement *helper) {
 
 	int num_polies = atoi(mesh->getAttribute("count").c_str());
 
+	std::vector<int> vcount;
+	if (!use_triangles) {
+		parse_int_array(mesh->getChild("vcount")->getCharData().c_str(), &vcount, num_polies);
+	}
+
 	int position = 0;
 	// add each polygon
 	pcs_shield_triangle shield_bit;
@@ -853,6 +864,10 @@ void DAEHandler::shield_handler(daeElement *helper) {
 			shield_bit.face_normal += fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
 
 			position += inputs.max_offset;
+		}
+		// TODO: deal with untriangulated shield meshes properly.
+		if (!use_triangles && vcount[j] > 3) {
+			position += inputs.max_offset * (vcount[j] - 2);
 		}
 		shield_bit.face_normal = MakeUnitVector(FigureNormal(
 					shield_bit.corners[0],
@@ -880,7 +895,15 @@ void DAEHandler::process_insignia(daeElement *element) {
 	//*log << temp << endl;
 	uri.setURI(temp.c_str());
 
-	daeElement* mesh = uri.getElement()->getChild("mesh")->getChild("triangles");
+	daeElement* mesh = uri.getElement()->getChild("mesh");
+	bool use_triangles = false;
+	daeElement* triangles = mesh->getChild("triangles");
+	if (triangles) {
+		use_triangles = true;
+		mesh = triangles;
+	} else {
+		mesh = mesh->getChild("polylist");
+	}
 
 	matrix rotation = get_rotation(element);
 	
@@ -905,6 +928,12 @@ void DAEHandler::process_insignia(daeElement *element) {
 
 	int num_polies = atoi(mesh->getAttribute("count").c_str());
 
+	std::vector<int> vcount;
+	if (!use_triangles) {
+		parse_int_array(mesh->getChild("vcount")->getCharData().c_str(), &vcount, num_polies);
+	}
+
+
 	int position = 0;
 	insignia.faces.resize(num_polies);
 
@@ -915,6 +944,10 @@ void DAEHandler::process_insignia(daeElement *element) {
 			insignia.faces[j].u[k] = (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
 			insignia.faces[j].v[k] = 1.0f - (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
 			position += inputs.max_offset;
+		}
+		// TODO: deal with untriangulated insignia properly.
+		if (!use_triangles && vcount[j] > 3) {
+			position += inputs.max_offset * (vcount[j] - 2);
 		}
 	}
 	model->AddInsignia(&insignia);
