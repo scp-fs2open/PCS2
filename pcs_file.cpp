@@ -2119,7 +2119,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 
 	ERROR_CHECK;
 	if(!Wireframe)
-	for(unsigned int t = 0; t<textures.size(); t++){
+	for(unsigned int t = 0; t<textures.size() + 1; t++){
 		if(subobjects[sobj].vertex_buffer.size() <1)
 			continue;
 		if(subobjects[sobj].vertex_buffer[t].n_verts <1)
@@ -2255,7 +2255,7 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 			glColor4ubv( (GLubyte*) get_SOBJ_color().col);
 		if (highlight_active_model && active_submodel == sobj)
 			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point, subobjects[sobj].bounding_box_max_point);
-		for(unsigned int t = 0; t<textures.size(); t++){
+		for(unsigned int t = 0; t<textures.size() + 1; t++){
 			if (subobjects[sobj].line_vertex_buffer[t].buffer != 0)
 			{
 				glBindBuffer(GL_ARRAY_BUFFER, subobjects[sobj].line_vertex_buffer[t].buffer);

@@ -265,7 +265,7 @@ OGL vertex buffer stuf!
 
 	void Transform(PCS_Model& model, int idx, const matrix& transform, const vector3d& translation, bool transform_pivot, bool fixed_pivot);
 
-	void make_vertex_buffer(int tid);//set's up a vertex buffer
+	void make_vertex_buffer(int tid, int texture_slot); // Sets up a vertex buffer
 	void destroy_vertex_buffer();//frees all the stuff
 
 	private:

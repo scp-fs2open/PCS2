@@ -168,7 +168,7 @@ class TextureControl
 
 		//should this texture be drawn in the solid render?
 		bool solid_render(int idx){
-			return texturenames[idx] != "invisible";//NO!!
+			return idx < 0 || idx >= (int)textures.size() || texturenames[idx] != "invisible";//NO!!
 		}
 };
 
