@@ -57,6 +57,7 @@ void add_scale(daeElement *element, vector3d scale, vector3d parent_scale = vect
 void add_texture_mappings(daeElement *element, std::map<std::string, std::string>* mapping);
 void filter_string(std::string& base, const std::string& property);
 void trim_extra_spaces(std::string& s);
+std::string get_name(daeElement* element);
 
 template <typename T>
 vector3d relative_to_absolute(vector3d vec, T subobj,const std::vector<T>& subobjs) {
