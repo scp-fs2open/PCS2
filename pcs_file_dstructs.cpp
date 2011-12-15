@@ -690,7 +690,7 @@ void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& transla
 	if (norm_after > 1e-5) {
 		radius *= sqrt(fabs(transform.determinant() / norm_after * norm_before));
 	} else {
-		radius = 0;
+		radius *= pow(fabs(transform.determinant()), 1.0f / 3);
 	}
 }
 
