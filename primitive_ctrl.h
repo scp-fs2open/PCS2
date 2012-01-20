@@ -263,7 +263,7 @@ class default_value_vector_ctrl
 	vector3d default_value;
 public:
 	default_value_vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:vector_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset\nReset to calculated value"), wxSize(40,20))
+		:vector_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset to calculated value"), wxSize(40,20))
 	{
 	}
 
@@ -340,7 +340,7 @@ class default_value_float_ctrl
 	float default_value;
 public:
 	default_value_float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:float_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset\nReset to calculated value"), wxSize(40,20))
+		:float_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset to calculated value"), wxSize(40,20))
 	{
 	}
 
