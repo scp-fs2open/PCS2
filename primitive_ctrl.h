@@ -211,26 +211,184 @@ class vector_ctrl : public _vector_ctrl<text_ctrl>{public:vector_ctrl(wxWindow*p
 class vector_disp : public _vector_ctrl<wxStaticText>{public:vector_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 template<class data_ctrl = text_ctrl>
-class _normal_ctrl
+class _vector_button_ctrl
 	:public _vector_ctrl<data_ctrl>
 {
-	wxButton*norm_btn;
+	wxButton*button;
 
 public:
-	_normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
+	_vector_button_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString button_text, wxString button_tooltip, wxSize button_size)
 		:_vector_ctrl<data_ctrl>(parent,x,y,w,h,Title)
 	{
-		add_control(norm_btn = new wxButton(this, NORM_NORMALIZE, _("Norm"), wxDefaultPosition, wxSize(40,20)));
-		norm_btn->SetToolTip(_("Normalize\nMake Unit length"));
+		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, button_size));
+		button->SetToolTip(button_tooltip);
 	}
 
-	void on_normalize(wxCommandEvent& event){
+	void on_click(wxCommandEvent& event) {
+		handle_click_event();
+		wxCommandEvent done_event(EDIT_DONE);
+		GetEventHandler()->ProcessEvent(done_event);
+	}
+
+	virtual void handle_click_event() = 0;
+
+	void EnableButton() {
+		button->Enable();
+	}
+
+	void DisableButton() {
+		button->Disable();
+	}
+};
+
+class vector_button_ctrl : public _vector_button_ctrl<text_ctrl> {
+public:
+	vector_button_ctrl(wxWindow*parent,
+		int x,
+		int y,
+		int w,
+		int h,
+		wxString Title,
+		wxString button_text,
+		wxString button_tooltip,
+		wxSize button_size=wxSize(40,20))
+		:_vector_button_ctrl<text_ctrl>(parent, x, y, w, h, Title, button_text, button_tooltip, button_size) {}
+
+	DECLARE_EVENT_TABLE();
+};
+
+class default_value_vector_ctrl
+	:public vector_button_ctrl
+{
+	vector3d default_value;
+public:
+	default_value_vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
+		:vector_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset\nReset to calculated value"), wxSize(40,20))
+	{
+	}
+
+	virtual void handle_click_event(){
+		vector_button_ctrl::set_value(default_value);
+		DisableButton();
+	}
+
+	virtual void set_value(const vector3d& v, const vector3d& default_value){
+		this->default_value = default_value;
+		vector_button_ctrl::set_value(v);
+		if (v == default_value) {
+			DisableButton();
+		} else {
+			EnableButton();
+		}
+	}
+
+	virtual vector3d get_value(){
+		vector3d value = vector_button_ctrl::get_value();
+		if (value == default_value) {
+			DisableButton();
+		} else {
+			EnableButton();
+		}
+		return value;
+	}
+
+	vector3d get_default_value(){
+		return default_value;
+	}
+};
+
+class float_button_ctrl : public float_ctrl {
+	wxButton*button;
+
+public:
+	float_button_ctrl(wxWindow*parent,
+		int x,
+		int y,
+		int w,
+		int h,
+		wxString Title,
+		wxString button_text,
+		wxString button_tooltip,
+		wxSize button_size=wxSize(40,20))
+		:float_ctrl(parent, x, y, w, h, Title) {
+		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, button_size));
+		button->SetToolTip(button_tooltip);
+	}
+
+
+	void on_click(wxCommandEvent& event) {
+		handle_click_event();
+		wxCommandEvent done_event(EDIT_DONE);
+		GetEventHandler()->ProcessEvent(done_event);
+	}
+
+	virtual void handle_click_event() = 0;
+
+	void EnableButton() {
+		button->Enable();
+	}
+
+	void DisableButton() {
+		button->Disable();
+	}
+	DECLARE_EVENT_TABLE();
+};
+
+class default_value_float_ctrl
+	:public float_button_ctrl
+{
+	float default_value;
+public:
+	default_value_float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
+		:float_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset\nReset to calculated value"), wxSize(40,20))
+	{
+	}
+
+	virtual void handle_click_event(){
+		float_button_ctrl::set_value(default_value);
+		DisableButton();
+	}
+
+	virtual void set_value(const float& v, const float& default_value){
+		this->default_value = default_value;
+		float_button_ctrl::set_value(v);
+		if (v == default_value) {
+			DisableButton();
+		} else {
+			EnableButton();
+		}
+	}
+
+	virtual float get_value(){
+		float value = float_button_ctrl::get_value();
+		if (value == default_value) {
+			DisableButton();
+		} else {
+			EnableButton();
+		}
+		return value;
+	}
+
+	float get_default_value(){
+		return default_value;
+	}
+};
+
+
+class normal_ctrl
+	:public vector_button_ctrl
+{
+public:
+	normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
+		:vector_button_ctrl(parent,x,y,w,h,Title, _("Norm"), _("Normalize\nMake Unit length"), wxSize(40,20))
+	{
+	}
+
+	virtual void handle_click_event(){
 		this->set_value(MakeUnitVector(this->get_value()));
 	}
 
 };
-class normal_ctrl : public _normal_ctrl<text_ctrl>{public:normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<text_ctrl>(parent,x,y,w,h,Title){};DECLARE_EVENT_TABLE();};
-class normal_disp : public _normal_ctrl<wxStaticText>{public:normal_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_normal_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
 
 
 

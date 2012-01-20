@@ -37,8 +37,12 @@ BEGIN_EVENT_TABLE (SOBJ_ctrl,editor_ctrl<pcs_sobj>)
 	EVT_CHECKBOX(BSP_DRAW,SOBJ_ctrl::on_BSP_render_change)
 END_EVENT_TABLE()
 
-BEGIN_EVENT_TABLE (normal_ctrl,_normal_ctrl<text_ctrl>)
-	EVT_BUTTON(NORM_NORMALIZE,normal_ctrl::on_normalize)
+BEGIN_EVENT_TABLE (vector_button_ctrl, _vector_button_ctrl<text_ctrl>)
+	EVT_BUTTON(BUTTON_CTRL_BUTTON,vector_button_ctrl::on_click)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE (float_button_ctrl, float_ctrl)
+	EVT_BUTTON(BUTTON_CTRL_BUTTON,float_button_ctrl::on_click)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE (insignia_ctrl,editor<pcs_insig>)

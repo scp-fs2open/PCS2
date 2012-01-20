@@ -301,8 +301,8 @@ enum
 	//BSP rendering
 	BSP_DRAW,
 
-	//normalize button for normal control
-	NORM_NORMALIZE,
+	// Button for generic control with a button.
+	BUTTON_CTRL_BUTTON,
 
 	//suggest button for suggest string control
 	STRING_SUGGEST,
