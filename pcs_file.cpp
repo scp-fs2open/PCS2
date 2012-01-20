@@ -2507,4 +2507,7 @@ void PCS_Model::Transform(const matrix& transform, const vector3d& translation) 
 	}
 	header.mass_center = transform * header.mass_center + translation;
 	header.mass *= fabs(transform.determinant());
+	header.max_radius_override *= fabs(transform.determinant());
+	header.min_bounding_override = transform * header.min_bounding_override + translation;
+	header.max_bounding_override = transform * header.max_bounding_override + translation;
 }
