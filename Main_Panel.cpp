@@ -1147,6 +1147,8 @@ void main_panel::open_progbar_end(wxAsyncProgressEndEvt &event)
 
 	rebuild_tree();
 	control_panel->reset_undo();
+	control_panel->push_undo();
+
 
 	glcanvas->FreezeRender = false;
 
