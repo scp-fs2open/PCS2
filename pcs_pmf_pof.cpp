@@ -661,16 +661,12 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 	// update our bounding boxes
 	//axis doesn't matter on the bounding boxes - it's all negative/positive values! i'm a faqing moron
-	poffile.HDR2_Set_MinBound(minbox);
-	poffile.HDR2_Set_MaxBound(maxbox);
+	poffile.HDR2_Set_MinBound(header.min_bounding_overridden ? header.min_bounding_override : minbox);
+	poffile.HDR2_Set_MaxBound(header.max_bounding_overridden ? header.max_bounding_override : maxbox);
 	this->header.max_bounding = minbox;
 	this->header.min_bounding = maxbox;
 
-	if (header.max_radius_override) {
-		poffile.HDR2_Set_MaxRadius(header.max_radius_override);
-	} else {
-		poffile.HDR2_Set_MaxRadius(header.max_radius);
-	}
+	poffile.HDR2_Set_MaxRadius(header.max_radius_overridden ? header.max_radius_override : header.max_radius);
 	poffile.HDR2_Set_Details(header.detail_levels.size(), header.detail_levels);
 	poffile.HDR2_Set_Debris(header.debris_pieces.size(), header.debris_pieces);
 	poffile.HDR2_Set_Mass(header.mass);
@@ -710,10 +706,13 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 	// Update Progress
 	progress->incrementWithMessage("Getting Header");
 
-	header.max_radius_override = poffile.HDR2_Get_MaxRadius();
+	header.max_radius = poffile.HDR2_Get_MaxRadius();
+	header.max_radius_override = header.max_radius;
 	header.min_bounding = poffile.HDR2_Get_MinBound();
 	header.max_bounding = poffile.HDR2_Get_MaxBound();
 	POFTranslateBoundingBoxes(header.min_bounding, header.max_bounding);
+	header.min_bounding_override = header.min_bounding;
+	header.max_bounding_override = header.max_bounding;
 
 	unsigned int i, j, k;
 	int scratch; // useless variable - for legacy remnant argument
@@ -1101,9 +1100,9 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 
 	
 	Transform(matrix(), vector3d());
-	if (fabs(header.max_radius - header.max_radius_override) < 0.0001f) {
-		header.max_radius_override = 0.0f;
-	}
+	header.max_radius_overridden = fabs(header.max_radius - header.max_radius_override) > 0.0001f;
+	header.max_bounding_overridden = header.max_bounding != header.max_bounding_override;
+	header.min_bounding_overridden = header.min_bounding != header.min_bounding_override;
 	return 0;
 }
 

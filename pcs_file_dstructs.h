@@ -597,26 +597,27 @@ inline bool operator==(const pcs_glow_array&t, const pcs_glow_array&o){
 
 struct header_data{
 	header_data()
-		:max_radius(0.0f),max_radius_override(0.0f),min_bounding(0,0,0),max_bounding(0,0,0),mass(0.0f),mass_center(0,0,0)
+		:max_radius(0.0f),max_radius_override(0.0f),min_bounding(0,0,0),max_bounding(0,0,0),mass(0.0f),mass_center(0,0,0), max_radius_overridden(false), min_bounding_overridden(false), max_bounding_overridden(false)
 	{
 		memset(MOI,0,sizeof(float)*9);
 		MOI[0][0]=1.0f;
 		MOI[1][1]=1.0f;
 		MOI[2][2]=1.0f;
 	}
-	header_data(float Max_radius, const vector3d&Min_bounding, const vector3d&Max_bounding, float Mass, const vector3d&Mass_center, float moi[3][3])
-		:max_radius(Max_radius),min_bounding(Min_bounding),max_bounding(Max_bounding),mass(Mass),mass_center(Mass_center)
-	{
-		memcpy(MOI,moi,sizeof(float)*9);
-	}
+
 	header_data(const header_data&h){
 		(*this)=h;
 	}
 	const header_data&operator=(const header_data&h){
 		max_radius = h.max_radius;
 		max_radius_override = h.max_radius_override;
+		max_radius_overridden = h.max_radius_overridden;
 		min_bounding = h.min_bounding;
 		max_bounding = h.max_bounding;
+		min_bounding_override = h.min_bounding_override;
+		max_bounding_override = h.max_bounding_override;
+		min_bounding_overridden = h.min_bounding_overridden;
+		max_bounding_overridden = h.max_bounding_overridden;
 		detail_levels = h.detail_levels;
 		debris_pieces = h.debris_pieces;
 		mass = h.mass;
@@ -628,9 +629,15 @@ struct header_data{
 		// ++++ "header" information ++++ //HDR2
 		float max_radius;           // maximum radius of entire ship
 		float max_radius_override;  // custom maximum radius of entire ship
+		float max_radius_overridden;
 
 		vector3d min_bounding;       // min bounding box point
 		vector3d max_bounding;         // max bounding box point
+		vector3d min_bounding_override;       // user-specified override for min bounding box point
+		vector3d max_bounding_override;         // user-specified override for max bounding box point
+		bool min_bounding_overridden;
+		bool max_bounding_overridden;
+
 
 		std::vector<int> detail_levels; // indexes into the subobjects vector
 										// defining "top level" for each sobj
@@ -649,8 +656,13 @@ struct header_data{
 inline bool operator == (const header_data&t, const header_data&h){
 	return t.max_radius == h.max_radius &&
 		t.max_radius_override == h.max_radius_override &&
+		t.max_radius_overridden == h.max_radius_overridden &&
 		t.min_bounding == h.min_bounding &&
 		t.max_bounding == h.max_bounding &&
+		t.min_bounding_override == h.min_bounding_override &&
+		t.max_bounding_override == h.max_bounding_override &&
+		t.min_bounding_overridden == h.min_bounding_overridden &&
+		t.max_bounding_overridden == h.max_bounding_overridden &&
 		t.detail_levels == h.detail_levels &&
 		t.debris_pieces == h.debris_pieces &&
 		t.mass == h.mass &&

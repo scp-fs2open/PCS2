@@ -4,6 +4,7 @@
 #include"array_ctrl.h"
 
 
+
 //control for a cross section
 class cross_section_editor :
 	public editor<pcs_crs_sect>
@@ -57,12 +58,11 @@ public:
 class header_ctrl
 	:public editor_ctrl<header_data>
 {
-	vector_disp*bbox_min;
-	vector_disp*bbox_max;
+	default_value_vector_ctrl*bbox_min;
+	default_value_vector_ctrl*bbox_max;
 	vector_ctrl*cent_mass;
 
-	float_disp*max_rad;
-	float_ctrl*max_rad_override;
+	default_value_float_ctrl*max_rad;
 	float_ctrl*mass;
 
 	model_array_ctrl*detail_levels;
@@ -79,15 +79,13 @@ public:
 	header_ctrl(wxWindow*parent)
 		:editor_ctrl<header_data>(parent, _("Header"))
 	{
-		add_control(bbox_min=new vector_disp(this,0,0,60,40,_("Bounding Box Min")),0,wxEXPAND );
-		add_control(bbox_max=new vector_disp(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
+		add_control(bbox_min=new default_value_vector_ctrl(this,0,0,60,40,_("Bounding Box Min")),0,wxEXPAND );
+		add_control(bbox_max=new default_value_vector_ctrl(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
 		add_control(cent_mass=new vector_ctrl(this,0,60,60,40,_("Center of Mass")),0,wxEXPAND );
 
 		wxBoxSizer*f_sizer = new wxBoxSizer(wxHORIZONTAL);
-		max_rad = new float_disp(this,0,90,30,40,_("Max Radius"));
-		max_rad_override = new float_ctrl(this,0,90,30,40,_("Radius override"));
+		max_rad = new default_value_float_ctrl(this,0,90,30,40,_("Max Radius"));
 		f_sizer->Add(max_rad,1);
-		f_sizer->Add(max_rad_override,1);
 		add_sizer(f_sizer,0,wxEXPAND);
 		add_control(mass = new float_ctrl(this,0,90,60,40,_("Mass")), 0, wxEXPAND);
 
@@ -108,12 +106,11 @@ public:
 	void set_value(const header_data&t){
 		data=t;
 
-		bbox_min->set_value(data.min_bounding);
-		bbox_max->set_value(data.max_bounding);
+		bbox_min->set_value(data.min_bounding_overridden ? data.min_bounding_override : data.min_bounding, data.min_bounding);
+		bbox_max->set_value(data.max_bounding_overridden ? data.max_bounding_override : data.max_bounding, data.max_bounding);
 		cent_mass->set_value(data.mass_center);
 
-		max_rad->set_value(data.max_radius);
-		max_rad_override->set_value(data.max_radius_override);
+		max_rad->set_value(data.max_radius_overridden ? data.max_radius_override : data.max_radius, data.max_radius);
 		mass->set_value(data.mass);
 		
 		detail_levels->set_value(data.detail_levels);
@@ -124,13 +121,19 @@ public:
 		MOI->set_value(data.MOI);
 	}
 	header_data get_value(){
-		data.min_bounding = bbox_min->get_value();
-		data.max_bounding = bbox_max->get_value();
+		data.min_bounding_override = bbox_min->get_value();
+		data.max_bounding_override = bbox_max->get_value();
+		data.min_bounding = bbox_min->get_default_value();
+		data.max_bounding = bbox_max->get_default_value();
+		data.min_bounding_overridden = data.min_bounding_override != data.min_bounding;
+		data.max_bounding_overridden = data.max_bounding_override != data.max_bounding;
+
 		data.mass_center = cent_mass->get_value();
 
 		data.mass = mass->get_value();
-		data.max_radius = max_rad->get_value();
-		data.max_radius_override = max_rad_override->get_value();
+		data.max_radius_override = max_rad->get_value();
+		data.max_radius = max_rad->get_default_value();
+		data.max_radius_overridden = data.max_radius_override != data.max_radius;
 		
 		data.detail_levels = detail_levels->get_value();
 		data.debris_pieces = debris_pieces->get_value();
@@ -146,8 +149,13 @@ public:
 	//populates the control with data from the model
 	void set_data(PCS_Model &model){
 		set_value(model.get_header());
-		
-		vector3d size = data.max_bounding - data.min_bounding;
+		recalculate_dimensions(model);
+	}
+
+	void recalculate_dimensions(const PCS_Model &model) {
+		vector3d& min_box = data.min_bounding_overridden ? data.min_bounding_override : data.min_bounding;
+		vector3d& max_box = data.max_bounding_overridden ? data.max_bounding_override : data.max_bounding;
+		vector3d size = max_box - min_box;
 		hinfo->set_value(std::string(wxString::Format(
 						_("H: %0.2f, W: %0.2f, D: %0.2f"),
 						abs(size.y), abs(size.x), abs(size.z) ).mb_str()));
@@ -157,6 +165,7 @@ public:
 	//applies the data in the control to the model
 	void apply_data(PCS_Model &model){
 		model.set_header(get_value());
+		recalculate_dimensions(model);
 	}
 
 	void set_item(const std::vector<int>&coord){
