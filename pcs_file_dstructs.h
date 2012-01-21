@@ -225,11 +225,18 @@ struct pcs_sobj
 
 	// some physics useful stuff
 	float radius;
+	float radius_override;
+	float radius_overridden;
 	vector3d offset;
 
 	vector3d geometric_center;
 	vector3d bounding_box_min_point;
 	vector3d bounding_box_max_point;
+	vector3d bounding_box_min_point_override;
+	vector3d bounding_box_max_point_override;
+	bool bounding_box_min_point_overridden;
+	bool bounding_box_max_point_overridden;
+
 
 	// other stuff
 	std::string name;
@@ -242,7 +249,7 @@ struct pcs_sobj
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
-	pcs_sobj() : parent_sobj(-1), radius(0.0), movement_type(MNONE), movement_axis(ANONE) {}
+	pcs_sobj() : parent_sobj(-1), radius(0.0), movement_type(MNONE), movement_axis(ANONE), radius_overridden(false), bounding_box_min_point_overridden(false), bounding_box_max_point_overridden(false) {}
 	void GenerateBBoxes() { 
 				for (unsigned int i = 0; i < polygons.size(); i++) 
 				{ 
@@ -276,10 +283,16 @@ OGL vertex buffer stuf!
 inline bool operator == (const pcs_sobj&t, const pcs_sobj&o){
 	return 	t.parent_sobj == o.parent_sobj&&
 		t.radius == o.radius&&
+		t.radius_override == o.radius_override&&
+		t.radius_overridden == o.radius_overridden&&
 		t.offset == o.offset&&
 		t.geometric_center == o.geometric_center&&
 		t.bounding_box_min_point == o.bounding_box_min_point&&
+		t.bounding_box_min_point_overridden == o.bounding_box_min_point_overridden&&
+		t.bounding_box_min_point_override == o.bounding_box_min_point_override&&
 		t.bounding_box_max_point == o.bounding_box_max_point&&
+		t.bounding_box_max_point_overridden == o.bounding_box_max_point_overridden&&
+		t.bounding_box_max_point_override == o.bounding_box_max_point_override&&
 		t.name == o.name&&
 		t.properties == o.properties&&
 		t.movement_type == o.movement_type&&
