@@ -522,19 +522,26 @@ void pmf_bsp_cache::Read(std::istream& in, int ver)
 		{
 			bsp_data.reset(new char[bsp_size]);
 			// XXX FIXME: Reads sizeof(bsp_size): 4 bytes.
-			BFRead(bsp_data, bsp_size) 
+			// XXX: Fixing this would require a PMF version bump as older
+			// readers would expect a broken PMF.
+			BFRead(*bsp_data.get(), bsp_size)
 		}
 		BFRead(changed, bool)
+		// Any values read will be useless, so we might as well override them
+		// with some values that shouldn't crash.
+		bsp_size = 0;
+		bsp_data.reset(NULL);
+		changed = true;
 	}
 }
 	
 void pmf_bsp_cache::Write(std::ostream& out)
 {
-	BFWrite(bsp_size, int)
-	if (bsp_size != 0) {
-		// XXX FIXME: Writes sizeof(bsp_size): 4 bytes.
-		BFWrite(*bsp_data.get(), bsp_size) }
-	BFWrite(changed, bool)
+	// As above, but this might help older versions crash less.
+	int dummy_bsp_size = 0;
+	bool dummy_changed = true;
+	BFWrite(dummy_bsp_size, int)
+	BFWrite(dummy_changed, bool)
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
