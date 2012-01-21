@@ -20,6 +20,9 @@ protected:
 	primitive_radio_button_ctrl<int>*movement_axis;
 	multi_string_ctrl*properties;
 	vector_ctrl*offset;
+	default_value_vector_ctrl*bbox_min;
+	default_value_vector_ctrl*bbox_max;
+	default_value_float_ctrl*max_rad;
 
 public:
 
@@ -48,6 +51,10 @@ public:
 		add_control(movement_axis=new primitive_radio_button_ctrl<int>(this, list,0,0,60,160,_("Rotation Axis")),0,wxEXPAND );
 
 		add_control(offset=new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
+
+		add_control(bbox_min=new default_value_vector_ctrl(this,0,0,60,40,_("Bounding Box Min")),0,wxEXPAND );
+		add_control(bbox_max=new default_value_vector_ctrl(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
+		add_control(max_rad = new default_value_float_ctrl(this,0,90,60,40,_("Max Radius")), 0, wxEXPAND);
 
 		std::vector<std::string> op;
 		op.push_back("$special=subsystem\n");
@@ -96,6 +103,10 @@ public:
 			movement_axis->set_value(ANONE);
 		}
 		offset->set_value(t.offset);
+		bbox_min->set_value(data.bounding_box_min_point_overridden ? data.bounding_box_min_point_override : data.bounding_box_min_point, data.bounding_box_min_point);
+		bbox_max->set_value(data.bounding_box_max_point_overridden ? data.bounding_box_max_point_override : data.bounding_box_max_point, data.bounding_box_max_point);
+		max_rad->set_value(data.radius_overridden? data.radius_override : data.radius, data.radius);
+
 		properties->set_value(t.properties);
 	}
 
@@ -105,6 +116,16 @@ public:
 		data.movement_axis = movement_axis->get_value();
 		data.movement_type = data.movement_axis == ANONE ? MNONE : ROTATE;
 		data.offset = offset->get_value();
+		data.bounding_box_min_point_override = bbox_min->get_value();
+		data.bounding_box_max_point_override = bbox_max->get_value();
+		data.bounding_box_min_point = bbox_min->get_default_value();
+		data.bounding_box_max_point = bbox_max->get_default_value();
+		data.bounding_box_min_point_overridden = data.bounding_box_min_point_override != data.bounding_box_min_point;
+		data.bounding_box_max_point_overridden = data.bounding_box_max_point_override != data.bounding_box_max_point;
+		data.radius_override = max_rad->get_value();
+		data.radius = max_rad->get_default_value();
+		data.radius_overridden = data.radius_override != data.radius;
+
 		data.properties = properties->get_value();
 		return data;
 	}
@@ -166,7 +187,8 @@ public:
 
 	//return's the control's value
 	pcs_sobj get_value(){
-		return sobj->get_value();
+		data = sobj->get_value();
+		return data;
 	}
 
 	//populates the control with data from the model
@@ -181,31 +203,36 @@ public:
 
 			bsp_render_box->SetValue(model.draw_bsp);
 
-			vector3d size = data.bounding_box_max_point - data.bounding_box_min_point;
-
-			wxString info(wxString::Format(_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\nBoundingbox Min:  %0.2f, %0.2f, %0.2f\nBoundingbox Max:  %0.2f, %0.2f, %0.2f\n"),
-				data.polygons.size(), 
-				model.get_child_subobj_poly_count(sobj_num), 
-				data.polygons.size() + model.get_child_subobj_poly_count(sobj_num), 
-				data.bounding_box_min_point.x,data.bounding_box_min_point.y,data.bounding_box_min_point.z, 
-				data.bounding_box_max_point.x,data.bounding_box_max_point.y,data.bounding_box_max_point.z));
-			info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nRadius:           %f\nParent submodel:  "),
-				fabs(size.y), fabs(size.x), fabs(size.z),
-				data.radius);
-			if (data.parent_sobj > -1) {
-				info += wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8);
-			} else {
-				info += _("*NONE*");
-			}
-			info += _("\n");
-			sobj_info->set_value(std::string(info.mb_str()));
+			update_info(model);
 		}
+	}
+
+	void update_info(PCS_Model& model) {
+
+		vector3d& min_box = data.bounding_box_min_point_overridden ? data.bounding_box_min_point_override : data.bounding_box_min_point;
+		vector3d& max_box = data.bounding_box_max_point_overridden ? data.bounding_box_max_point_override : data.bounding_box_max_point;
+		vector3d size = max_box - min_box;
+		wxString info(wxString::Format(_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\n"),
+			data.polygons.size(),
+			model.get_child_subobj_poly_count(sobj_num),
+			data.polygons.size() + model.get_child_subobj_poly_count(sobj_num)));
+		info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  "),
+			fabs(size.y), fabs(size.x), fabs(size.z));
+		if (data.parent_sobj > -1) {
+			info += wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8);
+		} else {
+			info += _("*NONE*");
+		}
+		info += _("\n");
+		sobj_info->set_value(std::string(info.mb_str()));
 	}
 
 	//applies the data in the control to the model
 	void apply_data(PCS_Model &model){
-		if(sobj_num >=0 && sobj_num<model.GetSOBJCount())
-		model.SOBJ(sobj_num)=get_value();
+		if(sobj_num >=0 && sobj_num<model.GetSOBJCount()) {
+			model.SOBJ(sobj_num)=get_value();
+			update_info(model);
+		}
 	}
 
 	void set_item(const std::vector<int>&coord){
