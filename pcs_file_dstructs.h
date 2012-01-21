@@ -226,7 +226,7 @@ struct pcs_sobj
 	// some physics useful stuff
 	float radius;
 	float radius_override;
-	float radius_overridden;
+	bool radius_overridden;
 	vector3d offset;
 
 	vector3d geometric_center;
