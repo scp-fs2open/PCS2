@@ -716,6 +716,12 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 	header.max_radius_overridden = header.max_radius_override != header.max_radius;
 	header.min_bounding_overridden = header.min_bounding_override != header.min_bounding;
 	header.max_bounding_overridden = header.max_bounding_override != header.max_bounding;
+	for (size_t i = 0; i < subobjects.size(); ++i) {
+		pcs_sobj& sobj = subobjects[i];
+		sobj.radius_overridden = fabs(sobj.radius - sobj.radius_override) > 0.0001f;
+		sobj.bounding_box_min_point_overridden = sobj.bounding_box_min_point != sobj.bounding_box_min_point_override;
+		sobj.bounding_box_max_point_overridden = sobj.bounding_box_max_point != sobj.bounding_box_max_point_override;
+	}
 
 	progress->incrementProgress();
 

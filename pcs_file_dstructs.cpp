@@ -121,11 +121,11 @@ void pcs_sobj::Write(std::ostream& out)
 {
 	//BF_WriteString
 	BFWrite(parent_sobj, int)
-	BFWrite(radius, float)
+	BFWrite(radius_overridden ? radius_override : radius, float)
 	BFWrite(offset, vector3d)
 	BFWrite(geometric_center, vector3d)
-	BFWrite(bounding_box_min_point, vector3d)
-	BFWrite(bounding_box_max_point, vector3d)
+	BFWrite(bounding_box_min_point_overridden ? bounding_box_min_point_override : bounding_box_min_point, vector3d)
+	BFWrite(bounding_box_max_point_overridden ? bounding_box_max_point_override : bounding_box_max_point, vector3d)
 	BFWriteString(name);
 	BFWriteString(properties);
 	BFWrite(movement_type, int)
@@ -141,10 +141,13 @@ void pcs_sobj::Read(std::istream &in, int ver)
 {
 	BFRead(parent_sobj, int)
 	BFRead(radius, float)
+	radius_override = radius;
 	BFRead(offset, vector3d)
 	BFRead(geometric_center, vector3d)
 	BFRead(bounding_box_min_point, vector3d)
+	bounding_box_min_point_override = bounding_box_min_point;
 	BFRead(bounding_box_max_point, vector3d)
+	bounding_box_max_point_override = bounding_box_max_point;
 	BFReadString(name);
 	BFReadString(properties);
 	BFRead(movement_type, int)
