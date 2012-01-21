@@ -2051,7 +2051,8 @@ void PCS_Model::RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_v
 
 		//highlight active model
 		if(highlight_active_model && sobj == active_submodel){
-			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point, subobjects[sobj].bounding_box_max_point);
+			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point_overridden ? subobjects[sobj].bounding_box_min_point_override : subobjects[sobj].bounding_box_min_point,
+				subobjects[sobj].bounding_box_max_point_overridden ? subobjects[sobj].bounding_box_max_point_override : subobjects[sobj].bounding_box_max_point);
 			for (i = 0; i < polygons.size(); i++)
 			{
 
@@ -2261,7 +2262,8 @@ void PCS_Model::RenderGeometry_vertex_buffers(int sobj, TextureControl &tc){
 		else
 			glColor4ubv( (GLubyte*) get_SOBJ_color().col);
 		if (highlight_active_model && active_submodel == sobj)
-			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point, subobjects[sobj].bounding_box_max_point);
+			OpenGL_RenderBox(subobjects[sobj].bounding_box_min_point_overridden ? subobjects[sobj].bounding_box_min_point_override : subobjects[sobj].bounding_box_min_point,
+				subobjects[sobj].bounding_box_max_point_overridden ? subobjects[sobj].bounding_box_max_point_override : subobjects[sobj].bounding_box_max_point);
 		for(unsigned int t = 0; t<textures.size() + 1; t++){
 			if (subobjects[sobj].line_vertex_buffer[t].buffer != 0)
 			{
