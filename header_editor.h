@@ -83,10 +83,7 @@ public:
 		add_control(bbox_max=new default_value_vector_ctrl(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
 		add_control(cent_mass=new vector_ctrl(this,0,60,60,40,_("Center of Mass")),0,wxEXPAND );
 
-		wxBoxSizer*f_sizer = new wxBoxSizer(wxHORIZONTAL);
-		max_rad = new default_value_float_ctrl(this,0,90,30,40,_("Max Radius"));
-		f_sizer->Add(max_rad,1);
-		add_sizer(f_sizer,0,wxEXPAND);
+		add_control(max_rad = new default_value_float_ctrl(this,0,90,60,40,_("Max Radius")), 0, wxEXPAND);
 		add_control(mass = new float_ctrl(this,0,90,60,40,_("Mass")), 0, wxEXPAND);
 
 		add_control(detail_levels=new model_array_ctrl(this,0,120,90,90,_("LOD"), _("Model#")),0,wxEXPAND );
