@@ -1040,6 +1040,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		obj = &subobjects[i];
 		poffile.OBJ2_Get_Parent(i, obj->parent_sobj);
 		poffile.OBJ2_Get_Radius(i, obj->radius);
+		obj->radius_override = obj->radius;
 
 		poffile.OBJ2_Get_Offset(i, obj->offset);
 		obj->offset = POFTranslate(obj->offset);
@@ -1052,6 +1053,8 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		poffile.OBJ2_Get_BoundingMax(i, obj->bounding_box_max_point);
 
 		POFTranslateBoundingBoxes(obj->bounding_box_min_point, obj->bounding_box_max_point);
+		obj->bounding_box_min_point_override = obj->bounding_box_min_point;
+		obj->bounding_box_max_point_override = obj->bounding_box_max_point;
 
 		poffile.OBJ2_Get_Name(i, obj->name);
 		poffile.OBJ2_Get_Props(i, obj->properties);
@@ -1103,6 +1106,12 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 	header.max_radius_overridden = fabs(header.max_radius - header.max_radius_override) > 0.0001f;
 	header.max_bounding_overridden = header.max_bounding != header.max_bounding_override;
 	header.min_bounding_overridden = header.min_bounding != header.min_bounding_override;
+	for (size_t i = 0; i < subobjects.size(); ++i) {
+		pcs_sobj& sobj = subobjects[i];
+		sobj.radius_overridden = fabs(sobj.radius - sobj.radius_override) > 0.0001f;
+		sobj.bounding_box_min_point_overridden = sobj.bounding_box_min_point != sobj.bounding_box_min_point_override;
+		sobj.bounding_box_max_point_overridden = sobj.bounding_box_max_point != sobj.bounding_box_max_point_override;
+	}
 	return 0;
 }
 
@@ -1302,6 +1311,15 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 	if (dst.radius == 0.0f) {
 		dst.bounding_box_max_point = vector3d();
 		dst.bounding_box_min_point = vector3d();
+	}
+	if (src.radius_override) {
+		dst.radius = src.radius_override;
+	}
+	if (src.bounding_box_min_point_overridden) {
+		dst.bounding_box_min_point = src.bounding_box_min_point_override;
+	}
+	if (src.bounding_box_max_point_overridden) {
+		dst.bounding_box_max_point = src.bounding_box_max_point_override;
 	}
 	POFTranslateBoundingBoxes(dst.bounding_box_min_point, dst.bounding_box_max_point);
 	return true;
