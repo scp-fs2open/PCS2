@@ -86,8 +86,8 @@
 //shortcuts
 //****************************************************************************
 
-#define BFWrite(obj, type) out.write((char *)&obj, sizeof(type));
-#define BFRead(obj, type) in.read((char *)&obj, sizeof(type));
+#define BFWrite(obj, type) out.write((char *)&(obj), sizeof(type));
+#define BFRead(obj, type) in.read((char *)&(obj), sizeof(type));
 #define BFWriteString(string) BF_WriteString(out, string);
 #define BFReadString(string) BF_ReadString(in, string);
 #define BFWriteVector(vector) BF_WriteVector(out, vector);

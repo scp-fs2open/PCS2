@@ -642,6 +642,9 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 	BFRead(header.max_radius, float)
 	BFRead(header.min_bounding, vector3d)
 	BFRead(header.max_bounding, vector3d)
+	header.max_radius_override = header.max_radius;
+	header.min_bounding_override = header.min_bounding;
+	header.max_bounding_override = header.max_bounding;
 	BFReadVector(header.detail_levels)
 	BFReadVector(header.debris_pieces)
 	BFRead(header.mass, float)
@@ -709,6 +712,10 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 		BFRead(has_fullsmoothing_data, bool)
 		
 	}
+	Transform(matrix(), vector3d());
+	header.max_radius_overridden = header.max_radius_override != header.max_radius;
+	header.min_bounding_overridden = header.min_bounding_override != header.min_bounding;
+	header.max_bounding_overridden = header.max_bounding_override != header.max_bounding;
 
 	progress->incrementProgress();
 
@@ -739,9 +746,9 @@ int PCS_Model::SaveToPMF(std::string filename, AsyncProgress* progress)
 	progress->incrementWithMessage("Writing Header");
 	// --------  data  -------- 
 
-	BFWrite(header.max_radius, float)
-	BFWrite(header.min_bounding, vector3d)
-	BFWrite(header.max_bounding, vector3d)
+	BFWrite(header.max_radius_overridden ? header.max_radius_override : header.max_radius, float);
+	BFWrite(header.min_bounding_overridden ? header.min_bounding_override : header.min_bounding, vector3d);
+	BFWrite(header.max_bounding_overridden ?  header.max_bounding_override : header.max_bounding, vector3d);
 	BFWriteVector(header.detail_levels)
 	BFWriteVector(header.debris_pieces)
 	BFWrite(header.mass, float)
