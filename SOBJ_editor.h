@@ -120,11 +120,11 @@ public:
 		data.bounding_box_max_point_override = bbox_max->get_value();
 		data.bounding_box_min_point = bbox_min->get_default_value();
 		data.bounding_box_max_point = bbox_max->get_default_value();
-		data.bounding_box_min_point_overridden = data.bounding_box_min_point_override != data.bounding_box_min_point;
-		data.bounding_box_max_point_overridden = data.bounding_box_max_point_override != data.bounding_box_max_point;
+		data.bounding_box_min_point_overridden = bbox_min->is_overridden();
+		data.bounding_box_max_point_overridden = bbox_max->is_overridden();
 		data.radius_override = max_rad->get_value();
 		data.radius = max_rad->get_default_value();
-		data.radius_overridden = data.radius_override != data.radius;
+		data.radius_overridden = max_rad->is_overridden();
 
 		data.properties = properties->get_value();
 		return data;

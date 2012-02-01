@@ -122,15 +122,15 @@ public:
 		data.max_bounding_override = bbox_max->get_value();
 		data.min_bounding = bbox_min->get_default_value();
 		data.max_bounding = bbox_max->get_default_value();
-		data.min_bounding_overridden = data.min_bounding_override != data.min_bounding;
-		data.max_bounding_overridden = data.max_bounding_override != data.max_bounding;
+		data.min_bounding_overridden = bbox_min->is_overridden();
+		data.max_bounding_overridden = bbox_max->is_overridden();
 
 		data.mass_center = cent_mass->get_value();
 
 		data.mass = mass->get_value();
 		data.max_radius_override = max_rad->get_value();
 		data.max_radius = max_rad->get_default_value();
-		data.max_radius_overridden = data.max_radius_override != data.max_radius;
+		data.max_radius_overridden = max_rad->is_overridden();
 		
 		data.detail_levels = detail_levels->get_value();
 		data.debris_pieces = debris_pieces->get_value();

@@ -275,25 +275,26 @@ public:
 	virtual void set_value(const vector3d& v, const vector3d& default_value){
 		this->default_value = default_value;
 		vector_button_ctrl::set_value(v);
-		if (v == default_value) {
-			DisableButton();
-		} else {
+		if (Distance(v, default_value) > 1e-5f) {
 			EnableButton();
-		}
-	}
-
-	virtual vector3d get_value(){
-		vector3d value = vector_button_ctrl::get_value();
-		if (value == default_value) {
-			DisableButton();
 		} else {
-			EnableButton();
+			DisableButton();
 		}
-		return value;
 	}
 
 	vector3d get_default_value(){
 		return default_value;
+	}
+
+	bool is_overridden(){
+		vector3d value = get_value();
+		bool overridden = Distance(value, default_value) > 1e-5f;
+		if (overridden) {
+			EnableButton();
+		} else {
+			DisableButton();
+		}
+		return overridden;
 	}
 };
 
@@ -349,28 +350,29 @@ public:
 		DisableButton();
 	}
 
-	virtual void set_value(const float& v, const float& default_value){
+	virtual void set_value(float v, float default_value){
 		this->default_value = default_value;
 		float_button_ctrl::set_value(v);
-		if (v == default_value) {
-			DisableButton();
-		} else {
+		if (fabs(v - default_value) > 1e-5f) {
 			EnableButton();
-		}
-	}
-
-	virtual float get_value(){
-		float value = float_button_ctrl::get_value();
-		if (value == default_value) {
-			DisableButton();
 		} else {
-			EnableButton();
+			DisableButton();
 		}
-		return value;
 	}
 
 	float get_default_value(){
 		return default_value;
+	}
+
+	bool is_overridden(){
+		float value = get_value();
+		bool overridden = fabs(value - default_value) > 1e-5f;
+		if (overridden) {
+			EnableButton();
+		} else {
+			DisableButton();
+		}
+		return overridden;
 	}
 };
 
