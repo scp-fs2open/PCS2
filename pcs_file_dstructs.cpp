@@ -570,7 +570,10 @@ void pcs_sobj::TransformBefore(PCS_Model& model, int idx) {
 	// Paths:
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
-		if (!path.parent.empty() && (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1)))) {
+		if (!path.parent.empty() &&
+		    (boost::algorithm::iequals(path.parent, name) ||
+		     (path.parent.size() > 1 && boost::algorithm::iequals(path.parent.substr(1), name)) ||
+		     (name.size() > 1 && boost::algorithm::iequals(path.parent, name.substr(1))))) {
 			path.Transform(transform, global_offset);
 		}
 	}
@@ -652,7 +655,10 @@ void pcs_sobj::TransformAfter(PCS_Model& model, int idx, const matrix& transform
 	// Paths:
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
-		if (!path.parent.empty() && (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1)))) {
+		if (!path.parent.empty() &&
+		    (boost::algorithm::iequals(path.parent, name) ||
+		     (path.parent.size() > 1 && boost::algorithm::iequals(path.parent.substr(1), name)) ||
+		     (name.size() > 1 && boost::algorithm::iequals(path.parent, name.substr(1))))) {
 			path.Transform(transform, subtranslation + global_offset);
 		}
 	}
@@ -778,7 +784,10 @@ void pcs_special::Transform(PCS_Model& model, const matrix& transform, const vec
 	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
-		if (!path.parent.empty() && (boost::algorithm::iequals(path.parent, name) || boost::algorithm::iequals(path.parent.substr(1), name) || boost::algorithm::iequals(path.parent, name.substr(1)))) {
+		if (!path.parent.empty() &&
+		    (boost::algorithm::iequals(path.parent, name) ||
+		     (path.parent.size() > 1 && boost::algorithm::iequals(path.parent.substr(1), name)) ||
+		     (name.size() > 1 && boost::algorithm::iequals(path.parent, name.substr(1))))) {
 			path.Transform(transform, translation);
 		}
 	}
