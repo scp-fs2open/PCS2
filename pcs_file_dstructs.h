@@ -249,7 +249,7 @@ struct pcs_sobj
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
-	pcs_sobj() : parent_sobj(-1), radius(0.0), movement_type(MNONE), movement_axis(ANONE), radius_overridden(false), bounding_box_min_point_overridden(false), bounding_box_max_point_overridden(false) {}
+	pcs_sobj() : parent_sobj(-1), radius(0.0), movement_type(MNONE), movement_axis(ANONE), radius_overridden(false), radius_override(0.0f), bounding_box_min_point_overridden(false), bounding_box_max_point_overridden(false) {}
 	void GenerateBBoxes() { 
 				for (unsigned int i = 0; i < polygons.size(); i++) 
 				{ 

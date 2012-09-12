@@ -1312,7 +1312,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 		dst.bounding_box_max_point = vector3d();
 		dst.bounding_box_min_point = vector3d();
 	}
-	if (src.radius_override) {
+	if (src.radius_overridden) {
 		dst.radius = src.radius_override;
 	}
 	if (src.bounding_box_min_point_overridden) {
