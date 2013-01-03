@@ -1317,6 +1317,8 @@ void PCS_Model::AddSOBJ(pcs_sobj *obj)
 		subobjects.push_back(empty);
 	}
 	if (vbos_enabled) {
+		subobjects.back().vertex_buffer.clear();
+		subobjects.back().line_vertex_buffer.clear();
 		make_vertex_buffer(subobjects.size() - 1);
 	}
 }
