@@ -26,7 +26,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="cl /O2 /I &quot;D:\libraries\boost&quot; /I &quot;D:\libraries\wxWidgets\lib\vc_lib\msw&quot; /I &quot;D:\libraries\wxWidgets\include&quot; /I &quot;D:\libraries\DevIL\include&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;__WINDOWS__&quot; /D &quot;__WXMSW__&quot; /D &quot;__WIN95__&quot; /D &quot;__WIN32__&quot; /D &quot;WINVER=0x0400&quot; /D &quot;STRICT&quot; /D &quot;_VC80_UPGRADE=0x0600&quot; /GF /FD /EHsc /MD /Gy /arch:SSE /Fp&quot;.\Release/pcs2.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /FR&quot;.\Release\\&quot; /W3 /nologo /c /TP /errorReport:prompt versions.cpp"
+				CommandLine="cl /O2 /I &quot;C:\libraries\boost&quot; /I &quot;C:\libraries\wxWidgets\lib\vc_lib\msw&quot; /I &quot;C:\libraries\wxWidgets\include&quot; /I &quot;C:\libraries\DevIL\include&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;NDEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;__WINDOWS__&quot; /D &quot;__WXMSW__&quot; /D &quot;__WIN95__&quot; /D &quot;__WIN32__&quot; /D &quot;WINVER=0x0400&quot; /D &quot;STRICT&quot; /D &quot;_VC80_UPGRADE=0x0600&quot; /GF /FD /EHsc /MD /Gy /arch:SSE /Fp&quot;.\Release/pcs2.pch&quot; /Fo&quot;.\Release/&quot; /Fd&quot;.\Release/&quot; /FR&quot;.\Release\\&quot; /W3 /nologo /c /TP /errorReport:prompt versions.cpp"
 				ExcludedFromBuild="true"
 			/>
 			<Tool
@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="3"
 				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="C:\libraries\wxWidgets\lib\vc_dll\msw;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_44;pugixml"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;NDEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;WXUSINGDLL;__WIN95__;__WIN32__;WINVER=0x0400;STRICT"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -81,11 +81,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="GLee.lib wxmsw28_core.lib wxmsw28_adv.lib wxmsw28_gl.lib wxbase28.lib devil.lib ilu.lib ilut.lib glu32.lib opengl32.lib libcollada14dom21.lib"
+				AdditionalDependencies="wxmsw28_core.lib wxmsw28_adv.lib wxmsw28_gl.lib wxbase28.lib devil.lib ilu.lib ilut.lib glu32.lib opengl32.lib"
 				OutputFile=".\Release/pcs2.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="C:\libraries\colladadom\dom\build\vc9-1.4"
+				AdditionalLibraryDirectories="C:\libraries\wxWidgets\lib\vc_dll;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_44\lib"
 				IgnoreDefaultLibraryNames="LIBC.lib;libci.lib;msvcrtd.lib"
 				GenerateDebugInformation="false"
 				AssemblyDebug="0"
@@ -132,7 +132,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="cl /Od /I &quot;D:\libraries\wxWidgets\lib\vc_lib\msw&quot; /I &quot;D:\libraries\wxWidgets\include&quot; /I &quot;D:\libraries\DevIL\include&quot; /I &quot;D:\libraries\boost&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;__WINDOWS__&quot; /D &quot;__WXMSW__&quot; /D &quot;__WXDEBUG__&quot; /D &quot;WXDEBUG=1&quot; /D &quot;__WIN95__&quot; /D &quot;__WIN32__&quot; /D &quot;WINVER=0x0400&quot; /D &quot;STRICT&quot; /D &quot;_VC80_UPGRADE=0x0600&quot; /Gm /EHsc /RTC1 /MDd /arch:SSE /Fp&quot;.\Debug/pcs2.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /FR&quot;.\Debug\\&quot; /W3 /nologo /c /ZI /TP /errorReport:prompt versions.cpp"
+				CommandLine="cl /Od /I &quot;C:\libraries\wxWidgets\lib\vc_lib\msw&quot; /I &quot;C:\libraries\wxWidgets\include&quot; /I &quot;C:\libraries\DevIL\include&quot; /I &quot;C:\libraries\boost&quot; /D &quot;_CRT_SECURE_NO_DEPRECATE&quot; /D &quot;_DEBUG&quot; /D &quot;WIN32&quot; /D &quot;_WINDOWS&quot; /D &quot;__WINDOWS__&quot; /D &quot;__WXMSW__&quot; /D &quot;__WXDEBUG__&quot; /D &quot;WXDEBUG=1&quot; /D &quot;__WIN95__&quot; /D &quot;__WIN32__&quot; /D &quot;WINVER=0x0400&quot; /D &quot;STRICT&quot; /D &quot;_VC80_UPGRADE=0x0600&quot; /Gm /EHsc /RTC1 /MDd /arch:SSE /Fp&quot;.\Debug/pcs2.pch&quot; /Fo&quot;.\Debug/&quot; /Fd&quot;.\Debug/&quot; /FR&quot;.\Debug\\&quot; /W3 /nologo /c /ZI /TP /errorReport:prompt versions.cpp"
 				ExcludedFromBuild="true"
 			/>
 			<Tool
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="C:\libraries\wxWidgets\lib\vc_dll\mswd;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_44;pugixml"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;WXUSINGDLL;WXDEBUG;__WIN95__;__WIN32__;WINVER=0x0400;STRICT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -186,11 +186,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="GLee.lib wxmsw28d_adv.lib wxmsw28d_core.lib wxmsw28d_gl.lib wxmsw28d_media.lib wxjpegd.lib wxbase28d.lib devil.lib ilu.lib ilut.lib opengl32.lib glu32.lib comctl32.lib wsock32.lib RPCRT4.LIB odbc32.lib odbccp32.lib libcollada14dom21-d.lib"
+				AdditionalDependencies="wxmsw28d_adv.lib wxmsw28d_core.lib wxmsw28d_gl.lib wxmsw28d_media.lib wxjpegd.lib wxbase28d.lib devil.lib ilu.lib ilut.lib opengl32.lib glu32.lib comctl32.lib wsock32.lib RPCRT4.LIB odbc32.lib odbccp32.lib"
 				OutputFile=".\Debug/pcs2d.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="C:\libraries\colladadom\dom\build\vc9-1.4-d"
+				AdditionalLibraryDirectories="C:\libraries\wxWidgets\lib\vc_dll;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_44\lib"
 				IgnoreDefaultLibraryNames="LIBC.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/pcs2.pdb"
@@ -550,10 +550,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="FileList.h"
-				>
-			</File>
-			<File
 				RelativePath=".\matrix.cpp"
 				>
 			</File>
@@ -688,6 +684,10 @@
 				</File>
 				<File
 					RelativePath=".\header_editor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\INSG_editor.h"
 					>
 				</File>
 				<File
@@ -976,14 +976,6 @@
 			<File
 				RelativePath=".\GLee.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\GLee.h"

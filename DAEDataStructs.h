@@ -1,8 +1,10 @@
 #include "matrix3d.h"
 #include <boost/shared_ptr.hpp>
+#include <pugixml.hpp>
 
 #ifndef _DAEDataStructs_H_
 #define _DAEDataStructs_H_
+
 
 
 class DAEInput {
@@ -12,7 +14,7 @@ class DAEInput {
 			valid = false;
 		}
 
-		DAEInput(daeURI uri);
+		DAEInput(const pugi::xml_document& doc, const char* id);
 		int x_offset();
 		int y_offset();
 		int z_offset();
@@ -29,7 +31,7 @@ class DAEInput {
 
 class DAEInputs {
 public:
-	DAEInputs(daeElement *element, std::string doc, DAE *dae);
+	DAEInputs(pugi::xml_node& element, const pugi::xml_document& document);
 	virtual ~DAEInputs() {}
 	int max_offset;
 	int pos_offset;
@@ -47,17 +49,16 @@ std::string write_float_array(std::vector<float> vec);
 std::string write_vector3d(vector3d vec,vector3d scale = vector3d(1,1,1));
 vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj, std::vector<pcs_sobj*> *subobjs);
 std::string int_to_string(int i);
-void add_accessor(daeElement *element, std::string source, int count, bool uv = false);
-void add_param(daeElement *accessor, std::string name);
+void add_accessor(pugi::xml_node element, std::string source, int count, bool uv = false);
+void add_param(pugi::xml_node accessor, std::string name);
 std::string strip_texture(std::string path);
 bool vector3d_comparator(const vector3d& a, const vector3d& b);
 bool float_pair_comparator(const std::pair<float,float>& a, const std::pair<float,float>& b);
 vector3d radius_to_scale(float radius);
-void add_scale(daeElement *element, vector3d scale, vector3d parent_scale = vector3d(1,1,1));
-void add_texture_mappings(daeElement *element, std::map<std::string, std::string>* mapping);
+void add_scale(pugi::xml_node element, vector3d scale, vector3d parent_scale = vector3d(1,1,1));
 void filter_string(std::string& base, const std::string& property);
 void trim_extra_spaces(std::string& s);
-std::string get_name(daeElement* element);
+std::string get_name(const pugi::xml_node& element);
 
 template <typename T>
 vector3d relative_to_absolute(vector3d vec, T subobj,const std::vector<T>& subobjs) {

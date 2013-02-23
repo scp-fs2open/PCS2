@@ -1,6 +1,7 @@
 #include "DAEHandler.h"
 #include "pcs_file.h"
 #include "BSPHandler.h"
+#include <ctime>
 #include <sstream>
 #include <iomanip>
 #include <limits>
@@ -14,26 +15,43 @@
 
 using namespace std;
 
-DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) {
-	this->filename = filename;
-	root = dae.open(this->filename);
+namespace {
+	pugi::xml_node find_node(pugi::xml_node base, const char* type) {
+		string xpath = ".//";
+		xpath += type;
+		return base.select_single_node(xpath.c_str()).node();
+	}
+
+	pugi::xml_node find_by_id(const char* type, const char* id, const pugi::xml_document& doc) {
+		string xpath = "//";
+		xpath += type;
+		xpath += "[@id='";
+		if (id[0] == '#') {
+			id++;
+		}
+		xpath += id;
+		xpath += "']";
+		return doc.select_single_node(xpath.c_str()).node();
+	}
+
+}
+
+DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) :
+	filename(filename),
 #if LOGGING_DAE
-	filename.resize(filename.size() - 4);
-	filename += ".log";
-	log.reset(new std::ofstream(filename.c_str()));
-	*log << root->getDocument()->getDocumentURI()->getPath() << endl;
+	log((filename.substr(filename.size() - 4) + ".log").c_str()),
 #endif
+	model(model) {
+	root.load_file(filename.c_str());
+
 	radius = 0;
 	scaling_factor = 1.0f;
-	doc = root->getDocumentURI()->getAuthority();
-	doc += root->getDocumentURI()->getPath();
-	this->model = model;
-	daeElement *temp = root->getDescendant("up_axis");
-	if (temp != NULL) {
-		if (boost::algorithm::equals(temp->getCharData(), "X_UP")) {
-			up_axis = 0;
-			
-		} else if (boost::algorithm::equals(temp->getCharData(), "Y_UP")) {
+
+	pugi::xml_node temp = find_node(root, "up_axis");
+	if (temp) {
+		if (boost::algorithm::equals(temp.child_value(), "X_UP")) {
+			up_axis = 0;			
+		} else if (boost::algorithm::equals(temp.child_value(), "Y_UP")) {
 			up_axis = 1;
 			front = vector3d(0,0,1);
 			up = vector3d(0,1,0);
@@ -48,52 +66,46 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 	mirror_z = mirror_z_axis;
 
 	this->progress = progress;
-	
 }
 
 int DAEHandler::populate(void) {
-	daeURI uri(dae);
-	string temp;
 	progress->setTarget(200);
 	progress->setMessage("Opening and Reading DAE");
 	progress->Notify();
 	num_textures = 0;
 
-	daeTArray< daeSmartRef<daeElement> > helpers = root->getDescendant("visual_scene")->getChildren();
+	pugi::xml_node scene = root.child("COLLADA").child("library_visual_scenes").child("visual_scene");
 	vector<int> lods;
 	vector<pcs_slot> guns, missiles;
 	string name;
-	map<string, int> detail, debris;
+	map<string, pugi::xml_node> detail, debris;
 	model->SetMass(-1);
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
+	for (pugi::xml_node helper = scene.first_child(); helper; helper = helper.next_sibling()) {
 #if LOGGING_DAE
-		*log << "Found " << helpers[i]->getTypeName();
-		if (helpers[i]->getID()) {
-			*log << ":" << helpers[get_name(i]);
-		}
-		*log << endl;
+		log << "Found " << helper.attribute("name").value();
+		log << endl;
 #endif
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			name = get_name(helpers[i]);
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			name = get_name(helper);
 			progress->incrementWithMessage("Processing " + name);
 			if (boost::algorithm::istarts_with(name, "subsystem")) {
-				subsystem_handler(helpers[i], true);
+				subsystem_handler(helper, true);
 			} else if (boost::algorithm::istarts_with(name, "special")) {
-				subsystem_handler(helpers[i], false);
+				subsystem_handler(helper, false);
 			} else if (boost::algorithm::istarts_with(name, "shield")) {
-				shield_handler(helpers[i]);
+				shield_handler(helper);
 			} else if (boost::algorithm::istarts_with(name, "thrusters")) {
-				process_thrusters(helpers[i],string(),matrix(),vector3d(0,0,0));
+				process_thrusters(helper,string(),matrix(),vector3d(0,0,0));
 			} else if (boost::algorithm::istarts_with(name, "insigLOD")) {
-				process_insignia(helpers[i]);
+				process_insignia(helper);
 			} else if (boost::algorithm::istarts_with(name, "debris")) {
-				debris[name] = i;
+				debris[name] = helper;
 			} else if (boost::algorithm::istarts_with(name, "dockpoint")) {
-				process_dockpoint(helpers[i]);
+				process_dockpoint(helper);
 			} else if (boost::algorithm::istarts_with(name, "bay")) {
-				process_path(helpers[i], "", matrix(), vector3d());
+				process_path(helper, "", matrix(), vector3d());
 			} else if (boost::algorithm::istarts_with(name, "detail")) {
-				detail[name] = i;
+				detail[name] = helper;
 			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
@@ -104,7 +116,7 @@ int DAEHandler::populate(void) {
 				} else {
 					continue;
 				}
-				eyes[eye] = process_eyepoint(helpers[i]);
+				eyes[eye] = process_eyepoint(helper);
 			} else if (boost::algorithm::istarts_with(name, "gunbank")) {
 				unsigned int bank;
 				if (name.length() > strlen("gunbank")) {
@@ -115,7 +127,7 @@ int DAEHandler::populate(void) {
 				} else {
 					continue;
 				}
-				guns[bank] = process_gunbank(helpers[i], 0);
+				guns[bank] = process_gunbank(helper, 0);
 			} else if (boost::algorithm::istarts_with(name, "missilebank")) {
 				unsigned int bank;
 				if (name.length() > strlen("missilebank")) {
@@ -126,26 +138,26 @@ int DAEHandler::populate(void) {
 				} else {
 					continue;
 				}
-				missiles[bank] = process_gunbank(helpers[i], 1);
+				missiles[bank] = process_gunbank(helper, 1);
 			} else if (boost::algorithm::istarts_with(name, "mass")) {
-				process_mass(helpers[i]);
+				process_mass(helper);
 			} else if (boost::algorithm::istarts_with(name, "moi")) {
-				process_moment_of_inertia(helpers[i]);
+				process_moment_of_inertia(helper);
 			} else if (boost::algorithm::istarts_with(name, "com")) {
-				model->SetCenterOfMass(get_translation(helpers[i]));
+				model->SetCenterOfMass(get_translation(helper));
 			} else if (boost::algorithm::istarts_with(name, "acen")) {
-				model->SetAutoCenter(get_translation(helpers[i]));
+				model->SetAutoCenter(get_translation(helper));
 			}
 		}
 
 	}
-	for (map<string, int>::iterator it = detail.begin(); it != detail.end(); ++it) {
+	for (map<string, pugi::xml_node>::iterator it = detail.begin(); it != detail.end(); ++it) {
 		model->AddLOD(subobjs.size());
-		process_subobj(helpers[it->second],-1);
+		process_subobj(it->second, -1);
 	}
-	for (map<string, int>::iterator it = debris.begin(); it != debris.end(); ++it) {
+	for (map<string, pugi::xml_node>::iterator it = debris.begin(); it != debris.end(); ++it) {
 		model->AddDebris(subobjs.size());
-		process_subobj(helpers[it->second], -1);
+		process_subobj(it->second, -1);
 	}
 	progress->setTarget(203 + subobjs.size() + specials.size() + docks.size() + missiles.size() + 3);
 	progress->SetProgress(203);
@@ -184,83 +196,60 @@ int DAEHandler::populate(void) {
 	if (model->GetMass() == -1) {
 		model->SetMass((model->GetMaxBounding().x - model->GetMinBounding().x) * (model->GetMaxBounding().y - model->GetMinBounding().y) * (model->GetMaxBounding().z - model->GetMinBounding().z));
 	}
-
 	return 0;
 
 }
 
+void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matrix rotation_matrix) {
+	pugi::xml_node geom = element.child("instance_geometry");
 
-void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation_matrix) {
-	// maybe getDescendent instead
-	// but other elements along the way...
-	daeElement *geom = element->getChild("instance_geometry");
-	map<string,string> texture_mapping;
-
-	if (geom == NULL) {
-		stringstream gah;
-		gah << "instance_geometry not found for subobject " << get_name(element);
-		wxMessageBox(wxString(gah.str().c_str(), wxConvUTF8));
+	if (!geom) {
+		stringstream error;
+		error << "instance_geometry not found for subobject " << get_name(element);
+		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
 		return;
 	}
-	add_texture_mappings(geom, &texture_mapping);
 	progress->incrementWithMessage("Processing " + get_name(element));
 
-	string temp = doc;
-	daeURI uri(dae);
-	temp += geom->getAttribute("url").c_str();
 #if LOGGING_DAE
-	*log << temp << endl;
+	log << temp << endl;
 #endif
-	uri.setURI(temp.c_str());
-
-	daeElement* mesh = uri.getElement()->getChild("mesh");
+	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	boost::shared_ptr<pcs_sobj> subobj(new pcs_sobj());
 	subobj->bounding_box_min_point = vector3d(1e30f,1e30f,1e30f);
 	subobj->bounding_box_max_point = vector3d(-1e30f,-1e30f,-1e30f);
 	subobj->name = get_name(element).c_str();
 	subobj->properties = "";
 	subobj->parent_sobj = parent;
-	//*log << "Processing " << subobj->name.c_str() << endl;
 
 	subobj->offset = get_translation(element,rotation_matrix);
 
-	// Hope this is right
 	if (subobj->parent_sobj != -1) {
 		subobj->geometric_center = relative_to_absolute(subobj->offset,subobjs[subobj->parent_sobj],subobjs);
 	} else {
 		subobj->geometric_center = vector3d(0,0,0);
 	}
 
-	rotation_matrix = get_rotation(element,rotation_matrix);
+	rotation_matrix = get_rotation(element, rotation_matrix);
 
-	daeTArray< daeSmartRef<daeElement> > poly_groups = mesh->getChildren();
-	for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
+	for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
 		// Add the polies to the subobj.
-		if (boost::algorithm::equals(poly_groups[i]->getTypeName(), "triangles") || boost::algorithm::equals(poly_groups[i]->getTypeName(), "polylist")) {
-			process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
+		if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
+			process_poly_group(poly_group, subobj, rotation_matrix);
 		}
 	}
-	uri.setURI((doc + "#" + element->getAttribute("id").c_str() + "-trans").c_str());
-	daeElement *trans = uri.getElement();
-	if (trans != NULL) {
-		mesh = trans->getChild("instance_geometry");
-		if (mesh != NULL) {
-			add_texture_mappings(mesh, &texture_mapping);
-			temp = doc;
-			temp += mesh->getAttribute("url").c_str();
-#if LOGGING_DAE
-			*log << temp << endl;
-#endif
-			uri.setURI(temp.c_str());
-			mesh = uri.getElement();
-			if (mesh != NULL) {
-				mesh = mesh->getChild("mesh");
-				if (mesh != NULL) {
-					poly_groups = mesh->getChildren();
-					for (unsigned int i = 0; i < poly_groups.getCount(); i++) {
+	pugi::xml_node trans = find_by_id("node", (string(element.attribute("id").value()) + "-trans").c_str(), root);
+	if (trans) {
+		mesh = trans.child("instance_geometry");
+		if (mesh) {
+			mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
+			if (mesh) {
+				mesh = mesh.child("mesh");
+				if (mesh) {
+					for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
 						// Add the polies to the subobj.
-						if (boost::algorithm::equals(poly_groups[i]->getTypeName(), "triangles") || boost::algorithm::equals(poly_groups[i]->getTypeName(), "polylist")) {
-							process_poly_group(poly_groups[i],subobj,rotation_matrix, &texture_mapping);
+						if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
+							process_poly_group(poly_group, subobj, rotation_matrix);
 						}
 					}
 				}
@@ -271,85 +260,75 @@ void DAEHandler::process_subobj(daeElement* element, int parent, matrix rotation
 	this->subobjs.push_back(subobj);
 	int current_sobj_id = this->subobjs.size() - 1;
 
-	daeTArray< daeSmartRef<daeElement> > subobjs = element->getChildren();
-	daeElement *sobj_helpers = NULL;
-	std::map<std::string, unsigned int> subobj_map;
-	for (unsigned int i = 0; i < subobjs.getCount(); i++) {
-		if (boost::algorithm::equals(subobjs[i]->getTypeName(), "node")) {
-			if (!boost::algorithm::istarts_with(get_name(subobjs[i]), "helper")) {
-				if (!strstr(get_name(subobjs[i]).c_str(),"-trans")) {
-					subobj_map[get_name(subobjs[i])] = i;
-					//process_subobj(subobjs[i],current_sobj_id,rotation_matrix);
+	pugi::xml_node sobj_helpers;
+	std::map<std::string, pugi::xml_node> subobj_map;
+	for (pugi::xml_node subobj_node = element.first_child(); subobj_node; subobj_node = subobj_node.next_sibling()) {
+		if (boost::algorithm::equals(subobj_node.name(), "node")) {
+			if (!boost::algorithm::istarts_with(get_name(subobj_node), "helper")) {
+				if (!strstr(get_name(subobj_node).c_str(),"-trans")) {
+					subobj_map[get_name(subobj_node)] = subobj_node;
 				}
 			} else {
-				sobj_helpers = subobjs[i];
+				sobj_helpers = subobj_node;
 			}
-		} else if (boost::algorithm::equals(subobjs[i]->getTypeName(), "extra")) {
-			daeElement *props = subobjs[i]->getDescendant("user_properties");
+		} else if (boost::algorithm::equals(subobj_node.name(), "extra")) {
+			pugi::xml_node props = find_node(subobj_node, "user_properties");
 			if (props) {
-				subobj->properties = props->getCharData().c_str();
+				subobj->properties = props.child_value();
 			}
 		}
 	}
-	for (std::map<std::string, unsigned int>::const_iterator it = subobj_map.begin(); it != subobj_map.end(); ++it) {
-		process_subobj(subobjs[it->second],current_sobj_id,rotation_matrix);
+	for (std::map<std::string, pugi::xml_node>::const_iterator it = subobj_map.begin(); it != subobj_map.end(); ++it) {
+		process_subobj(it->second, current_sobj_id, rotation_matrix);
 	}
 
 	if (sobj_helpers) {
-		process_sobj_helpers(sobj_helpers,current_sobj_id,parent,rotation_matrix);
+		process_sobj_helpers(sobj_helpers, current_sobj_id, parent, rotation_matrix);
 	}
 
 }
 
-void DAEHandler::process_dockpoint(daeElement *helper) {
+void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
 	boost::shared_ptr<pcs_dock_point> dockpoint(new pcs_dock_point());
 	pcs_hardpoint temp;
-	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && !boost::algorithm::istarts_with(get_name(helpers[i]), "helper")) {
-			temp.norm = fix_axes(up,get_rotation(helpers[i]));
-			temp.point = get_translation(helpers[i]);
+	for (pugi::xml_node helper = dockpoint_helper.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node") &&
+			!boost::algorithm::istarts_with(get_name(helper), "helper")) {
+			temp.norm = fix_axes(up,get_rotation(helper));
+			temp.point = get_translation(helper);
 			dockpoint->dockpoints.push_back(temp);
 		}
 	}
 	docks.push_back(dockpoint);
-	process_dock_helpers(helper);
+	process_dock_helpers(dockpoint_helper);
 
 }
 
 
-void DAEHandler::process_poly_group(daeElement *element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, map<string, string> *texture_mapping) {
-
-	daeTArray< daeSmartRef<daeElement> > poly_bits = element->getChildren();
-	string temp;
-	daeURI uri(dae);
-
+void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation) {
 	vector<int> refs;
-	DAEInputs inputs(element,doc,&dae);
+	DAEInputs inputs(element, root);
 	int poly_offset = subobj->polygons.size();
 	bool triangles = false;
 
-	daeElement *vcount = element->getChild("vcount");
-	if (vcount == NULL) {
+	pugi::xml_node vcount = element.child("vcount");
+	if (!vcount) {
 		triangles = true;
 	}
 
-	string texture = element->getAttribute("material").c_str();
-	int texture_id = find_texture_id(texture, texture_mapping);
+	string texture = element.attribute("material").value();
+	int texture_id = find_texture_id(texture);
 
-	daeElement *ref_element = element->getChild("p");
-	if (ref_element != NULL) {
-		parse_int_array(ref_element->getCharData().c_str(), &refs);
+	pugi::xml_node ref_element = element.child("p");
+	if (ref_element) {
+		parse_int_array(ref_element.child_value(), &refs);
 	}
-
-
-
-	int num_polies = atoi(element->getAttribute("count").c_str());
+	int num_polies = element.attribute("count").as_int();
 
 	subobj->polygons.resize(num_polies + poly_offset);
 	vector<int> counts;
 	if (!triangles) {
-		parse_int_array(vcount->getCharData().c_str(), &counts, num_polies);
+		parse_int_array(vcount.child_value(), &counts, num_polies);
 	}
 
 	int position = 0;
@@ -392,39 +371,40 @@ void DAEHandler::process_poly_group(daeElement *element, boost::shared_ptr<pcs_s
 	}
 }
 
-// Go through the helpers and hand off work appropriately...
-void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
-	vector3d offset = relative_to_absolute(vector3d(0,0,0),subobjs[current_sobj_id],subobjs);
-	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
+void DAEHandler::process_sobj_helpers(pugi::xml_node& element, 
+																			int current_sobj_id, int parent_sobj_id, 
+																			matrix rotation_matrix) {
+	vector3d offset = relative_to_absolute(vector3d(0,0,0), subobjs[current_sobj_id],
+		subobjs);
+	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helpers[i]), "properties")) {
-				process_properties(helpers[i],&subobjs[current_sobj_id]->properties);
+			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+				process_properties(helper, &subobjs[current_sobj_id]->properties);
 			}
 		}
 	}
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			std::string name = get_name(helpers[i]);
+	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			std::string name = get_name(helper);
 			if (boost::algorithm::istarts_with(name, "thrusters")) {
-				process_thrusters(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_thrusters(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "multifirepoints")) {
-				process_firepoints(helpers[i],parent_sobj_id,current_sobj_id,rotation_matrix);
+				process_firepoints(helper,parent_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (boost::algorithm::istarts_with(name, "firepoints")) {
-				process_firepoints(helpers[i],current_sobj_id,current_sobj_id,rotation_matrix);
+				process_firepoints(helper,current_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (boost::algorithm::istarts_with(name, "glowbank")) {
-				process_glowpoints(helpers[i],current_sobj_id,rotation_matrix,offset);
+				process_glowpoints(helper,current_sobj_id,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "bay")) {
-				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_path(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "path")) {
-				process_path(helpers[i],subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_path(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "vec")) {
-				process_sobj_vec(helpers[i],rotation_matrix, &subobjs[current_sobj_id]->properties);
+				process_sobj_vec(helper,rotation_matrix, &subobjs[current_sobj_id]->properties);
 			} else if (boost::algorithm::istarts_with(name, "rotate-nospeed")) {
-				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id], false);
+				process_sobj_rotate(helper,rotation_matrix, subobjs[current_sobj_id], false);
 			} else if (boost::algorithm::istarts_with(name, "rotate")) {
-				process_sobj_rotate(helpers[i],rotation_matrix, subobjs[current_sobj_id]);
+				process_sobj_rotate(helper,rotation_matrix, subobjs[current_sobj_id]);
 			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
@@ -432,7 +412,7 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 					if (eyes.size() <= eye) {
 						eyes.resize(eye + 1);
 					}
-					eyes[eye] = process_eyepoint(helpers[i], rotation_matrix, current_sobj_id);
+					eyes[eye] = process_eyepoint(helper, rotation_matrix, current_sobj_id);
 				}
 			}
 		}
@@ -440,102 +420,96 @@ void DAEHandler::process_sobj_helpers(daeElement *element,int current_sobj_id, i
 	trim_extra_spaces(subobjs[current_sobj_id]->properties);
 }
 
-void DAEHandler::process_special_helpers(daeElement *element, int idx, matrix rotation) {
-	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
-	daeElement *helper = NULL;
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && boost::algorithm::istarts_with(get_name(helpers[i]), "helper")) {
-			helper = helpers[i];
+void DAEHandler::process_special_helpers(pugi::xml_node& element, int idx, matrix rotation) {
+	pugi::xml_node helper_parent;
+	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
+		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
 			break;
 		}
 	}
-	if (helper == NULL) {
+	if (!helper_parent) {
 		return;
 	}
 	
 	vector3d offset = specials[idx]->point;
-	helpers = helper->getChildren();
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
+	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helpers[i]), "properties")) {
-				process_properties(helpers[i],&specials[idx]->properties);
+			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+				process_properties(helper,&specials[idx]->properties);
 			}
 		}
 	}
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			if (boost::algorithm::istarts_with(get_name(helpers[i]), "thrusters")) {
-				process_thrusters(helpers[i],specials[idx]->name,rotation,offset);
-			} else if (boost::algorithm::istarts_with(get_name(helpers[i]), "bay")) {
-				process_path(helpers[i],specials[idx]->name,rotation,offset);
-			} else if (boost::algorithm::istarts_with(get_name(helpers[i]), "path")) {
-				process_path(helpers[i],specials[idx]->name,rotation,offset);
+	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			if (boost::algorithm::istarts_with(get_name(helper), "thrusters")) {
+				process_thrusters(helper,specials[idx]->name,rotation,offset);
+			} else if (boost::algorithm::istarts_with(get_name(helper), "bay")) {
+				process_path(helper,specials[idx]->name,rotation,offset);
+			} else if (boost::algorithm::istarts_with(get_name(helper), "path")) {
+				process_path(helper,specials[idx]->name,rotation,offset);
 			}
 		}
 	}
 }
 
-void DAEHandler::process_dock_helpers(daeElement *element) {
+void DAEHandler::process_dock_helpers(pugi::xml_node& element) {
 	int idx = docks.size() - 1;
-	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
-	daeElement *helper = NULL;
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node") && boost::algorithm::istarts_with(get_name(helpers[i]), "helper")) {
-			helper = helpers[i];
+	pugi::xml_node helper_parent;
+	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
+		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
 			break;
 		}
 	}
-	daeElement *props = element->getDescendant("user_properties");
+	pugi::xml_node props = find_node(element, "user_properties");
 	if (props) {
-		docks[idx]->properties = props->getCharData().c_str();
+		docks[idx]->properties = props.child_value();
 	}
 
-	if (helper == NULL) {
+	if (!helper_parent) {
 		return;
 	}
 	
 	vector3d offset = vector3d(0,0,0);//docks[idx]->dockpoints[0].point;
-	helpers = helper->getChildren();
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
+	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helpers[i]), "properties")) {
-				process_properties(helpers[i],&docks[idx]->properties);
+			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+				process_properties(helper,&docks[idx]->properties);
 			}
 		}
 	}
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			if (boost::algorithm::istarts_with(get_name(helpers[i]), "path")) {
-				process_path(helpers[i],"",matrix(),offset,idx);
+	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			if (boost::algorithm::istarts_with(get_name(helper), "path")) {
+				process_path(helper, "", matrix(), offset, idx);
 			}
 		}
 	}
 
 }
 
-void DAEHandler::process_properties(daeElement *element,string *properties) {
-	if (element == NULL) return;
+void DAEHandler::process_properties(pugi::xml_node element, string *properties) {
+	if (!element) {
+		return;
+	}
 
-	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
-	daeElement *extra = element->getDescendant("user_properties");
+	pugi::xml_node extra = find_node(element, "user_properties");
 	if (extra) {
-		*properties = extra->getCharData().c_str();
+		*properties = extra.child_value();
 		return;
 	}
 	*properties = "";
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			*properties += get_name(helpers[i]);
-			//properties->replace(SPACE_REPLACEMENT,' ');
+	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			*properties += get_name(helper);
 			*properties += "\n";
 		}
 	}
 	trim_extra_spaces(*properties);
 }
 
-void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::string* properties) {
+void DAEHandler::process_sobj_vec(pugi::xml_node& element, matrix rotation, std::string* properties) {
 	rotation = get_rotation(element, rotation);
 	vector3d uvec = MakeUnitVector(fix_axes(up, rotation));
 	vector3d fvec = MakeUnitVector(fix_axes(front, rotation));
@@ -553,7 +527,7 @@ void DAEHandler::process_sobj_vec(daeElement *element, matrix rotation, std::str
 	}
 }
 
-void DAEHandler::process_sobj_rotate(daeElement *element, matrix rotation, boost::shared_ptr<pcs_sobj> sobj, bool speed) {
+void DAEHandler::process_sobj_rotate(pugi::xml_node& element, matrix rotation, boost::shared_ptr<pcs_sobj> sobj, bool speed) {
 	rotation = get_rotation(element, rotation);
 	vector3d rotate = fix_axes(up, rotation);
 	float x, y, z, x_abs, y_abs, z_abs;
@@ -592,10 +566,9 @@ void DAEHandler::process_sobj_rotate(daeElement *element, matrix rotation, boost
 
 }
 
-void DAEHandler::process_thrusters(daeElement *element,string name,matrix rotation_matrix, vector3d offset) {
+void DAEHandler::process_thrusters(pugi::xml_node& element,string name,matrix rotation_matrix, vector3d offset) {
 	offset = get_translation(element, rotation_matrix) + offset;
 	rotation_matrix = get_rotation(element,rotation_matrix);
-	daeTArray< daeSmartRef<daeElement> > thrusters = element->getChildren();
 	pcs_thruster thruster;
 	pcs_thrust_glow glow;
 	if (name.size() > 0 && strlen(name.c_str()) > 0) {
@@ -605,28 +578,27 @@ void DAEHandler::process_thrusters(daeElement *element,string name,matrix rotati
 			thruster.properties = string("$engine_subsystem=$") + name;
 		}
 	}
-	for (unsigned int i = 0; i < thrusters.getCount(); i++) {
-		if (boost::algorithm::equals(thrusters[i]->getTypeName(), "node")) {
-			glow.pos = get_translation(thrusters[i], rotation_matrix) + offset;
-			glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thrusters[i],rotation_matrix)));
-			glow.radius = get_rotation(thrusters[i], rotation_matrix).scale();
+	for (pugi::xml_node thruster_node = element.first_child(); thruster_node; thruster_node = thruster_node.next_sibling()) {
+		if (boost::algorithm::equals(thruster_node.name(), "node")) {
+			glow.pos = get_translation(thruster_node, rotation_matrix) + offset;
+			glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thruster_node,rotation_matrix)));
+			glow.radius = get_rotation(thruster_node, rotation_matrix).scale();
 			thruster.points.push_back(glow);
 		}
 	}
 	model->AddThruster(&thruster);
 }
 
-void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matrix rotation_matrix) {
-	daeTArray< daeSmartRef<daeElement> > turrets = element->getChildren();
+void DAEHandler::process_firepoints(pugi::xml_node& element,int parent, int arm,matrix rotation_matrix) {
 	pcs_turret turret;
 	turret.sobj_parent = parent;
 	turret.sobj_par_phys = arm;
 	turret.turret_normal = vector3d(0,0,0);
 
-	for (unsigned int i = 0; i < turrets.getCount(); i++) {
-		if (boost::algorithm::equals(turrets[i]->getTypeName(), "node")) {
-			turret.turret_normal += fix_axes(up,get_rotation(turrets[i],rotation_matrix));
-			turret.fire_points.push_back(get_translation(turrets[i],rotation_matrix));
+	for (pugi::xml_node turret_node = element.first_child(); turret_node; turret_node = turret_node.next_sibling()) {
+		if (boost::algorithm::equals(turret_node.name(), "node")) {
+			turret.turret_normal += fix_axes(up,get_rotation(turret_node,rotation_matrix));
+			turret.fire_points.push_back(get_translation(turret_node,rotation_matrix));
 		}
 	}
 	if (subobjs[parent]->properties.size() == 0) {
@@ -638,31 +610,27 @@ void DAEHandler::process_firepoints(daeElement *element,int parent, int arm,matr
 		if (!strstr(subobjs[parent]->properties.c_str(),"fov")) {
 			subobjs[parent]->properties += "$fov=180\n";
 		}
-		if (!strstr(subobjs[parent]->properties.c_str(),"name")) {
-			//subobjs[parent]->properties += "$name=GunTurret\n";
-		}
 	}
 	turret.turret_normal = MakeUnitVector(turret.turret_normal);
 	model->AddTurret(&turret);
 }
 
-void DAEHandler::process_path(daeElement *element,string parent,matrix rotation_matrix, vector3d offset, int dock) {
+void DAEHandler::process_path(pugi::xml_node& element,string parent,matrix rotation_matrix, vector3d offset, int dock) {
 	pcs_path path;
 	path.name = string ("$") + get_name(element).c_str();
 	trim_extra_spaces(path.name);
 #if LOGGING_DAE
-	*log << element->getAttribute("id").c_str() << endl;
+	log << element.attribute("id").value() << endl;
 #endif
 	path.parent = parent;
-	daeTArray< daeSmartRef<daeElement> > paths = element->getChildren();
 	std::multimap<std::string, pcs_pvert> ordered_paths;
 	pcs_pvert vert;
 
-	for (unsigned int i = 0; i < paths.getCount(); i++) {
-		if (boost::algorithm::equals(paths[i]->getTypeName(), "node")) {
-			vert.pos = get_translation(paths[i], rotation_matrix) + offset;
-			vert.radius = get_rotation(paths[i], rotation_matrix).scale();
-			ordered_paths.insert(std::pair<std::string, pcs_pvert>(get_name(paths[i]), vert));
+	for (pugi::xml_node path_node = element.first_child(); path_node; path_node = path_node.next_sibling()) {
+		if (boost::algorithm::equals(path_node.name(), "node")) {
+			vert.pos = get_translation(path_node, rotation_matrix) + offset;
+			vert.radius = get_rotation(path_node, rotation_matrix).scale();
+			ordered_paths.insert(make_pair(get_name(path_node), vert));
 		}
 	}
 	for (std::multimap<string, pcs_pvert>::iterator it = ordered_paths.begin(); it != ordered_paths.end(); ++it) {
@@ -676,25 +644,24 @@ void DAEHandler::process_path(daeElement *element,string parent,matrix rotation_
 	model->AddPath(&path);
 }
 
-void DAEHandler::process_glowpoints(daeElement *element,int parent,matrix rotation_matrix, vector3d offset) {
-	daeTArray< daeSmartRef<daeElement> > glows = element->getChildren();
+void DAEHandler::process_glowpoints(pugi::xml_node& element,int parent,matrix rotation_matrix, vector3d offset) {
 	pcs_glow_array glowbank;
 	glowbank.obj_parent = parent;
 	pcs_thrust_glow glow;
-	for (unsigned int i = 0; i < glows.getCount(); i++) {
-		if (boost::algorithm::equals(glows[i]->getTypeName(), "node")) {
-			if (boost::algorithm::istarts_with(get_name(glows[i]), "helper")) {
-				process_properties(glows[i]->getChild("node"),&glowbank.properties);
+	for (pugi::xml_node glow_node = element.first_child(); glow_node; glow_node = glow_node.next_sibling()) {
+		if (boost::algorithm::equals(glow_node.name(), "node")) {
+			if (boost::algorithm::istarts_with(get_name(glow_node), "helper")) {
+				process_properties(glow_node.child("node"),&glowbank.properties);
 			} else {
-				glow.pos = get_translation(glows[i], rotation_matrix);
-				glow.radius = get_rotation(glows[i], rotation_matrix).scale();
+				glow.pos = get_translation(glow_node, rotation_matrix);
+				glow.radius = get_rotation(glow_node, rotation_matrix).scale();
 				glow.norm = vector3d(0,0,0);
 				glowbank.lights.push_back(glow);
 			}
-		} else if (boost::algorithm::equals(glows[i]->getTypeName(), "extra")) {
-			daeElement *props = glows[i]->getDescendant("user_properties");
-			if (props != NULL) {
-				glowbank.properties = props->getCharData().c_str();
+		} else if (boost::algorithm::equals(glow_node.name(), "extra")) {
+			pugi::xml_node props = find_node(glow_node, "user_properties");
+			if (props) {
+				glowbank.properties = props.child_value();
 			}
 		}
 	}
@@ -736,47 +703,32 @@ string strip_texture(string name) {
 
 }
 
-int DAEHandler::find_texture_id(string name, map<string, string> *texture_mapping) {
-	daeURI uri(dae);
-	string temp = doc;
-	if (texture_mapping == NULL) {
+int DAEHandler::find_texture_id(string name) {
+	pugi::xml_node current = find_by_id("material", name.c_str(), root);
+	if (!current) {
 		return -1;
 	}
-	temp += (*texture_mapping)[name.c_str()].c_str();
-	uri.setURI(temp.c_str());
-	daeElement *current = uri.getElement();
-	if (current == NULL) {
+	current = current.child("instance_effect");
+	if (!current) {
 		return -1;
 	}
-	current = current->getChild("instance_effect");
-	if (current == NULL) {
+	current = find_by_id("effect", current.attribute("url").value(), root);
+	if (!current) {
 		return -1;
 	}
-	temp = doc;
-	temp += current->getAttribute("url").c_str();
-	uri.setURI(temp.c_str());
-	current = uri.getElement();
-	if (current == NULL) {
+	current = find_node(current, "init_from");
+	if (!current) {
 		return -1;
 	}
-
-	current = current->getDescendant("init_from");
-	if (current == NULL) {
+	current = find_by_id("image", current.child_value(), root);
+	if (!current) {
 		return -1;
 	}
-	temp = doc;
-	temp += "#";
-	temp += current->getCharData().c_str();
-	uri.setURI(temp.c_str());
-	current = uri.getElement();
-	if (current == NULL) {
+	current = find_node(current, "init_from");
+	if (!current) {
 		return -1;
 	}
-	current = current->getDescendant("init_from");
-	if (current == NULL) {
-		return -1;
-	}
-	return find_or_add_texture(string(current->getCharData().c_str()));
+	return find_or_add_texture(string(current.child_value()));
 }
 
 int DAEHandler::find_or_add_texture(string name) {
@@ -787,7 +739,7 @@ int DAEHandler::find_or_add_texture(string name) {
 	return texture_map[name];
 }
 
-void DAEHandler::subsystem_handler(daeElement *helper, bool isSubsystem) {
+void DAEHandler::subsystem_handler(pugi::xml_node& helper, bool isSubsystem) {
 	boost::shared_ptr<pcs_special> special(new pcs_special);
 	matrix rot = get_rotation(helper);
 	special->name = "$";
@@ -801,38 +753,32 @@ void DAEHandler::subsystem_handler(daeElement *helper, bool isSubsystem) {
 	special->radius = rot.scale();
 	specials.push_back(special);
 	process_special_helpers(helper,specials.size() - 1, rot);
-
 }
 
-void DAEHandler::shield_handler(daeElement *helper) {
-	daeElement *geom = helper->getChild("instance_geometry");
-	if (geom == NULL) {
+void DAEHandler::shield_handler(pugi::xml_node& helper) {
+	pugi::xml_node geom = helper.child("instance_geometry");
+	if (!geom) {
 		return;
 	}
 
-	string temp = doc;
-	daeURI uri(dae);
-	temp += geom->getAttribute("url").c_str();
 #if LOGGING_DAE
-	*log << temp << endl;
+	log << geom.attribute("url") << endl;
 #endif
-	uri.setURI(temp.c_str());
 
-	daeElement* mesh = uri.getElement()->getChild("mesh");
+	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	bool use_triangles = false;
-	daeElement* triangles = mesh->getChild("triangles");
+	pugi::xml_node triangles = mesh.child("triangles");
 	if (triangles) {
 		use_triangles = true;
 		mesh = triangles;
 	} else {
-		mesh = mesh->getChild("polylist");
+		mesh = mesh.child("polylist");
 	}
-
 	matrix rotation = get_rotation(helper);
 	
 	vector<int> refs;
 
-	DAEInputs inputs(mesh,doc,&dae);
+	DAEInputs inputs(mesh, root);
 	if (!inputs.pos.is_valid()) {
 		wxMessageBox(wxT("Positions not found for shield"));
 		return;
@@ -842,16 +788,16 @@ void DAEHandler::shield_handler(daeElement *helper) {
 		return;
 	}
 
-	daeElement *ref_element = mesh->getDescendant("p");
-	if (ref_element != NULL) {
-		parse_int_array(ref_element->getCharData().c_str(), &refs);
+	pugi::xml_node ref_element = find_node(mesh, "p");
+	if (ref_element) {
+		parse_int_array(ref_element.child_value(), &refs);
 	}
 
-	int num_polies = atoi(mesh->getAttribute("count").c_str());
+	int num_polies = mesh.attribute("count").as_int();
 
 	std::vector<int> vcount;
 	if (!use_triangles) {
-		parse_int_array(mesh->getChild("vcount")->getCharData().c_str(), &vcount, num_polies);
+		parse_int_array(mesh.child("vcount").child_value(), &vcount, num_polies);
 	}
 
 	int position = 0;
@@ -878,44 +824,36 @@ void DAEHandler::shield_handler(daeElement *helper) {
 	}
 }
 
-void DAEHandler::process_insignia(daeElement *element) {
+void DAEHandler::process_insignia(pugi::xml_node& element) {
 	pcs_insig insignia;
 	string name = get_name(element);
 	insignia.lod = 0;
 	if (name.length() >= 10) {
-		name = name.substr(8,2);
+		name = name.substr(8, 2);
 		insignia.lod = atoi(name.c_str()) - 1;
 	}
 	insignia.offset = get_translation(element);
-	daeElement *geom = element->getChild("instance_geometry");
+	pugi::xml_node geom = element.child("instance_geometry");
 
-	daeURI uri(dae);
-	string temp = doc;
-	temp += geom->getAttribute("url").c_str();
-	//*log << temp << endl;
-	uri.setURI(temp.c_str());
-
-	daeElement* mesh = uri.getElement()->getChild("mesh");
+	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	bool use_triangles = false;
-	daeElement* triangles = mesh->getChild("triangles");
+	pugi::xml_node triangles = mesh.child("triangles");
 	if (triangles) {
 		use_triangles = true;
 		mesh = triangles;
 	} else {
-		mesh = mesh->getChild("polylist");
+		mesh = mesh.child("polylist");
 	}
 
 	matrix rotation = get_rotation(element);
 	
-	daeTArray< daeSmartRef<daeElement> > poly_bits = mesh->getChildren();
-
 	vector<int> refs;
-	DAEInputs inputs(mesh,doc,&dae);
+	DAEInputs inputs(mesh, root);
 
 
-	daeElement *ref_element = mesh->getDescendant("p");
-	if (ref_element != NULL) {
-		parse_int_array(ref_element->getCharData().c_str(), &refs);
+	pugi::xml_node ref_element = find_node(mesh, "p");
+	if (ref_element) {
+		parse_int_array(ref_element.child_value(), &refs);
 	}
 	if (!inputs.pos.is_valid()) {
 		wxMessageBox(wxT("Positions not found for insignia"));
@@ -926,11 +864,11 @@ void DAEHandler::process_insignia(daeElement *element) {
 		return;
 	}
 
-	int num_polies = atoi(mesh->getAttribute("count").c_str());
+	int num_polies = mesh.attribute("count").as_int();
 
 	std::vector<int> vcount;
 	if (!use_triangles) {
-		parse_int_array(mesh->getChild("vcount")->getCharData().c_str(), &vcount, num_polies);
+		parse_int_array(mesh.child("vcount").child_value(), &vcount, num_polies);
 	}
 
 
@@ -953,9 +891,9 @@ void DAEHandler::process_insignia(daeElement *element) {
 	model->AddInsignia(&insignia);
 }
 
-void DAEHandler::process_mass(daeElement *element) {
-	element = element->getChild("node");
-	if (element != NULL) {
+void DAEHandler::process_mass(pugi::xml_node element) {
+	element = element.child("node");
+	if (element) {
 		std::stringstream stream(get_name(element));
 		float mass;
 		stream >> mass;
@@ -963,9 +901,9 @@ void DAEHandler::process_mass(daeElement *element) {
 	}
 }
 
-void DAEHandler::process_moment_of_inertia(daeElement *element) {
-	element = element->getChild("node");
-	if (element != NULL) {
+void DAEHandler::process_moment_of_inertia(pugi::xml_node element) {
+	element = element.child("node");
+	if (element) {
 		std::stringstream moi(get_name(element));
 		float numbers[3][3];
 		char dummy;
@@ -981,57 +919,41 @@ void DAEHandler::process_moment_of_inertia(daeElement *element) {
 
 void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count) {
 	if (count != (unsigned)-1) {
-		result->resize(count);
-	} else {
-		result->resize(VECTOR_INITIAL_SIZE);
+		result->reserve(count);
 	}
 	stringstream in(chars);
 	int temp;
 	unsigned int i = 0;
 	while(!in.eof() && i < count) {
 		in >> temp;
-		if (i == result->size()) {
-			result->resize(result->size() * VECTOR_GROWTH_FACTOR);
-		}
-		(*result)[i] = temp;
+		result->push_back(temp);
 		i++;
 	}
-	if (i < count && count != (unsigned)-1) {
+	if (result->size() < count && count != (unsigned)-1) {
 		stringstream error;
-		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
+		error << "Found " << result->size() << " items \"" << chars << "\", expected " << count << ". This may break something later...";
 		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
-	}
-	if (i != result->size()) {
-		result->resize(i);
 	}
 }
 
 boost::shared_ptr<vector<float> > parse_float_array(const char* chars, unsigned int count) {
 	boost::shared_ptr<vector<float> > result;
+	result.reset(new vector<float>());
 	if (count != (unsigned)-1) {
-		result.reset(new vector<float>(count));
-	} else {
-		result.reset(new vector<float>(VECTOR_INITIAL_SIZE));
+		result->reserve(count);
 	}
 	stringstream in(chars);
 	float temp;
 	unsigned int i = 0;
 	while(!in.eof() && i < count) {
 		in >> temp;
-		if (i == result->size()) {
-			result->resize(result->size() * VECTOR_GROWTH_FACTOR);
-		}
-		(*result)[i] = temp;
-		i++;
+		result->push_back(temp);
 	}
-	
-	if (i < count && count != (unsigned)-1) {
+
+	if (result->size() < count && count != (unsigned)-1) {
 		stringstream error;
-		error << "Found " << i << " items \"" << chars << "\", expected " << count << ". This may break something later...";
+		error << "Found " << result->size() << " items \"" << chars << "\", expected " << count << ". This may break something later...";
 		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
-	}
-	if (i != result->size()) {
-		result->resize(i);
 	}
 	return result;
 }
@@ -1059,16 +981,16 @@ string int_to_string(int i) {
 	return string(temp.str().c_str());
 }
 
-vector3d DAEHandler::get_translation(daeElement *element, matrix rotation) {
-	daeElement *position = element->getChild("translate");
-	daeElement *matrix = element->getChild("matrix"); 
+vector3d DAEHandler::get_translation(const pugi::xml_node& element, matrix rotation) {
+	const pugi::xml_node& position = element.child("translate");
+	const pugi::xml_node& matrix = element.child("matrix"); 
 	boost::shared_ptr<vector<float> > points;
 	vector3d result;
-	if (position != NULL) {
-		points = parse_float_array(position->getCharData().c_str(),3);
+	if (position) {
+		points = parse_float_array(position.child_value(), 3);
 		result = fix_axes(vector3d((*points)[0],(*points)[1],(*points)[2]),rotation);
-	} else if (matrix != NULL) {
-		points = parse_float_array(matrix->getCharData().c_str(),16);
+	} else if (matrix) {
+		points = parse_float_array(matrix.child_value(), 16);
 		result = fix_axes(vector3d((*points)[3],(*points)[7],(*points)[11]),rotation);
 	}
 	return result;
@@ -1131,39 +1053,31 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 	return vec;
 }
 
-DAEInput::DAEInput(daeURI uri) {
+DAEInput::DAEInput(const pugi::xml_document& doc, const char* id) {
 	valid = false;
-	daeElement *element = uri.getElement();
-	string next_uri = uri.getAuthority();
-	next_uri += uri.getPath();
-	if (element == NULL) {
-		return;
-	}
-	daeElement *next = element->getChild("input");
-	if (next != NULL) {
+	pugi::xml_node element = find_by_id("*", id, doc);
 
-		next_uri += next->getAttribute("source").c_str();
-		uri.setURI(next_uri.c_str());
-		DAEInput other(uri);
+	pugi::xml_node next = element.child("input");
+	if (next) {
+		DAEInput other(doc, next.attribute("source").value());
 		*this = other;
 	} else {
-		next = element->getChild("technique_common");
-		if (next == NULL) {
+		next = element.child("technique_common");
+		if (!next) {
 			return;
 		}
-		next = next->getChild("accessor");
-		if (next == NULL) {
+		next = next.child("accessor");
+		if (!next) {
 			return;
 		}
-		strides = atoi(next->getAttribute("stride").c_str());
-		next_uri += next->getAttribute("source").c_str();
+		strides = atoi(next.attribute("stride").value());
 
 		// find coord order
-		daeTArray <daeSmartRef <daeElement> > children = next->getChildren();
 		int found = 0;
 		int uvs = 0;
-		for (unsigned int i = 0; i < children.getCount(); i++) {
-			switch (get_name(children[i]).c_str()[0]) {
+		int i = 0;
+		for (pugi::xml_node child = next.first_child(); child; child = child.next_sibling(), i++) {
+			switch (get_name(child).c_str()[0]) {
 				case 'X':
 					x = i;
 					found++;
@@ -1186,7 +1100,7 @@ DAEInput::DAEInput(daeURI uri) {
 					break;
 				default:
 					string error = "Unexpected axis '";
-					error += get_name(children[i]).c_str();
+					error += get_name(child).c_str();
 					error += "' found";
 					//wxMessageBox(error.c_str());
 					break;
@@ -1196,15 +1110,14 @@ DAEInput::DAEInput(daeURI uri) {
 			wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
 			exit(1);
 		}
-		uri.setURI(next_uri.c_str());
-		next = uri.getElement();
-		if (next == NULL) {
+		next = find_by_id("*", next.attribute("source").value(), doc);
+		if (!next) {
 			return;
 		}
-		if (next->hasAttribute("count")) {
-			value = parse_float_array(next->getCharData().c_str(), atoi(next->getAttribute("count").c_str()));
+		if (next.attribute("count")) {
+			value = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
 		} else {
-			value = parse_float_array(next->getCharData().c_str());
+			value = parse_float_array(next.child_value());
 		}
 	}
 	valid = true;
@@ -1249,61 +1162,42 @@ int DAEInput::v_offset() {
 	return v;
 }
 
-DAEInputs::DAEInputs(daeElement *element, string doc, DAE *dae) {
-	daeURI uri(*dae);
-	string temp;
+DAEInputs::DAEInputs(pugi::xml_node& element, const pugi::xml_document& root) {
 	int vert_offset;
 	max_offset = 0;
-	daeTArray< daeSmartRef<daeElement> > poly_bits = element->getChildren();
 	int uv_set_id = std::numeric_limits<int>::max();
-	for (unsigned int k = 0; k < poly_bits.getCount(); k++) {
-		if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "VERTEX")) {
-			vert_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
+	for (pugi::xml_node poly_bit = element.first_child(); poly_bit; poly_bit = poly_bit.next_sibling()) {
+		if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "VERTEX")) {
+			vert_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset,vert_offset);
-			temp = doc;
-			temp += poly_bits[k]->getAttribute("source").c_str();
-			uri.setURI(temp.c_str());
-			daeTArray< daeSmartRef<daeElement> > vertices = uri.getElement()->getChildren();
-			for (unsigned int i = 0; i < vertices.getCount(); i++) {
-
-				if (boost::algorithm::equals(vertices[i]->getAttribute("semantic"), "POSITION")) {
+			pugi::xml_node vertices = find_by_id("*", poly_bit.attribute("source").value(), root);
+			for (pugi::xml_node vertex = vertices.first_child(); vertex; vertex = vertex.next_sibling()) {
+				if (boost::algorithm::equals(vertex.attribute("semantic").value(), "POSITION")) {
 					pos_offset = vert_offset;
-					temp = doc;
-					temp += vertices[i]->getAttribute("source").c_str();
-					uri.setURI(temp.c_str());
-					pos = DAEInput(uri);
-				} else if (boost::algorithm::equals(vertices[i]->getAttribute("semantic"), "NORMAL")) {
+					pos = DAEInput(root, vertex.attribute("source").value());
+				} else if (boost::algorithm::equals(vertex.attribute("semantic").value(), "NORMAL")) {
 					norm_offset = vert_offset;
-					temp = doc;
-					temp += vertices[i]->getAttribute("source").c_str();
-					uri.setURI(temp.c_str());
-					norm = DAEInput(uri);
+					norm = DAEInput(root, vertex.attribute("source").value());
 				}
 			}
-		} else if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "NORMAL")) {
-			norm_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
+		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "NORMAL")) {
+			norm_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset,norm_offset);
-			temp = doc;
-			temp += poly_bits[k]->getAttribute("source").c_str();
-			uri.setURI(temp.c_str());
-			norm = DAEInput(uri);
-		} else if (boost::algorithm::equals(poly_bits[k]->getAttribute("semantic"), "TEXCOORD")) {
-			int current_offset = atoi(poly_bits[k]->getAttribute("offset").c_str());
+			norm = DAEInput(root, poly_bit.attribute("source").value());
+		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "TEXCOORD")) {
+			int current_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset, current_offset);
-			if (poly_bits[k]->hasAttribute("set")) {
-				int current_uv_set_id = atoi(poly_bits[k]->getAttribute("set").c_str());
+			if (poly_bit.attribute("set")) {
+				int current_uv_set_id = atoi(poly_bit.attribute("set").value());
 				if (current_uv_set_id >= uv_set_id) {
 					continue;
 				}
 				uv_set_id = current_uv_set_id;
 			}
 			uv_offset = current_offset;
-			temp = doc;
-			temp += poly_bits[k]->getAttribute("source").c_str();
-			uri.setURI(temp.c_str());
-			uv = DAEInput(uri);
-		} else if (!poly_bits[k]->getAttribute("offset").empty()) {
-			max_offset = max(max_offset,atoi(poly_bits[k]->getAttribute("offset").c_str()));
+			uv = DAEInput(root, poly_bit.attribute("source").value());
+		} else if (!poly_bit.attribute("offset").empty()) {
+			max_offset = max(max_offset,atoi(poly_bit.attribute("offset").value()));
 		}
 	}
 	max_offset++;
@@ -1324,26 +1218,25 @@ vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 	return broken;
 }
 
-matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
+matrix DAEHandler::get_rotation(const pugi::xml_node& element, matrix old) {
 	matrix rot;
 	matrix base;
-	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
 	boost::shared_ptr<vector<float> > temp;
-	for (unsigned int i = 0; i < children.getCount(); i++) {
-		if (boost::algorithm::equals(children[i]->getTypeName(), "rotate")) {
-			temp = parse_float_array(children[i]->getCharData().c_str(),4);
+	for (pugi::xml_node child = element.first_child(); child; child = child.next_sibling()) {
+		if (boost::algorithm::equals(child.name(), "rotate")) {
+			temp = parse_float_array(child.child_value(), 4);
 			rot = matrix((*temp)[3]);
 			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
 			old = base.invert() % rot % base % old;
-		} else if (boost::algorithm::equals(children[i]->getTypeName(), "scale")) {
-			temp = parse_float_array(children[i]->getCharData().c_str(),3);
+		} else if (boost::algorithm::equals(child.name(), "scale")) {
+			temp = parse_float_array(child.child_value(), 3);
 			base = matrix();
 			for (int j = 0; j < 3; j++) {
 				base.a2d[j][j] = (*temp)[j];
 			}
 			old = base % old;
-		} else if (boost::algorithm::equals(children[i]->getTypeName(), "matrix")) {
-			temp = parse_float_array(children[i]->getCharData().c_str(),16);
+		} else if (boost::algorithm::equals(child.name(), "matrix")) {
+			temp = parse_float_array(child.child_value(), 16);
 			rot = matrix(temp.get());
 			old = old % rot;
 		}
@@ -1351,20 +1244,19 @@ matrix DAEHandler::get_rotation(daeElement *element, matrix old) {
 	return old;
 }
 
-pcs_slot DAEHandler::process_gunbank(daeElement *helper, int type) {
+pcs_slot DAEHandler::process_gunbank(pugi::xml_node& element, int type) {
 	pcs_slot bank;
 	bank.type = type;
 	pcs_hardpoint temp;
-	matrix rot = get_rotation(helper);
-	vector3d translation = get_translation(helper);
-	daeTArray< daeSmartRef<daeElement> > helpers = helper->getChildren();
+	matrix rot = get_rotation(element);
+	vector3d translation = get_translation(element);
 	std::multimap<std::string, pcs_hardpoint> ordered_gunpoints;
 
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::equals(helpers[i]->getTypeName(), "node")) {
-			temp.norm = fix_axes(up,get_rotation(helpers[i], rot));
-			temp.point = get_translation(helpers[i], rot) + translation;
-			ordered_gunpoints.insert(std::pair<std::string, pcs_hardpoint>(get_name(helpers[i]), temp));
+	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
+		if (boost::algorithm::equals(helper.name(), "node")) {
+			temp.norm = fix_axes(up, get_rotation(helper, rot));
+			temp.point = get_translation(helper, rot) + translation;
+			ordered_gunpoints.insert(make_pair(get_name(helper), temp));
 		}
 	}
 	for (std::multimap<string, pcs_hardpoint>::iterator it = ordered_gunpoints.begin(); it != ordered_gunpoints.end(); ++it) {
@@ -1373,22 +1265,20 @@ pcs_slot DAEHandler::process_gunbank(daeElement *helper, int type) {
 	return bank;
 }
 
-pcs_eye_pos DAEHandler::process_eyepoint(daeElement* helper, matrix transform, int subobj_idx) {
+pcs_eye_pos DAEHandler::process_eyepoint(pugi::xml_node& helper, matrix transform, int subobj_idx) {
 	pcs_eye_pos result;
 	result.normal = fix_axes(up, get_rotation(helper, transform));
 	result.sobj_offset = get_translation(helper, transform);
 	result.sobj_number = subobj_idx;
 	return result;
-
 }
 
-// Saving stuff from here... maybe
 DAESaver::DAESaver(string name, PCS_Model *model, int helpers, int props_as_helpers, AsyncProgress* progress) {
 	this->model = model;
 	this->filename = name;
-	root = dae.add(name.c_str());
+	root = doc.append_child("COLLADA");
 	for (int i = 0; i < model->GetSOBJCount(); i++) {
-		subobjs.push_back(NULL);
+		subobjs.push_back(pugi::xml_node());
 		model_subobjs.push_back(&model->SOBJ(i));
 	}
 	this->export_helpers = helpers;
@@ -1443,85 +1333,87 @@ int DAESaver::save(void) {
 
 
 	progress->incrementWithMessage( "Saving DAE");
-	dae.writeAll();
+	doc.save_file(filename.c_str());
 	return 0;
 }
 
 void DAESaver::add_header() {
-	daeElement* asset = root->add("asset");
-	asset->add("contributor");
-	daeElement* created = asset->add("created");
-	daeElement* modified = asset->add("modified");
-	created->setCharData("2008-04-08T13:07:52");
-	modified->setCharData("2008-04-08T13:07:52");
-	daeElement *scene = root->add("scene instance_visual_scene");
-	scene->setAttribute("url","#Scene");
-	daeElement *up = asset->add("up_axis");
-	up->setCharData("Z_UP");
+	root.append_attribute("version") = "1.4.0";
+	root.append_attribute("xmlns") = "http://www.collada.org/2005/11/COLLADASchema";
+	pugi::xml_node asset = root.append_child("asset");
+	time_t now = time(NULL);
+	struct tm* tm = gmtime(&now);
+	char time_string[20];
+	strftime(time_string, sizeof(time_string), "%Y-%m-%dT%H:%M:%S", tm);
+	pugi::xml_node created = asset.append_child("created");
+	pugi::xml_node modified = asset.append_child("modified");
+	created.text().set(time_string);
+	modified.text().set(time_string);
+	pugi::xml_node scene = root.append_child("scene").append_child("instance_visual_scene");
+	scene.append_attribute("url") = "#Scene";
+	pugi::xml_node up = asset.append_child("up_axis");
+	up.text().set("Z_UP");
 }
 
 void DAESaver::add_textures() {
-	materials = root->add("library_materials");
-	daeElement *images = root->add("library_images");
-	daeElement *effects = root->add("library_effects");
-	daeElement *current_image;
-	daeElement *current_init;
-	daeElement *current_effect;
-	daeElement *sampler;
-	daeElement *surface;
-	daeElement *shader;
+	materials = root.append_child("library_materials");
+	pugi::xml_node images = root.append_child("library_images");
+	pugi::xml_node effects = root.append_child("library_effects");
+	pugi::xml_node current_image;
+	pugi::xml_node current_init;
+	pugi::xml_node current_effect;
+	pugi::xml_node sampler;
+	pugi::xml_node surface;
+	pugi::xml_node shader;
 	string temp;
 	num_textures = model->GetTexturesCount();
 	
 	for (int i = 0; i < model->GetTexturesCount(); i++) {
 		temp = model->Texture(i);
-		current_image = images->add("image");
-		current_init = current_image->add("init_from");
-		current_init->setCharData((temp + ".tga").c_str());
+		current_image = images.append_child("image");
+		current_init = current_image.append_child("init_from");
+		current_init.text().set((temp + ".tga").c_str());
 		temp += "-img";
-		current_image->setAttribute("id",temp.c_str());
-		current_image->setAttribute("name",temp.c_str());
-		current_effect = effects->add("effect");
+		current_image.append_attribute("id") = temp.c_str();
+		current_image.append_attribute("name") = temp.c_str();
+		current_effect = effects.append_child("effect");
 		temp = model->Texture(i);
 		temp += "-fx";
-		current_effect->setAttribute("id",temp.c_str());
-		current_effect->setAttribute("name",temp.c_str());
-		current_effect = current_effect->add("profile_COMMON");
+		current_effect.append_attribute("id") = temp.c_str();
+		current_effect.append_attribute("name") = temp.c_str();
+		current_effect = current_effect.append_child("profile_COMMON");
 		temp = model->Texture(i);
-		surface = current_effect->add("newparam");
-		surface->setAttribute("sid",(string(model->Texture(i)) + "-surface").c_str());
-		surface = surface->add("surface");
-		surface->setAttribute("type","2D");
-		surface = surface->add("init_from");
-		surface->setCharData((string(model->Texture(i)) + "-img").c_str());
-		sampler = current_effect->add("newparam");
-		sampler->setAttribute("sid",(string(model->Texture(i)) + "-sampler").c_str());
-		sampler = sampler->add("sampler2D source");
-		sampler->setCharData((string(model->Texture(i)) + "-surface").c_str());
-		shader = current_effect->add("technique");
-		shader = shader->add("phong");
-		shader = shader->add("diffuse");
-		shader = shader->add("texture");
-		shader->setAttribute("texcoord","CHANNEL1");
-		shader->setAttribute("texture",(string(model->Texture(i)) + "-sampler").c_str());
+		surface = current_effect.append_child("newparam");
+		surface.append_attribute("sid") = (string(model->Texture(i)) + "-surface").c_str();
+		surface = surface.append_child("surface");
+		surface.append_attribute("type") = "2D";
+		surface = surface.append_child("init_from");
+		surface.text().set((string(model->Texture(i)) + "-img").c_str());
+		sampler = current_effect.append_child("newparam");
+		sampler.append_attribute("sid") = (string(model->Texture(i)) + "-sampler").c_str();
+		sampler = sampler.append_child("sampler2D").append_child("source");
+		sampler.text().set((string(model->Texture(i)) + "-surface").c_str());
+		shader = current_effect.append_child("technique");
+		shader = shader.append_child("phong");
+		shader = shader.append_child("diffuse");
+		shader = shader.append_child("texture");
+		shader.append_attribute("texcoord") = "CHANNEL1";
+		shader.append_attribute("texture") = (string(model->Texture(i)) + "-sampler").c_str();
 
-		daeElement *mat = materials->add("material");
+		pugi::xml_node mat = materials.append_child("material");
 		temp = string(model->Texture(i).c_str()) + "-mat";
-		mat->setAttribute("id",temp.c_str());
-		mat->setAttribute("name",temp.c_str());
-		daeElement *effect = mat->add("instance_effect");
-		effect->setAttribute("url",(string("#") + model->Texture(i) + "-fx").c_str());
-
-
-		// probably still needs more...or not!
+		mat.append_attribute("id") = temp.c_str();
+		mat.append_attribute("name") = temp.c_str();
+		pugi::xml_node effect = mat.append_child("instance_effect");
+		effect.append_attribute("url") = (string("#") + model->Texture(i) + "-fx").c_str();
 	}
 }
 
 void DAESaver::add_geom() {
-	geoms = root->add("library_geometries");
-	scene = root->add("library_visual_scenes visual_scene");
-	scene->setAttribute("id","Scene");
-	scene->setAttribute("name","Scene");
+	geoms = root.append_child("library_geometries");
+	scene = root.append_child("library_visual_scenes").append_child("visual_scene");
+	scene.append_attribute("id") = "Scene";
+	scene.append_attribute("name") = "Scene";
 	string temp("detail0");
 	for (int i = 0; i < model->GetLODCount(); i++) {
 		temp[strlen("detail")] = i + '0';
@@ -1541,35 +1433,34 @@ void DAESaver::add_geom() {
 }
 
 void DAESaver::get_subobj(int idx,string *name) {
-	if (subobjs[idx] != NULL) return;
-	daeElement *subobj;
+	if (subobjs[idx]) return;
+	pugi::xml_node subobj;
 	pcs_sobj& sobj = model->SOBJ(idx);
 	if (sobj.parent_sobj == -1) {
-		subobj = scene->add("node");
+		subobj = scene.append_child("node");
 	} else {
-		if (subobjs[sobj.parent_sobj] != NULL) {
-			subobj = subobjs[sobj.parent_sobj]->add("node");
+		if (subobjs[sobj.parent_sobj]) {
+			subobj = subobjs[sobj.parent_sobj].append_child("node");
 		} else {
 			return;
 		}
 	}
 	subobjs[idx] = subobj;
-	daeElement* helper = add_helper(subobj,sobj.properties);
-	daeElement *translate = subobj->add("translate");
-	translate->setCharData(write_vector3d(sobj.offset).c_str());
+	pugi::xml_node helper = add_helper(subobj,sobj.properties);
+	pugi::xml_node translate = subobj.append_child("translate");
+	translate.text().set(write_vector3d(sobj.offset).c_str());
 	if (name) {
 		progress->incrementWithMessage("Adding " + *name);
-		subobj->setAttribute("id",name->c_str());
-		subobj->setAttribute("name",name->c_str());
+		subobj.append_attribute("id") = name->c_str();
+		subobj.append_attribute("name") = name->c_str();
 	} else {
-		subobj->setAttribute("id",sobj.name.c_str());
-		subobj->setAttribute("name",sobj.name.c_str());
+		subobj.append_attribute("id") = sobj.name.c_str();
+		subobj.append_attribute("name") = sobj.name.c_str();
 		progress->incrementWithMessage("Adding " + sobj.name);
 	}
 	
 	// split up polies by texture...
 	vector<vector<pcs_polygon*> > polies;
-	vector<daeElement*> poly_groups;
 	polies.resize(num_textures + 1);
 	vector<unsigned int> counters;
 	counters.resize(num_textures + 1, 0);
@@ -1596,12 +1487,12 @@ void DAESaver::get_subobj(int idx,string *name) {
 			polies[i].resize(counters[i]);
 		}
 	}
-	daeElement *current_group;
-	daeElement *temp;
+	pugi::xml_node current_group;
+	pugi::xml_node temp;
 	stringstream group_name;
-	temp = subobj->add("instance_geometry");
-	temp->add("bind_material")->add("technique_common");
-	temp->setAttribute("url",(string("#") + get_name(subobj).c_str() + "-geometry").c_str());
+	temp = subobj.append_child("instance_geometry");
+	temp.append_child("bind_material").append_child("technique_common");
+	temp.append_attribute("url") = (string("#") + get_name(subobj).c_str() + "-geometry").c_str();
 	group_name << get_name(subobj).c_str() << "-geometry";
 	current_group = get_polygroups(polies,string(group_name.str().c_str()),subobj);
 
@@ -1610,7 +1501,7 @@ void DAESaver::get_subobj(int idx,string *name) {
 	}
 }
 
-void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pcs_sobj& sobj) {
+void DAESaver::add_sobj_helpers(pugi::xml_node& subobj, pugi::xml_node& helper, const pcs_sobj& sobj) {
 	if (sobj.movement_type == 1 && sobj.movement_axis != ANONE) {
 		vector3d direction;
 		double length = 1;
@@ -1629,18 +1520,18 @@ void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pc
 				direction = vector3d(0,0,1);
 				break;
 		}
-		if (helper == NULL) {
-			helper = subobj->add("node");
-			helper->setAttribute("id","helper");
-			helper->setAttribute("name","helper");
+		if (!helper) {
+			helper = subobj.append_child("node");
+			helper.append_attribute("id") = "helper";
+			helper.append_attribute("name") = "helper";
 		}
-		daeElement* rotation = helper->add("node");
+		pugi::xml_node rotation = helper.append_child("node");
 		if (rotate_offset != string::npos) {
-			rotation->setAttribute("id","rotate");
-			rotation->setAttribute("name","rotate");
+			rotation.append_attribute("id") = "rotate";
+			rotation.append_attribute("name") = "rotate";
 		} else {
-			rotation->setAttribute("id","rotate-nospeed");
-			rotation->setAttribute("name","rotate-nospeed");
+			rotation.append_attribute("id") = "rotate-nospeed";
+			rotation.append_attribute("name") = "rotate-nospeed";
 		}
 		write_transform(rotation, vector3d(), direction, vector3d(0,1,0), length);
 	}
@@ -1656,23 +1547,23 @@ void DAESaver::add_sobj_helpers(daeElement *subobj, daeElement* helper, const pc
 		fvec = vector3d(-x, y, z);
 		sscanf(sobj.properties.c_str() + uvec_offset, "$uvec:%lf,%lf,%lf", &x, &y, &z);
 		uvec = vector3d(-x, y, z);
-		if (helper == NULL) {
-			helper = subobj->add("node");
-			helper->setAttribute("id","helper");
-			helper->setAttribute("name","helper");
+		if (!helper) {
+			helper = subobj.append_child("node");
+			helper.append_attribute("id") = "helper";
+			helper.append_attribute("name") = "helper";
 		}
-		daeElement* vec = helper->add("node");
-		vec->setAttribute("id","vec");
-		vec->setAttribute("name","vec");
+		pugi::xml_node vec = helper.append_child("node");
+		vec.append_attribute("id") = "vec";
+		vec.append_attribute("name") = "vec";
 		write_transform_binormal(vec, vector3d(), fvec, uvec, vector3d(0,0,1));
 	}
 }
 
-daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, string name,daeElement *node) {
-	daeElement *result = geoms->add("geometry");
-	result->setAttribute("id",name.c_str());
-	result->setAttribute("name",name.c_str());
-	daeElement *mesh = result->add("mesh");
+pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, string name,pugi::xml_node& node) {
+	pugi::xml_node result = geoms.append_child("geometry");
+	result.append_attribute("id") = name.c_str();
+	result.append_attribute("name") = name.c_str();
+	pugi::xml_node mesh = result.append_child("mesh");
 	vector<float> vert,norm,uv;
 	vector<int> ref, sizes;
 	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
@@ -1692,7 +1583,7 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 				sizes[j] = polies[i][j]->verts.size();
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					if (vert_map.find(polies[i][j]->verts[k].point) == vert_map.end()) {
-						vert_map.insert(pair<vector3d,int>(polies[i][j]->verts[k].point, vert_map.size()));
+						vert_map.insert(make_pair(polies[i][j]->verts[k].point, vert_map.size()));
 						if (vert.size() <= vert_idx + 2) {
 							vert.resize(vert.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1702,7 +1593,7 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 						vert_idx += 3;
 					}
 					if (norm_map.find(polies[i][j]->verts[k].norm) == norm_map.end()) {
-						norm_map.insert(pair<vector3d,int>(polies[i][j]->verts[k].norm, norm_map.size()));
+						norm_map.insert(make_pair(polies[i][j]->verts[k].norm, norm_map.size()));
 						if (norm.size() <= norm_idx + 2) {
 							norm.resize(norm.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1712,8 +1603,8 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 						norm_idx += 3;
 
 					}
-					if (uv_map.find(pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)) == uv_map.end()) {
-						uv_map.insert(pair<pair<float,float>,int>(pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v), uv_map.size()));
+					if (uv_map.find(make_pair(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)) == uv_map.end()) {
+						uv_map.insert(make_pair(make_pair(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v), uv_map.size()));
 						if (uv.size() <= uv_idx + 1) {
 							uv.resize(uv.size() * VECTOR_GROWTH_FACTOR);
 						}
@@ -1733,47 +1624,47 @@ daeElement *DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, str
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					ref[count] = vert_map[polies[i][j]->verts[k].point];
 					ref[count + 1] = norm_map[polies[i][j]->verts[k].norm];
-					ref[count + 2] = uv_map[pair<float,float>(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)];
+					ref[count + 2] = uv_map[make_pair(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)];
 					count += 3;
 				}
 			}
-			add_refs(mesh,name,ref,sizes,node,i);
+			add_refs(mesh,name,ref,sizes,&node,i);
 		}
 	}
-	daeElement *pos = mesh->add("source");
-	pos->setAttribute("id",(name + "-position").c_str());
-	daeElement *pos_float_array = pos->add("float_array");
-	pos_float_array->setAttribute("id",(name + "-position-array").c_str());
-	pos_float_array->setCharData(write_float_array(vert).c_str());
-	pos_float_array->setAttribute("count",int_to_string(vert.size()).c_str());
+	pugi::xml_node pos = mesh.append_child("source");
+	pos.append_attribute("id") = (name + "-position").c_str();
+	pugi::xml_node pos_float_array = pos.append_child("float_array");
+	pos_float_array.append_attribute("id") = (name + "-position-array").c_str();
+	pos_float_array.text().set(write_float_array(vert).c_str());
+	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 	add_accessor(pos,name + "-position-array",vert.size()/3);
 
-	daeElement *norms = mesh->add("source");
-	norms->setAttribute("id",(name + "-normals").c_str());
-	daeElement *norms_float_array = norms->add("float_array");
-	norms_float_array->setAttribute("id",(name + "-normals-array").c_str());
-	norms_float_array->setCharData(write_float_array(norm).c_str());
-	norms_float_array->setAttribute("count",int_to_string(norm.size()).c_str());
+	pugi::xml_node norms = mesh.append_child("source");
+	norms.append_attribute("id") = (name + "-normals").c_str();
+	pugi::xml_node norms_float_array = norms.append_child("float_array");
+	norms_float_array.append_attribute("id") = (name + "-normals-array").c_str();
+	norms_float_array.text().set(write_float_array(norm).c_str());
+	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
 	add_accessor(norms,name + "-normals-array",norm.size()/3);
 
-	daeElement *verts = mesh->add("vertices");
-	verts->setAttribute("id",(name + "-vertex").c_str());
-	daeElement *vert_input = verts->add("input");
-	vert_input->setAttribute("semantic", "POSITION");
-	vert_input->setAttribute("source", (string("#") + name + "-position").c_str());
-	daeElement *uvs = mesh->add("source");
-	uvs->setAttribute("id",(name + "-uv").c_str());
-	daeElement *uvs_float_array = uvs->add("float_array");
-	uvs_float_array->setAttribute("id",(name + "-uv-array").c_str());
-	uvs_float_array->setCharData(write_float_array(uv).c_str());
-	uvs_float_array->setAttribute("count",int_to_string(uv.size()).c_str());
+	pugi::xml_node verts = mesh.append_child("vertices");
+	verts.append_attribute("id") = (name + "-vertex").c_str();
+	pugi::xml_node vert_input = verts.append_child("input");
+	vert_input.append_attribute("semantic") =  "POSITION";
+	vert_input.append_attribute("source") =  (string("#") + name + "-position").c_str();
+	pugi::xml_node uvs = mesh.append_child("source");
+	uvs.append_attribute("id") = (name + "-uv").c_str();
+	pugi::xml_node uvs_float_array = uvs.append_child("float_array");
+	uvs_float_array.append_attribute("id") = (name + "-uv-array").c_str();
+	uvs_float_array.text().set(write_float_array(uv).c_str());
+	uvs_float_array.append_attribute("count") = int_to_string(uv.size()).c_str();
 	add_accessor(uvs,name + "-uv-array",uv.size()/2,true);
 
 	return result;
 }
 
-void DAESaver::add_refs(daeElement *mesh, string name, vector<int> refs, vector<int> sizes, daeElement *node, int texture) {
-	daeElement *polylist;
+void DAESaver::add_refs(pugi::xml_node& mesh, string name, vector<int> refs, vector<int> sizes, pugi::xml_node* node, int texture) {
+	pugi::xml_node polylist;
 	bool tri = true;
 	for (unsigned int i = 0; i < sizes.size(); i++) {
 		if (sizes[i] != 3) {
@@ -1782,139 +1673,139 @@ void DAESaver::add_refs(daeElement *mesh, string name, vector<int> refs, vector<
 		}
 	}
 	if (tri) {
-		polylist = mesh->add("triangles");
+		polylist = mesh.append_child("triangles");
 	} else {
-		polylist = mesh->add("polylist");
+		polylist = mesh.append_child("polylist");
 	}
 	if (texture > -1 && texture < num_textures) {
-		polylist->setAttribute("material",add_material(texture,node).c_str());
+		polylist.append_attribute("material") = add_material(texture,*node).c_str();
 	}
-	daeElement *vert, *norm, *uv;
-	vert = polylist->add("input");
-	vert->setAttribute("offset","0");
-	vert->setAttribute("semantic","VERTEX");
-	vert->setAttribute("source", (string("#") + name + "-vertex").c_str());
+	pugi::xml_node vert, norm, uv;
+	vert = polylist.append_child("input");
+	vert.append_attribute("offset") = "0";
+	vert.append_attribute("semantic") = "VERTEX";
+	vert.append_attribute("source") =  (string("#") + name + "-vertex").c_str();
 	if (texture < num_textures + 1) {
-		norm = polylist->add("input");
-		norm->setAttribute("offset","1");
-		norm->setAttribute("semantic","NORMAL");
-		norm->setAttribute("source", (string("#") + name + "-normals").c_str());
+		norm = polylist.append_child("input");
+		norm.append_attribute("offset") = "1";
+		norm.append_attribute("semantic") = "NORMAL";
+		norm.append_attribute("source") =  (string("#") + name + "-normals").c_str();
 	}
 	if (texture > -1) {
-		uv = polylist->add("input");
+		uv = polylist.append_child("input");
 		if (texture < num_textures + 1) {
-			uv->setAttribute("offset","2");
+			uv.append_attribute("offset") = "2";
 		} else {
-			uv->setAttribute("offset","1");
+			uv.append_attribute("offset") = "1";
 		}
-		uv->setAttribute("semantic","TEXCOORD");
-		uv->setAttribute("source", (string("#") + name + "-uv").c_str());
+		uv.append_attribute("semantic") = "TEXCOORD";
+		uv.append_attribute("source") =  (string("#") + name + "-uv").c_str();
 	}
 	if (!tri) {
-		daeElement *vcount = polylist->add("vcount");
-		vcount->setCharData(write_int_array(sizes).c_str());
+		pugi::xml_node vcount = polylist.append_child("vcount");
+		vcount.text().set(write_int_array(sizes).c_str());
 	}
 
-	daeElement *p = polylist->add("p");
-	p->setCharData(write_int_array(refs).c_str());
-	polylist->setAttribute("count",int_to_string(sizes.size()).c_str());
+	pugi::xml_node p = polylist.append_child("p");
+	p.text().set(write_int_array(refs).c_str());
+	polylist.append_attribute("count") = int_to_string(sizes.size()).c_str();
 }
 
 void DAESaver::add_turret_fps() {
-	daeElement *element;
+	pugi::xml_node element;
 	stringstream name;
 	pcs_turret *turret;
-	daeElement *helper;
+	pugi::xml_node helper;
 	for (int i = 0; i < model->GetTurretCount(); i++) {
 		turret = &model->Turret(i);
 		helper = find_helper(subobjs[turret->sobj_par_phys]);
-		if (helper == NULL) {
+		if (!helper) {
 			helper = scene;
 		}
-		helper = helper->add("node");
+		helper = helper.append_child("node");
 		name.str("");
 		if (turret->sobj_parent == turret->sobj_par_phys) {
 			name << "firepoints" << i;
 		} else {
 			name << "multifirepoints" << i;
 		}
-		helper->setAttribute("id",name.str().c_str());
-		helper->setAttribute("name",name.str().c_str());
+		helper.append_attribute("id") = name.str().c_str();
+		helper.append_attribute("name") = name.str().c_str();
 		for (unsigned int j = 0; j < turret->fire_points.size(); j++) {
 			name.str("");
 			name << model_subobjs[0][turret->sobj_parent].name.c_str() << "-" << setfill ('0') << setw (2) << (j + 1);
-			element = helper->add("node");
-			element->setAttribute("id",name.str().c_str());
-			element->setAttribute("name",name.str().c_str());
+			element = helper.append_child("node");
+			element.append_attribute("id") = name.str().c_str();
+			element.append_attribute("name") = name.str().c_str();
 			write_transform(element, turret->fire_points[j], turret->turret_normal, vector3d(0,1,0));
 		}
 	}
 }
 
 void DAESaver::add_docks() {
-	daeElement *element;
-	daeElement *group;
+	pugi::xml_node element;
+	pugi::xml_node group;
 	stringstream name;
 	pcs_dock_point *dockpoint;
 	for (int i = 0; i < model->GetDockingCount(); i++) {
 		dockpoint = &model->Dock(i);
 		name.str("");
 		name << "dockpoint" << setfill ('0') << setw (2) << (i+1);
-		group = scene->add("node");
-		group->setAttribute("id",name.str().c_str());
-		group->setAttribute("name",name.str().c_str());
+		group = scene.append_child("node");
+		group.append_attribute("id") = name.str().c_str();
+		group.append_attribute("name") = name.str().c_str();
 		add_helper(group,dockpoint->properties);
 		docks.push_back(group);
 
 		for (unsigned int j = 0; j < dockpoint->dockpoints.size(); j++) {
 			name.str("");
 			name << "dockpoint" << setfill ('0') << setw (2) << (i+1) << "-" << setfill ('0') << setw (2) << (j+1);
-			element = group->add("node");
-			element->setAttribute("id",name.str().c_str());
-			element->setAttribute("name",name.str().c_str());
+			element = group.append_child("node");
+			element.append_attribute("id") = name.str().c_str();
+			element.append_attribute("name") = name.str().c_str();
 			write_transform(element,dockpoint->dockpoints[j].point,dockpoint->dockpoints[j].norm,vector3d(0,1,0));
 		}
 	}
 }
 
 void DAESaver::add_thrusters() {
-	daeElement *element;
+	pugi::xml_node element;
 	stringstream name;
 	pcs_thruster *thruster;
-	daeElement *helper;
+	pugi::xml_node helper;
 	string engine_name;
 	vector3d offset,scale_vec;
 	for (int i = 0; i < model->GetThrusterCount(); i++) {
-		helper = NULL;
+		helper = pugi::xml_node();
 		thruster = &model->Thruster(i);
 		engine_name = thruster->properties;
 		if (!engine_name.empty() && boost::algorithm::istarts_with(engine_name, "$engine_subsystem=")) {
 			engine_name = engine_name.substr(engine_name.find("="));
 			helper = find_subsystem(engine_name,offset,scale_vec);
 		}
-		if (helper == NULL) {
+		if (!helper) {
 			helper = scene;
 			scale_vec = vector3d(1,1,1);
 		}
-		helper = helper->add("node");
-		helper->setAttribute("id","thrusters");
-		helper->setAttribute("name","thrusters");
+		helper = helper.append_child("node");
+		helper.append_attribute("id") = "thrusters";
+		helper.append_attribute("name") = "thrusters";
 
 
 		for (unsigned int j = 0; j < thruster->points.size(); j++) {
-			element = helper->add("node");
-			element->setAttribute("id","thruster");
-			element->setAttribute("name","thruster");
+			element = helper.append_child("node");
+			element.append_attribute("id") = "thruster";
+			element.append_attribute("name") = "thruster";
 			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), vector3d(0,0,1), thruster->points[j].radius, scale_vec.x);
 		}
 	}
 }
 
 void DAESaver::add_guns() {
-	daeElement *element;
+	pugi::xml_node element;
 	stringstream name;
 	pcs_slot *gunbank;
-	daeElement *group;
+	pugi::xml_node group;
 	int guns = 0;
 	int missiles = 0;
 
@@ -1931,9 +1822,9 @@ void DAESaver::add_guns() {
 		} else {
 			name << "missilebank" << setfill ('0') << setw (2) << (missiles);
 		}
-		group = scene->add("node");
-		group->setAttribute("id",name.str().c_str());
-		group->setAttribute("name",name.str().c_str());
+		group = scene.append_child("node");
+		group.append_attribute("id") = name.str().c_str();
+		group.append_attribute("name") = name.str().c_str();
 		for (unsigned int j = 0; j < gunbank->muzzles.size(); j++) {
 			name.str("");
 			if (gunbank->type == GUN) {
@@ -1942,9 +1833,9 @@ void DAESaver::add_guns() {
 				name << "missilebank" << setfill ('0') << setw (2) << (missiles);
 			}
 			name << "-" << setfill ('0') << setw (2) << (j+1);
-			element = group->add("node");
-			element->setAttribute("id",name.str().c_str());
-			element->setAttribute("name",name.str().c_str());
+			element = group.append_child("node");
+			element.append_attribute("id") = name.str().c_str();
+			element.append_attribute("name") = name.str().c_str();
 			write_transform(element,gunbank->muzzles[j].point,gunbank->muzzles[j].norm,vector3d(0,1,0));
 		}
 	}
@@ -1955,21 +1846,21 @@ void DAESaver::add_eyes() {
 		pcs_eye_pos& eye = model->Eye(i);
 		stringstream name;
 		name << "eyepoint" << setfill ('0') << setw (2) << (i+1);
-		daeElement *element;
+		pugi::xml_node element;
 		if (eye.sobj_number == -1) {
-			element = scene->add("node");
+			element = scene.append_child("node");
 		} else {
-			element = find_helper(subobjs[eye.sobj_number])->add("node");
+			element = find_helper(subobjs[eye.sobj_number]).append_child("node");
 		}
-		element->setAttribute("id",name.str().c_str());
-		element->setAttribute("name",name.str().c_str());
+		element.append_attribute("id") = name.str().c_str();
+		element.append_attribute("name") = name.str().c_str();
 		write_transform(element,eye.sobj_offset,eye.normal,vector3d(0,1,0));
 	}
 }
 
 void DAESaver::add_subsystems() {
-	daeElement *element;
-	daeElement *translate;
+	pugi::xml_node element;
+	pugi::xml_node translate;
 	stringstream name;
 	pcs_special *subsys;
 	vector3d scale_vec;
@@ -1982,12 +1873,12 @@ void DAESaver::add_subsystems() {
 			name << "special";
 		}
 	    name << (subsys->name.c_str() + 1);
-		element = scene->add("node");
-		element->setAttribute("id",name.str().c_str());
-		element->setAttribute("name",name.str().c_str());
-		translate = element->add("translate");
-		translate->setAttribute("sid","translate");
-		translate->setCharData(write_vector3d(subsys->point).c_str());
+		element = scene.append_child("node");
+		element.append_attribute("id") = name.str().c_str();
+		element.append_attribute("name") = name.str().c_str();
+		translate = element.append_child("translate");
+		translate.append_attribute("sid") = "translate";
+		translate.text().set(write_vector3d(subsys->point).c_str());
 		add_scale(element,radius_to_scale(subsys->radius));
 		specials.push_back(element);
 		add_helper(element,subsys->properties);
@@ -2000,21 +1891,21 @@ void DAESaver::add_shield() {
 	}
 	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
 	int vert_idx = 0,norm_idx = 0;
-	daeElement *element = scene->add("node");
-	element->setAttribute("id","shield");
-	element->setAttribute("name","shield");
-	daeElement *temp = element->add("instance_geometry");
-	temp->setAttribute("url","#shield-geometry");
-	daeElement *geom = geoms->add("geometry");
-	geom->setAttribute("id","shield-geometry");
-	geom->setAttribute("name","shield-geometry");
+	pugi::xml_node element = scene.append_child("node");
+	element.append_attribute("id") = "shield";
+	element.append_attribute("name") = "shield";
+	pugi::xml_node temp = element.append_child("instance_geometry");
+	temp.append_attribute("url") = "#shield-geometry";
+	pugi::xml_node geom = geoms.append_child("geometry");
+	geom.append_attribute("id") = "shield-geometry";
+	geom.append_attribute("name") = "shield-geometry";
 	vector<float> vert,norm;
 	vector<int> ref,size;
 	pcs_shield_triangle tri;
 	for (int i = 0; i < model->GetShldTriCount(); i++) {
 		tri = model->ShldTri(i);
 		if (norm_map.find(tri.face_normal) == norm_map.end()) {
-			norm_map.insert(pair<vector3d,int>(tri.face_normal, norm_map.size()));
+			norm_map.insert(make_pair(tri.face_normal, norm_map.size()));
 			norm.push_back(-tri.face_normal.x);
 			norm.push_back(tri.face_normal.z);
 			norm.push_back(tri.face_normal.y);
@@ -2023,7 +1914,7 @@ void DAESaver::add_shield() {
 
 		for (int j = 2; j >= 0; j--) {
 			if (vert_map.find(tri.corners[j]) == vert_map.end()) {
-				vert_map.insert(pair<vector3d,int>(tri.corners[j], vert_map.size()));
+				vert_map.insert(make_pair(tri.corners[j], vert_map.size()));
 				vert.push_back(-tri.corners[j].x);
 				vert.push_back(tri.corners[j].z);
 				vert.push_back(tri.corners[j].y);
@@ -2034,62 +1925,62 @@ void DAESaver::add_shield() {
 		}
 		size.push_back(3);
 	}
-	daeElement *mesh = geom->add("mesh");
+	pugi::xml_node mesh = geom.append_child("mesh");
 	add_refs(mesh,"shield",ref,size);
-	daeElement *pos = mesh->add("source");
-	pos->setAttribute("id","shield-position");
-	daeElement *pos_float_array = pos->add("float_array");
-	pos_float_array->setAttribute("id","shield-position-array");
-	pos_float_array->setCharData(write_float_array(vert).c_str());
-	pos_float_array->setAttribute("count",int_to_string(vert.size()).c_str());
+	pugi::xml_node pos = mesh.append_child("source");
+	pos.append_attribute("id") = "shield-position";
+	pugi::xml_node pos_float_array = pos.append_child("float_array");
+	pos_float_array.append_attribute("id") = "shield-position-array";
+	pos_float_array.text().set(write_float_array(vert).c_str());
+	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 	add_accessor(pos,"shield-position-array",vert.size()/3);
 
-	daeElement *norms = mesh->add("source");
-	norms->setAttribute("id","shield-normals");
-	daeElement *norms_float_array = norms->add("float_array");
-	norms_float_array->setAttribute("id","shield-normals-array");
-	norms_float_array->setCharData(write_float_array(norm).c_str());
-	norms_float_array->setAttribute("count",int_to_string(norm.size()).c_str());
+	pugi::xml_node norms = mesh.append_child("source");
+	norms.append_attribute("id") = "shield-normals";
+	pugi::xml_node norms_float_array = norms.append_child("float_array");
+	norms_float_array.append_attribute("id") = "shield-normals-array";
+	norms_float_array.text().set(write_float_array(norm).c_str());
+	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
 	add_accessor(norms,"shield-normals-array",norm.size()/3);
 
-	daeElement *verts = mesh->add("vertices");
-	verts->setAttribute("id","shield-vertex");
-	daeElement *vert_input = verts->add("input");
-	vert_input->setAttribute("semantic", "POSITION");
-	vert_input->setAttribute("source", "#shield-position");
+	pugi::xml_node verts = mesh.append_child("vertices");
+	verts.append_attribute("id") = "shield-vertex";
+	pugi::xml_node vert_input = verts.append_child("input");
+	vert_input.append_attribute("semantic") =  "POSITION";
+	vert_input.append_attribute("source") =  "#shield-position";
 }
 
 void DAESaver::add_paths() {
 	pcs_path *path;
-	daeElement *element;
-	daeElement *translate;
-	daeElement *helper;
+	pugi::xml_node element;
+	pugi::xml_node translate;
+	pugi::xml_node helper;
 	stringstream name;
 	vector3d offset(0,0,0);
 	vector3d scale_vec;
 	for (int i = 0; i < model->GetPathCount(); i++) {
 		path = &model->Path(i);
 		helper = find_subsystem(path->parent,offset,scale_vec);
-		if (helper == NULL) {
+		if (!helper) {
 			helper = find_dockpoint(i,offset);
 		}
-		if (helper == NULL) {
+		if (!helper) {
 			helper = scene;
 		}
 		name.str("");
 		name << (path->name.c_str() + 1);
-		helper = helper->add("node");
-		helper->setAttribute("id",name.str().c_str());
-		helper->setAttribute("name",name.str().c_str());
+		helper = helper.append_child("node");
+		helper.append_attribute("id") = name.str().c_str();
+		helper.append_attribute("name") = name.str().c_str();
 		for (unsigned int j = 0; j < path->verts.size(); j++) {
 			name.str("");
 			name << (path->name.c_str() + 1) << "-" << setw(2) << setfill('0') << (j+1);
-			element = helper->add("node");
-			element->setAttribute("id",name.str().c_str());
-			element->setAttribute("name",name.str().c_str());
-			translate = element->add("translate");
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(path->verts[j].pos - offset,scale_vec).c_str());
+			element = helper.append_child("node");
+			element.append_attribute("id") = name.str().c_str();
+			element.append_attribute("name") = name.str().c_str();
+			translate = element.append_child("translate");
+			translate.append_attribute("sid") = "translate";
+			translate.text().set(write_vector3d(path->verts[j].pos - offset,scale_vec).c_str());
 			add_scale(element,radius_to_scale(path->verts[j].radius), scale_vec);
 		}
 	}
@@ -2099,15 +1990,15 @@ void DAESaver::add_glows() {
 	pcs_glow_array glows;
 	pcs_thrust_glow glow;
 	string name;
-	daeElement *element;
-	daeElement *glowpoint;
-	daeElement *trans;
+	pugi::xml_node element;
+	pugi::xml_node glowpoint;
+	pugi::xml_node trans;
 	
 	for (int i = 0; i < model->GetLightCount(); i++) {
 		glows = model->Light(i);
-		element = find_helper(subobjs[glows.obj_parent])->add("node");
-		element->setAttribute("id","glowbank");
-		element->setAttribute("name","glowbank");
+		element = find_helper(subobjs[glows.obj_parent]).append_child("node");
+		element.append_attribute("id") = "glowbank";
+		element.append_attribute("name") = "glowbank";
 		std::stringstream fields;
 		fields << glows.properties;
 		fields << endl << "type=" << glows.type;
@@ -2118,13 +2009,13 @@ void DAESaver::add_glows() {
 		add_helper(element, fields.str());
 		for (unsigned int j = 0; j < glows.lights.size(); j++) {
 			glow = glows.lights[j];
-			glowpoint = element->add("node");
-			glowpoint->setAttribute("id","glowpoint");
-			glowpoint->setAttribute("name","glowpoint");
+			glowpoint = element.append_child("node");
+			glowpoint.append_attribute("id") = "glowpoint";
+			glowpoint.append_attribute("name") = "glowpoint";
 			add_scale(glowpoint,radius_to_scale(glow.radius));
-			trans = glowpoint->add("translate");
-			trans->setAttribute("sid","translate");
-			trans->setCharData(write_vector3d(glow.pos).c_str());
+			trans = glowpoint.append_child("translate");
+			trans.append_attribute("sid") = "translate";
+			trans.text().set(write_vector3d(glow.pos).c_str());
 		}
 	}
 }
@@ -2137,26 +2028,26 @@ void DAESaver::add_insignia() {
 
 	pcs_insig insignia;
 	stringstream name;
-	daeElement *element;
-	daeElement *translate;
+	pugi::xml_node element;
+	pugi::xml_node translate;
 	pcs_insig_face face;
 	for (int i = 0; i < model->GetInsigniaCount(); i++) {
 		insignia = model->Insignia(i);
 		name.str("");
 		name << "insigLOD" << setfill ('0') << setw (2) << insignia.lod + 1 << "-" << setfill ('0') << setw (2) << counts[insignia.lod];
 		counts[insignia.lod]++;
-		element = scene->add("node");
-		element->setAttribute("id", name.str().c_str());
-		element->setAttribute("name", name.str().c_str());
-		translate = element->add("translate");
-		translate->setCharData(write_vector3d(insignia.offset).c_str());
+		element = scene.append_child("node");
+		element.append_attribute("id") =  name.str().c_str();
+		element.append_attribute("name") =  name.str().c_str();
+		translate = element.append_child("translate");
+		translate.text().set(write_vector3d(insignia.offset).c_str());
 
 
-		daeElement *temp = element->add("instance_geometry");
-		temp->setAttribute("url",(string("#") + name.str().c_str() + "-geometry").c_str());
-		daeElement *geom = geoms->add("geometry");
-		geom->setAttribute("id",(name.str() + "-geometry").c_str());
-		geom->setAttribute("name",(name.str() + "-geometry").c_str());
+		pugi::xml_node temp = element.append_child("instance_geometry");
+		temp.append_attribute("url") = (string("#") + name.str().c_str() + "-geometry").c_str();
+		pugi::xml_node geom = geoms.append_child("geometry");
+		geom.append_attribute("id") = (name.str() + "-geometry").c_str();
+		geom.append_attribute("name") = (name.str() + "-geometry").c_str();
 		vector<float> vert, uv;
 		vector<int> ref,size;
 		vert_map.clear();
@@ -2165,18 +2056,18 @@ void DAESaver::add_insignia() {
 			face = insignia.faces[i];
 			for (int j = 2; j >= 0; j--) {
 				if (vert_map.find(face.verts[j]) == vert_map.end()) {
-					vert_map.insert(pair<vector3d,int>(face.verts[j], vert_map.size()));
+					vert_map.insert(make_pair(face.verts[j], vert_map.size()));
 					vert.push_back(-face.verts[j].x);
 					vert.push_back(face.verts[j].z);
 					vert.push_back(face.verts[j].y);
 				}
 				vert_idx = vert_map[face.verts[j]];
-				if (uv_map.find(pair<float,float>(face.u[j],face.v[j])) == uv_map.end()) {
-					uv_map.insert(pair<pair<float,float>,int>(pair<float,float>(face.u[j],face.v[j]), uv_map.size()));
+				if (uv_map.find(make_pair(face.u[j],face.v[j])) == uv_map.end()) {
+					uv_map.insert(make_pair(make_pair(face.u[j],face.v[j]), uv_map.size()));
 					uv.push_back(face.u[j]);
 					uv.push_back(1.0 - face.v[j]);
 				}
-				uv_idx = uv_map[pair<float,float>(face.u[j],face.v[j])];
+				uv_idx = uv_map[make_pair(face.u[j],face.v[j])];
 
 
 
@@ -2185,29 +2076,29 @@ void DAESaver::add_insignia() {
 			}
 			size.push_back(3);
 		}
-		daeElement *mesh = geom->add("mesh");
+		pugi::xml_node mesh = geom.append_child("mesh");
 		add_refs(mesh,name.str().c_str(),ref,size,NULL, num_textures + 1);
-		daeElement *pos = mesh->add("source");
-		pos->setAttribute("id",(name.str() + "-position").c_str());
-		daeElement *pos_float_array = pos->add("float_array");
-		pos_float_array->setAttribute("id",(name.str() + "-position-array").c_str());
-		pos_float_array->setCharData(write_float_array(vert).c_str());
-		pos_float_array->setAttribute("count",int_to_string(vert.size()).c_str());
+		pugi::xml_node pos = mesh.append_child("source");
+		pos.append_attribute("id") = (name.str() + "-position").c_str();
+		pugi::xml_node pos_float_array = pos.append_child("float_array");
+		pos_float_array.append_attribute("id") = (name.str() + "-position-array").c_str();
+		pos_float_array.text().set(write_float_array(vert).c_str());
+		pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 		add_accessor(pos,(name.str() + "-position-array").c_str(),vert.size()/3);
 
-		daeElement *uvs = mesh->add("source");
-		uvs->setAttribute("id",(name.str() + "-uv").c_str());
-		daeElement *uvs_float_array = uvs->add("float_array");
-		uvs_float_array->setAttribute("id",(name.str() + "-uv-array").c_str());
-		uvs_float_array->setCharData(write_float_array(uv).c_str());
-		uvs_float_array->setAttribute("count",int_to_string(uv.size()).c_str());
+		pugi::xml_node uvs = mesh.append_child("source");
+		uvs.append_attribute("id") = (name.str() + "-uv").c_str();
+		pugi::xml_node uvs_float_array = uvs.append_child("float_array");
+		uvs_float_array.append_attribute("id") = (name.str() + "-uv-array").c_str();
+		uvs_float_array.text().set(write_float_array(uv).c_str());
+		uvs_float_array.append_attribute("count") = int_to_string(uv.size()).c_str();
 		add_accessor(uvs,(name.str() + "-uv-array").c_str(),uv.size()/2,true);
 
-		daeElement *verts = mesh->add("vertices");
-		verts->setAttribute("id",(name.str() + "-vertex").c_str());
-		daeElement *vert_input = verts->add("input");
-		vert_input->setAttribute("semantic", "POSITION");
-		vert_input->setAttribute("source", (string("#") + name.str().c_str() + "-position").c_str());
+		pugi::xml_node verts = mesh.append_child("vertices");
+		verts.append_attribute("id") = (name.str() + "-vertex").c_str();
+		pugi::xml_node vert_input = verts.append_child("input");
+		vert_input.append_attribute("semantic") =  "POSITION";
+		vert_input.append_attribute("source") =  (string("#") + name.str().c_str() + "-position").c_str();
 	}
 }
 
@@ -2215,14 +2106,14 @@ void DAESaver::add_center_of_mass() {
 	const vector3d& com = model->GetCenterOfMass();
 	if (com == vector3d())
 		return;
-	daeElement *center_of_mass = scene->add("node");
-	if (center_of_mass != NULL) {
-		center_of_mass->setAttribute("id", "com");
-		center_of_mass->setAttribute("name", "com");
-		daeElement* translate = center_of_mass->add("translate");
-		if (translate != NULL) {
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(com));
+	pugi::xml_node center_of_mass = scene.append_child("node");
+	if (center_of_mass) {
+		center_of_mass.append_attribute("id") =  "com";
+		center_of_mass.append_attribute("name") =  "com";
+		pugi::xml_node translate = center_of_mass.append_child("translate");
+		if (translate) {
+			translate.append_attribute("sid") = "translate";
+			translate.text().set(write_vector3d(com).c_str());
 		}
 	}
 }
@@ -2231,29 +2122,29 @@ void DAESaver::add_autocentering() {
 	const vector3d& acen = model->GetAutoCenter();
 	if (acen == vector3d())
 		return;
-	daeElement *autocentering = scene->add("node");
-	if (autocentering != NULL) {
-		autocentering->setAttribute("id", "acen");
-		autocentering->setAttribute("name", "acen");
-		daeElement* translate = autocentering->add("translate");
-		if (translate != NULL) {
-			translate->setAttribute("sid","translate");
-			translate->setCharData(write_vector3d(acen));
+	pugi::xml_node autocentering = scene.append_child("node");
+	if (autocentering) {
+		autocentering.append_attribute("id") =  "acen";
+		autocentering.append_attribute("name") =  "acen";
+		pugi::xml_node translate = autocentering.append_child("translate");
+		if (translate) {
+			translate.append_attribute("sid") = "translate";
+			translate.text().set(write_vector3d(acen).c_str());
 		}
 	}
 }
 
 void DAESaver::add_mass() {
-	daeElement *mass = scene->add("node");
-	if (mass != NULL) {
-		mass->setAttribute("id", "mass");
-		mass->setAttribute("name", "mass");
-		mass = mass->add("node");
-		if (mass != NULL) {
+	pugi::xml_node mass = scene.append_child("node");
+	if (mass) {
+		mass.append_attribute("id") =  "mass";
+		mass.append_attribute("name") =  "mass";
+		mass = mass.append_child("node");
+		if (mass) {
 			stringstream stream;
 			stream << model->GetMass();
-			mass->setAttribute("id", stream.str().c_str());
-			mass->setAttribute("name", stream.str().c_str());
+			mass.append_attribute("id") =  stream.str().c_str();
+			mass.append_attribute("name") =  stream.str().c_str();
 		}
 	}
 }
@@ -2271,29 +2162,29 @@ void DAESaver::add_moment_of_inertia() {
 	}
 	// let's not bother saving a heap of zeroes.
 	if (calculated) {
-		daeElement *moi = scene->add("node");
-		if (moi != NULL) {
-			moi->setAttribute("id", "moi");
-			moi->setAttribute("name", "moi");
-			moi = moi->add("node");
-			if (moi != NULL) {
-				moi->setAttribute("id", stream.str().c_str());
-				moi->setAttribute("name", stream.str().c_str());
+		pugi::xml_node moi = scene.append_child("node");
+		if (moi) {
+			moi.append_attribute("id") =  "moi";
+			moi.append_attribute("name") =  "moi";
+			moi = moi.append_child("node");
+			if (moi) {
+				moi.append_attribute("id") =  stream.str().c_str();
+				moi.append_attribute("name") =  stream.str().c_str();
 			}
 		}
 	}
 }
 
-string DAESaver::add_material(int idx,daeElement *node) {
+string DAESaver::add_material(int idx,pugi::xml_node& node) {
 
-	daeElement *instance = node->getDescendant("technique_common");
-	instance = instance->add("instance_material");
-	instance->setAttribute("symbol",(model->Texture(idx) + "-mat").c_str());
-	instance->setAttribute("target",(string("#") + model->Texture(idx) + "-mat").c_str());
-	instance = instance->add("bind_vertex_input");
-	instance->setAttribute("input_semantic","TEXCOORD");
-	instance->setAttribute("input_set","1");
-	instance->setAttribute("semantic","CHANNEL1");
+	pugi::xml_node instance = find_node(node, "technique_common");
+	instance = instance.append_child("instance_material");
+	instance.append_attribute("symbol") = (model->Texture(idx) + "-mat").c_str();
+	instance.append_attribute("target") = (string("#") + model->Texture(idx) + "-mat").c_str();
+	instance = instance.append_child("bind_vertex_input");
+	instance.append_attribute("input_semantic") = "TEXCOORD";
+	instance.append_attribute("input_set") = "1";
+	instance.append_attribute("semantic") = "CHANNEL1";
 
 	return string(model->Texture(idx) + "-mat");
 }
@@ -2311,27 +2202,27 @@ void filter_string(std::string& base, const std::string& property) {
 	}
 }
 
-daeElement* DAESaver::add_helper(daeElement *element,string properties) {
+pugi::xml_node DAESaver::add_helper(pugi::xml_node& element,string properties) {
 	if (export_helpers) {
 		if (properties.size() > 0 && strlen(properties.c_str()) > 0) {
-			daeElement *helper = element->add("node");
-			daeElement *props;
+			pugi::xml_node helper = element.append_child("node");
+			pugi::xml_node props;
 			stringstream temp;
 
 			string result;
 			string properti;
 			string previous;
-			helper->setAttribute("id", "helper");
-			helper->setAttribute("name", "helper");
+			helper.append_attribute("id") =  "helper";
+			helper.append_attribute("name") =  "helper";
 			filter_string(properties, "$rotate");
 			filter_string(properties, "$uvec");
 			filter_string(properties, "$fvec");
 			trim_extra_spaces(properties);
 
 			if (props_as_helpers) {
-				props = helper->add("node");
-				props->setAttribute("id","properties");
-				props->setAttribute("name","properties");
+				props = helper.append_child("node");
+				props.append_attribute("id") = "properties";
+				props.append_attribute("name") = "properties";
 				result = properties;
 				temp.str(result.c_str());
 				while (!temp.eof()) {
@@ -2342,28 +2233,28 @@ daeElement* DAESaver::add_helper(daeElement *element,string properties) {
 					previous = properti;
 				}
 			} else {
-				props = element->add("extra")->add("technique");
-				props->setAttribute("profile","FCOLLADA");
-				props = props->add("user_properties");
-				props->setCharData(properties.c_str());
+				props = element.append_child("extra").append_child("technique");
+				props.append_attribute("profile") = "FCOLLADA";
+				props = props.append_child("user_properties");
+				props.text().set(properties.c_str());
 
 			}
 			return helper;
 		}
 	}
-	return NULL;
+	return pugi::xml_node();
 }
 
 
-void DAESaver::add_property(daeElement *props, const char* prop) {
-	daeElement *current_prop;
-	current_prop = props->add("node");
-	current_prop->setAttribute("id",prop);
-	current_prop->setAttribute("name",prop);
+void DAESaver::add_property(pugi::xml_node& props, const char* prop) {
+	pugi::xml_node current_prop;
+	current_prop = props.append_child("node");
+	current_prop.append_attribute("id") = prop;
+	current_prop.append_attribute("name") = prop;
 }
 
-daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &scale) {
-	daeElement *answer = NULL;
+pugi::xml_node DAESaver::find_subsystem(string name, vector3d &offset, vector3d &scale) {
+	pugi::xml_node answer;
 	offset = vector3d(0,0,0);
 	scale = vector3d(1,1,1);
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
@@ -2373,7 +2264,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 			break;
 		}
 	}
-	if (answer == NULL) {
+	if (!answer) {
 		for (int i = 0; i < model->GetSpecialCount(); i++) {
 			if (boost::algorithm::iequals(model->Special(i).name, name)) {
 				offset = model->Special(i).point;
@@ -2383,7 +2274,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 			}
 		}
 	}
-	if (answer == NULL) {
+	if (!answer) {
 		if (name[0] != '$') {
 			name.insert(0, "$");
 		} else if (name[0] == '$') {
@@ -2396,7 +2287,7 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 				break;
 			}
 		}
-		if (answer == NULL) {
+		if (!answer) {
 			for (int i = 0; i < model->GetSpecialCount(); i++) {
 				if (boost::algorithm::iequals(model->Special(i).name, name)) {
 					offset = model->Special(i).point;
@@ -2410,24 +2301,20 @@ daeElement *DAESaver::find_subsystem(string name, vector3d &offset, vector3d &sc
 	return find_helper(answer);
 }
 
-daeElement *DAESaver::find_helper(daeElement *element) {
-	if (element == NULL) return NULL;
-	daeTArray< daeSmartRef<daeElement> > helpers = element->getChildren();
-	for (unsigned int i = 0; i < helpers.getCount(); i++) {
-		if (boost::algorithm::istarts_with(helpers[i]->getAttribute("id"), "helper")) {
-			return helpers[i];
+pugi::xml_node DAESaver::find_helper(pugi::xml_node& element) {
+	if (!element) return element;
+	for (pugi::xml_node child = element.first_child(); child; child = child.next_sibling()) {
+		if (boost::algorithm::istarts_with(child.attribute("id").value(), "helper")) {
+			return child;
 		}
 	}
-	daeElement *temp = element->add("node");
-	//stringstream name;
-	//num_helpers++;
-	//name << "helper" << num_helpers << endl;
-	temp->setAttribute("id","helper");
-	temp->setAttribute("name","helper");
+	pugi::xml_node temp = element.append_child("node");
+	temp.append_attribute("id") = "helper";
+	temp.append_attribute("name") = "helper";
 	return temp;
 }
 
-daeElement *DAESaver::find_dockpoint(int idx,vector3d &offset) {
+pugi::xml_node DAESaver::find_dockpoint(int idx,vector3d &offset) {
 	offset = vector3d(0,0,0);
 	for (unsigned int i = 0; i < docks.size(); i++) {
 		for (unsigned int j = 0; j < model->Dock(i).paths.size(); j++) {
@@ -2439,29 +2326,29 @@ daeElement *DAESaver::find_dockpoint(int idx,vector3d &offset) {
 			}
 		}
 	}
-	return NULL;
+	return pugi::xml_node();
 }
 
-void add_accessor(daeElement *element, string source, int count, bool uv) {
-	daeElement *accessor = element->add("technique_common accessor");
-	accessor->setAttribute("count",int_to_string(count).c_str());
-	accessor->setAttribute("source", (string("#") + source).c_str());
+void add_accessor(pugi::xml_node element, string source, int count, bool uv) {
+	pugi::xml_node accessor = element.append_child("technique_common").append_child("accessor");
+	accessor.append_attribute("count") = int_to_string(count).c_str();
+	accessor.append_attribute("source") =  (string("#") + source).c_str();
 	if (uv) {
-		accessor->setAttribute("stride","2");
+		accessor.append_attribute("stride") = "2";
 		add_param(accessor,"S");
 		add_param(accessor,"T");
 	} else {
-		accessor->setAttribute("stride","3");
+		accessor.append_attribute("stride") = "3";
 		add_param(accessor,"X");
 		add_param(accessor,"Y");
 		add_param(accessor,"Z");
 	}
 }
 
-void add_param(daeElement *accessor, string name) {
-	daeElement *temp = accessor->add("param");
-	temp->setAttribute("type","float");
-	temp->setAttribute("name",name.c_str());
+void add_param(pugi::xml_node accessor, string name) {
+	pugi::xml_node temp = accessor.append_child("param");
+	temp.append_attribute("type") = "float";
+	temp.append_attribute("name") = name.c_str();
 }
 
 string write_vector3d(vector3d vec,vector3d scale) {
@@ -2471,13 +2358,13 @@ string write_vector3d(vector3d vec,vector3d scale) {
 
 }
 
-void DAESaver::write_transform(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale, float external_scale) {
+void DAESaver::write_transform(pugi::xml_node& element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale, float external_scale) {
 	write_transform_binormal(element, offset, norm, vector3d(1, 0, 0), base, scale, external_scale);
 }
 
-void DAESaver::write_transform_binormal(daeElement *element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale, float external_scale) {
-	element = element->add("matrix");
-	element->setAttribute("sid","matrix");
+void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale, float external_scale) {
+	element = element.append_child("matrix");
+	element.append_attribute("sid") = "matrix";
 	int order[3] = {0, 2, 1};
 	vector3d one(MakeUnitVector(norm)), two(MakeUnitVector(binorm)), three;
 	if (fabs(dot(one, two)) > 0.9) {
@@ -2520,7 +2407,7 @@ void DAESaver::write_transform_binormal(daeElement *element, const vector3d& off
 		output << " ";
 	}
 	output << "0 0 0 1";
-	element->setCharData(output.str().c_str());
+	element.text().set(output.str().c_str());
 }
 
 bool vector3d_comparator(const vector3d& a, const vector3d& b) {
@@ -2550,31 +2437,11 @@ vector3d radius_to_scale(float radius) {
 	return vector3d(radius,radius,radius);
 }
 
-void add_scale(daeElement *element, vector3d scale, vector3d parent_scale) {
-	element = element->add("scale");
-	element->setAttribute("sid","scale");
+void add_scale(pugi::xml_node element, vector3d scale, vector3d parent_scale) {
+	element = element.append_child("scale");
+	element.append_attribute("sid") = "scale";
 	scale.x = -scale.x;
-	element->setCharData(write_vector3d(scale, parent_scale).c_str());
-}
-
-void add_texture_mappings(daeElement *element, map<string, string> *mapping) {
-	if (element == NULL) {
-		return;
-	}
-	element = element->getChild("bind_material");
-	if (element == NULL) {
-		return;
-	}
-	element = element->getChild("technique_common");
-	if (element == NULL) {
-		return;
-	}
-	daeTArray< daeSmartRef<daeElement> > children = element->getChildren();
-	for (unsigned int i = 0; i < children.getCount(); i++) {
-		if (boost::algorithm::equals(children[i]->getTypeName(), "instance_material") && mapping->find(children[i]->getAttribute("symbol")) == mapping->end()) {
-			mapping->insert(pair<string, string>(children[i]->getAttribute("symbol"), children[i]->getAttribute("target")));
-		}
-	}
+	element.text().set(write_vector3d(scale, parent_scale).c_str());
 }
 
 void trim_extra_spaces(std::string& s) {
@@ -2610,10 +2477,10 @@ void trim_extra_spaces(std::string& s) {
 	s.resize(jt - s.begin() + 1);
 }
 
-std::string get_name(daeElement* element) {
-	std::string name = element->getAttribute("name");
+std::string get_name(const pugi::xml_node& element) {
+	std::string name = element.attribute("name").as_string();
 	if (name.empty()) {
-		name = element->getID();
+		name = element.attribute("id").as_string();
 	}
 	return name;
 }
