@@ -120,8 +120,9 @@ public:
 	//set's the control's current index to the one passed
 	void set_index(int idx){
 
-		if(idx>(int)(this->array.size()))
-			idx=-1;//if we are out of bounds set to nothing
+		if(idx > 0 && static_cast<size_t>(idx) > this->array.size()) {
+			idx = -1;//if we are out of bounds set to nothing
+		}
 
 		//if we were told to set it to nothing
 		if(idx<0){

@@ -175,11 +175,6 @@ MOI calc_under_tri(vector3d tri[3], int res){
 }
 
 MOI calc_geometry_MOI(PCS_Model&model){
-
-	vector3d dif = model.GetMaxBounding() - model.GetMinBounding();
-	vector3d sum = (model.GetMaxBounding() + model.GetMinBounding());
-	vector3d avg = sum / 2.0;
-//	return calc_cuboid_MOI(avg, dif.x, dif.y, dif.z);
 	return calc_cuboid_MOI(vector3d(0,0,0), 1, 1, 1);
 	
 	if(model.GetSOBJCount()<1)return MOI();

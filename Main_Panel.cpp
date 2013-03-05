@@ -1475,7 +1475,7 @@ void main_panel::rebuild_tree(){
 		path[0] = i;
 		wxString str(model.Special(i).name.c_str(), wxConvUTF8);
 		if(str == _(""))str = wxString().Format(_("Special Point %i"), i+1);
-		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.SPCL_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(SPCL, path));
+		navigation_panel->AppendItem(tree_id.SPCL_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(SPCL, path));
 	}
 
 	for(i=0; i<model.GetEyeCount(); i++){
@@ -1483,7 +1483,7 @@ void main_panel::rebuild_tree(){
 		wxString str = _("");
 		if(model.Eye(i).sobj_number > -1 && model.Eye(i).sobj_number < model.GetSOBJCount())str = wxString(model.SOBJ(model.Eye(i).sobj_number).name.c_str(), wxConvUTF8);
 		if(str == _(""))str = wxString().Format(_("Eye %i"), i+1);
-		wxTreeItemId parent = navigation_panel->AppendItem(tree_id.EYE_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(EYE, path));
+		navigation_panel->AppendItem(tree_id.EYE_ID, str, TREE_UNSEL, TREE_SEL, new tree_node_id(EYE, path));
 	}
 
 	path.resize(2);
@@ -1831,8 +1831,6 @@ void main_panel::tree_end_drag(wxTreeEvent& event){
 	}
 	//you can't drop on your self
 
-	bool rebuild = true;
-
 	int src;
 	int dst;
 
@@ -1908,8 +1906,6 @@ void main_panel::tree_end_drag(wxTreeEvent& event){
 		case PINF:
 		case SHLD:
 		default:
-			//nothing!
-			rebuild = false;
 			break;
 	}
 

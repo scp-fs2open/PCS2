@@ -249,7 +249,7 @@ struct pcs_sobj
 
 	void Read(std::istream& in, int ver);
 	void Write(std::ostream& out);
-	pcs_sobj() : parent_sobj(-1), radius(0.0), movement_type(MNONE), movement_axis(ANONE), radius_overridden(false), radius_override(0.0f), bounding_box_min_point_overridden(false), bounding_box_max_point_overridden(false) {}
+	pcs_sobj() : parent_sobj(-1), radius(0.0), radius_override(0.0f), radius_overridden(false), bounding_box_min_point_overridden(false), bounding_box_max_point_overridden(false), movement_type(MNONE), movement_axis(ANONE) {}
 	void GenerateBBoxes() { 
 				for (unsigned int i = 0; i < polygons.size(); i++) 
 				{ 
@@ -610,7 +610,7 @@ inline bool operator==(const pcs_glow_array&t, const pcs_glow_array&o){
 
 struct header_data{
 	header_data()
-		:max_radius(0.0f),max_radius_override(0.0f),min_bounding(0,0,0),max_bounding(0,0,0),mass(0.0f),mass_center(0,0,0), max_radius_overridden(false), min_bounding_overridden(false), max_bounding_overridden(false)
+		:max_radius(0.0f),max_radius_override(0.0f),max_radius_overridden(false), min_bounding(0,0,0),max_bounding(0,0,0),min_bounding_overridden(false), max_bounding_overridden(false), mass(0.0f), mass_center(0,0,0)
 	{
 		memset(MOI,0,sizeof(float)*9);
 		MOI[0][0]=1.0f;

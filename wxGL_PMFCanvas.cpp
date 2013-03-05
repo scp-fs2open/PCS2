@@ -827,8 +827,6 @@ void wxGL_PMFCanvas::ray_pick(vector3d point, vector3d norm){
 		for(unsigned int j = 0; j< omni.point[i].size(); j++){
 
 			float d = point_line_distance(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model), point, norm);
-			vector3d g = MakeUnitVector(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model) - point);
-
 			float rad = 0.0f;
 			if(omni.flags & OMNIPOINT_ANY_PATH)//paths can have rediculusly huge radius's
 				rad = log(omni.point[i][j].rad)+1.0f;
