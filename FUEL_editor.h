@@ -9,14 +9,14 @@ protected:
 	glow_point_array_ctrl*points;
 public:
 	
-	thruster_bank_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_thruster>(parent,x,y,w,h, orient, Title)
+	thruster_bank_point_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_thruster>(parent, orient, Title)
 	{
 		//add controls
 		std::vector<std::string> op;
 		op.push_back("$engine_subsystem=Engine");
-		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Properties"), op),0,wxEXPAND );
-		add_control(points=new glow_point_array_ctrl(this,0,0,60,215,_("Glow Points")),0,wxEXPAND );
+		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,_("Properties"), op),0,wxEXPAND );
+		add_control(points=new glow_point_array_ctrl(this,_("Glow Points")),0,wxEXPAND );
 	};
 
 	virtual ~thruster_bank_point_ctrl(void){};
@@ -55,8 +55,8 @@ class thruster_bank_array_ctrl :
 	public type_array_ctrl<pcs_thruster, thruster_bank_point_ctrl>
 {
 public:
-	thruster_bank_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_thruster, thruster_bank_point_ctrl>(parent,x,y,w,h,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	thruster_bank_array_ctrl(wxWindow*parent, wxString Title, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_thruster, thruster_bank_point_ctrl>(parent, Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -79,7 +79,7 @@ public:
 		:editor_ctrl<std::vector<pcs_thruster> >(parent, _("Thrusters"))
 	{
 		//add controls
-		add_control(thrusters=new thruster_bank_array_ctrl(this,0,0,90,330,_("")),0,wxEXPAND );
+		add_control(thrusters=new thruster_bank_array_ctrl(this, _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

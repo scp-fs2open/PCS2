@@ -15,12 +15,12 @@ protected:
 
 public:
 	
-	cross_section_editor(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_crs_sect>(parent,x,y,w,h, orient, Title)
+	cross_section_editor(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_crs_sect>(parent, orient, Title)
 	{
 		//add controls
-		add_control(radius =new float_ctrl(this,0,0,60,40,_("Radius")),0,wxEXPAND );
-		add_control(depth =new float_ctrl(this,0,0,60,40,_("Depth")),0,wxEXPAND ); 
+		add_control(radius =new float_ctrl(this,_("Radius")),0,wxEXPAND );
+		add_control(depth =new float_ctrl(this,_("Depth")),0,wxEXPAND );
 	};
 
 	virtual ~cross_section_editor(void){};
@@ -45,8 +45,8 @@ class cross_section_array_ctrl :
 	public type_array_ctrl<pcs_crs_sect, cross_section_editor>
 {
 public:
-	cross_section_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_crs_sect, cross_section_editor>(parent,x,y,w,h,subtitle, _(""), wxHORIZONTAL, wxEXPAND)
+	cross_section_array_ctrl(wxWindow*parent,  wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_crs_sect, cross_section_editor>(parent, subtitle, _(""), wxHORIZONTAL, wxEXPAND)
 	{
 	}
 
@@ -79,22 +79,22 @@ public:
 	header_ctrl(wxWindow*parent)
 		:editor_ctrl<header_data>(parent, _("Header"))
 	{
-		add_control(bbox_min=new default_value_vector_ctrl(this,0,0,60,40,_("Bounding Box Min")),0,wxEXPAND );
-		add_control(bbox_max=new default_value_vector_ctrl(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
-		add_control(cent_mass=new vector_ctrl(this,0,60,60,40,_("Center of Mass")),0,wxEXPAND );
+		add_control(bbox_min=new default_value_vector_ctrl(this,_("Bounding Box Min")),0,wxEXPAND );
+		add_control(bbox_max=new default_value_vector_ctrl(this,_("Bounding Box Max")),0,wxEXPAND );
+		add_control(cent_mass=new vector_ctrl(this,_("Center of Mass")),0,wxEXPAND );
 
-		add_control(max_rad = new default_value_float_ctrl(this,0,90,60,40,_("Max Radius")), 0, wxEXPAND);
-		add_control(mass = new float_ctrl(this,0,90,60,40,_("Mass")), 0, wxEXPAND);
+		add_control(max_rad = new default_value_float_ctrl(this,_("Max Radius")), 0, wxEXPAND);
+		add_control(mass = new float_ctrl(this,_("Mass")), 0, wxEXPAND);
 
-		add_control(detail_levels=new model_array_ctrl(this,0,120,90,90,_("LOD"), _("Model#")),0,wxEXPAND );
-		add_control(debris_pieces=new model_array_ctrl(this,0,210,90,90,_("Debris"), _("Model#")),0,wxEXPAND );
+		add_control(detail_levels=new model_array_ctrl(this, _("LOD"), _("Model#")),0,wxEXPAND );
+		add_control(debris_pieces=new model_array_ctrl(this, _("Debris"), _("Model#")),0,wxEXPAND );
 
-		add_control(cross_sections=new cross_section_array_ctrl(this,0,300,90,100,_(""), _("Cross Sections")),0,wxEXPAND );
+		add_control(cross_sections=new cross_section_array_ctrl(this, _(""), _("Cross Sections")),0,wxEXPAND );
 
-		add_control(MOI=new matrix_ctrl(this,0,400,90,90,_("Moment of Inertia")),0,wxEXPAND );
+		add_control(MOI=new matrix_ctrl(this,_("Moment of Inertia")),0,wxEXPAND );
 		add_control(moi_btn = new wxButton(this, MOI_CALC_btn, _("Recalculate")));
 		 
-		add_control(hinfo = new string_disp(this,0,0,60,160,_("Model Info")),0,wxEXPAND );
+		add_control(hinfo = new string_disp(this,_("Model Info")),0,wxEXPAND );
 
 		recalc_size();
 	}

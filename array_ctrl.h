@@ -87,8 +87,8 @@ protected:
 		event.Skip();
 	}
 
-	array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1,bool a=false)//bool to diferentiate
-		:editor<std::vector<type> >(parent, x, y, w, h, orient, Title, ID),index(-1), get_index_name(NULL)
+	array_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL, int ID = -1,bool a=false)//bool to diferentiate
+		:editor<std::vector<type> >(parent, orient, Title, ID),index(-1), get_index_name(NULL)
 	{
 	}
 
@@ -110,6 +110,7 @@ protected:
 		//make sure the cuurent item is selected in the combo box
 		array_list->Select(index);
 	}
+
 public:
 	void set_index_name_function(std::string(*Get_index_name)(int idx)){
 		get_index_name = Get_index_name;
@@ -150,14 +151,14 @@ public:
 
 	size_t get_size(){return (this->array.size());}
 
-	array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1)
-		:editor<std::vector<type> >(parent, x, y, w, h, orient, Title, ID),index(-1),control_orient(orient)
+	array_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL, int ID = -1)
+		:editor<std::vector<type> >(parent, orient, Title, ID),index(-1),control_orient(orient)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
 		box = new wxStaticBoxSizer(wxHORIZONTAL, this,"Select");
 		//the combo box
-		box->Add(array_size_box = new wxTextCtrl(this,-1,"0",wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE));
-		box->Add(array_list = new wxComboBox(this,ARRAY_SELECT,"",wxPoint(10,10),wxSize(64,30)),1.0);
+		box->Add(array_size_box = new wxTextCtrl(this,-1,"0",wxDefaultPosition,wxSize(32,-1),wxTE_READONLY|wxTE_CENTRE));
+		box->Add(array_list = new wxComboBox(this,ARRAY_SELECT,"",wxDefaultPosition,wxSize(64,-1)),1);
 	}
 	virtual std::vector<type> get_value(){if((int)(this->array.size()) > index && index>-1)array[index] = get_curent_value(); return array;}
 	virtual void set_value(const std::vector<type>&i){set_array(i);}
@@ -207,29 +208,29 @@ class resizeable_array_ctrl :
 public:
 	//constructor, DOES _NOT_ take an array, they must be set after the 
 	//control is is constructed or you get virtual function problems
-	resizeable_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int ID = -1, bool user_resizeable=true)
-		:array_ctrl<type>(parent, x, y, w, h, Title, orient,ID,true), user_resizeable(user_resizeable)
+		resizeable_array_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL, int ID = -1, bool user_resizeable=true)
+		:array_ctrl<type>(parent, Title, orient,ID,true), user_resizeable(user_resizeable)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
 		this->box = new wxStaticBoxSizer(wxVERTICAL, this,_("Select"));
 		//the combo box
-		this->array_list = new combo(this,ARRAY_SELECT,_(""),wxPoint(10,10),wxSize(64,30));
-		this->box->Add(this->array_list);
+		this->array_list = new combo(this,ARRAY_SELECT,_(""),wxDefaultPosition,wxSize(64,30));
+		this->box->Add(this->array_list, 0, wxEXPAND);
 		//sizer that holds the size display and the new/copy/delete buttons
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
-		this->array_size_box = new wxTextCtrl(this,-1,_("0"),wxPoint(0,0),wxSize(16,16),wxTE_READONLY|wxTE_CENTRE);
-		b->Add(this->array_size_box);
+		this->array_size_box = new wxTextCtrl(this,-1,_("0"),wxDefaultPosition,wxSize(32, -1),wxTE_READONLY|wxTE_CENTRE);
+		b->Add(this->array_size_box, 0, wxALIGN_CENTER_VERTICAL);
 		if (user_resizeable) {
-			new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxPoint(26,0),wxSize(16,16));
-			cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxPoint(42,0),wxSize(16,16));
-			del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16));
+			new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
+			cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
+			del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
 			new_btn->SetToolTip(_("New"));
 			cpy_btn->SetToolTip(_("Copy"));
 			del_btn->SetToolTip(_("Delete"));
 			//add the buttons'n stuff to the proper sizer
-			b->Add(new_btn);
-			b->Add(cpy_btn);
-			b->Add(del_btn);
+			b->Add(new_btn, 0, wxALIGN_CENTER_VERTICAL);
+			b->Add(cpy_btn, 0, wxALIGN_CENTER_VERTICAL);
+			b->Add(del_btn, 0, wxALIGN_CENTER_VERTICAL);
 		}
 		this->box->Add(b);
 		//add all this to the editor
@@ -361,10 +362,10 @@ class type_array_ctrl
 protected:
 	type_control*ctrl;
 public:
-	type_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable=true)
-		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient,ID, user_resizeable)
+	type_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable=true)
+		:resizeable_array_ctrl<type>(parent, Title,orient, ID, user_resizeable)
 	{
-		add_control(ctrl=new type_control(this,0,30,90,(subTitle==_(""))?20:40,subTitle),1,flags);
+		add_control(ctrl=new type_control(this,subTitle),1,flags);
 	}
 
 	virtual type get_curent_value(){this->array[this->index] = ctrl->get_value(); return this->array[this->index];}
@@ -391,10 +392,10 @@ class type_static_array_ctrl
 {
 	type_control*ctrl;
 public:
-	type_static_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0)
-		:resizeable_array_ctrl<type>(parent,x,y,w,h,Title,orient)
+	type_static_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0)
+		:resizeable_array_ctrl<type>(parent, Title,orient)
 	{
-		add_control(ctrl=new type_control(this,0,30,90,(subTitle==_(""))?20:40,subTitle),1,flags);
+		add_control(ctrl=new type_control(this,subTitle),1,flags);
 	}
 
 	virtual type get_curent_value(){this->array[this->index] = ctrl->get_value(); return this->array[this->index];}
@@ -406,8 +407,8 @@ class float_array_ctrl
 	:public type_array_ctrl<float, float_ctrl>
 {
 public:
-	float_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<float, float_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	float_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<float, float_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
 	}
 
@@ -422,8 +423,8 @@ class int_array_ctrl
 	:public type_array_ctrl<int, int_ctrl>
 {
 public:
-	int_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<int, int_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	int_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<int, int_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
 	}
 
@@ -438,8 +439,8 @@ class model_array_ctrl
 	:public type_array_ctrl<int, model_list_ctrl>
 {
 public:
-	model_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<int, model_list_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	model_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<int, model_list_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
 	}
 };
@@ -449,8 +450,8 @@ class path_idx_array_ctrl
 	:public type_array_ctrl<int, path_list_ctrl>
 {
 public:
-	path_idx_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<int, path_list_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	path_idx_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<int, path_list_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
 	}
 };
@@ -460,10 +461,9 @@ class string_array_ctrl
 	:public type_array_ctrl<std::string, string_ctrl>
 {
 public:
-	string_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<std::string, string_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	string_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<std::string, string_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
-		ctrl->SetSize(w, h-40);
 	}
 
 	virtual void on_new_clicked(wxCommandEvent&e){
@@ -477,10 +477,9 @@ class multi_string_array_ctrl
 	:public type_array_ctrl<std::string, multi_string_ctrl>
 {
 public:
-	multi_string_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<std::string, multi_string_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	multi_string_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<std::string, multi_string_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
-				ctrl->SetSize(200, h-50);
 	}
 
 	virtual void on_new_clicked(wxCommandEvent&e){
@@ -494,8 +493,8 @@ class vector_array_ctrl
 	:public type_array_ctrl<vector3d, vector_ctrl>
 {
 public:
-	vector_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
-		:type_array_ctrl<vector3d, vector_ctrl>(parent,x,y,w,h,Title, subTitle, orient, flags, ID)
+	vector_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxHORIZONTAL, int flags = 0, int ID = -1)
+		:type_array_ctrl<vector3d, vector_ctrl>(parent, Title, subTitle, orient, flags, ID)
 	{
 	}
 

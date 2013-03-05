@@ -58,7 +58,6 @@ class PCS_Preferences : public wxDialog
 
 	private:
 		wxListBox *texture_paths;
-		wxStaticText *tpath_txt, *cob_scale_text, *dae_flip_axes;
 		wxButton *tadd, *tdele, *tbrowse, *col_ops, *ok, *cancel;
 		wxTextCtrl *tpath, *cob_scale;
 		wxCheckBox *geo_filter, *vbos;

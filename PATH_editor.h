@@ -17,12 +17,12 @@ protected:
 
 public:
 	
-	path_vert_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_pvert>(parent,x,y,w,h, orient, Title)
+	path_vert_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_pvert>(parent, orient, Title)
 	{
 		//add controls
-		add_control(radius =new float_ctrl(this,0,0,60,40,_("Radius")),0,wxEXPAND );
-		add_control(pos =new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
+		add_control(radius =new float_ctrl(this,_("Radius")),0,wxEXPAND );
+		add_control(pos =new vector_ctrl(this,_("Position")),0,wxEXPAND );
 	};
 
 	virtual ~path_vert_ctrl(void){};
@@ -47,8 +47,8 @@ class point_array_ctrl :
 	public type_array_ctrl<pcs_pvert, path_vert_ctrl>
 {
 public:
-	point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_pvert, path_vert_ctrl>(parent,x,y,w,h,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+	point_array_ctrl(wxWindow*parent, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_pvert, path_vert_ctrl>(parent,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 	}
 
@@ -68,18 +68,18 @@ protected:
 
 public:
 	
-	path_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_path>(parent,x,y,w,h, orient, Title)
+	path_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_path>(parent, orient, Title)
 	{
 		//add controls
-		add_control(name =new string_ctrl(this,0,0,60,40,_("Name")),0,wxEXPAND );
+		add_control(name =new string_ctrl(this,_("Name")),0,wxEXPAND );
 
 		std::vector<std::string> op;
 		get_subsystem_list(op);
 
-		add_control(parent_str =new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Parent"),op),0,wxEXPAND );
+		add_control(parent_str =new suggest_ctrl<std::string, string_ctrl>(this,_("Parent"),op),0,wxEXPAND );
 
-		add_control(verts =new point_array_ctrl(this,0,0,60,150,_("Verts"), _("")),0,wxEXPAND );
+		add_control(verts =new point_array_ctrl(this,_("Verts"), _("")),0,wxEXPAND );
 	};
 
 	virtual ~path_ctrl(void){};
@@ -125,8 +125,8 @@ class path_array_ctrl :
 	public type_array_ctrl<pcs_path, path_ctrl>
 {
 public:
-	path_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_path, path_ctrl>(parent,x,y,w,h,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	path_array_ctrl(wxWindow*parent, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_path, path_ctrl>(parent,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -206,7 +206,7 @@ public:
 		:editor_ctrl<std::vector<pcs_path> >(parent, _("Paths"))
 	{
 		//add controls
-		add_control(paths=new path_array_ctrl(this,0,0,60,300,_("Path"), _("")),0,wxEXPAND );
+		add_control(paths=new path_array_ctrl(this,_("Path"), _("")),0,wxEXPAND );
 		add_control(auto_gen_btn = new wxButton(this, PATH_AUTO_GEN, _("Auto-Gen")));
 	}
 

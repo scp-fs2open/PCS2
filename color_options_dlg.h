@@ -23,7 +23,7 @@ protected:
 public:
 		wxString path;
 	
-	chunk_color_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString Path, int Flags=0, wxString title1 = _("Unselected"), wxString title2 = _("Selected List"), wxString title3 = _("Selected Item"));
+	chunk_color_ctrl(wxWindow*parent, wxString Title, wxString Path, int Flags=0, wxString title1 = _("Unselected"), wxString title2 = _("Selected List"), wxString title3 = _("Selected Item"));
 public:
 	virtual ~chunk_color_ctrl(void){};
 

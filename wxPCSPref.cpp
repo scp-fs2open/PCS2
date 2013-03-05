@@ -69,49 +69,79 @@
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 PCS_Preferences::PCS_Preferences(wxWindow *parent)
-	: wxDialog(parent, -1, _("PCS Preferences"), wxDefaultPosition, wxSize(450,300))
+	: wxDialog(parent, -1, wxString(_("PCS Preferences")))
 {
 	// ----------------- Create Controls ------------------
-	texture_paths = new wxListBox(this, PCS2_PREF_LBOX, wxPoint(5,15), 
-				wxSize(430, 80), 0);
-	tpath_txt = new wxStaticText(this, -1,_("Texture Paths"), wxPoint(5, 0));
+	wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+	wxSizer* texture_paths_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _("Texture Paths"));
+	texture_paths_sizer->Add(texture_paths = new wxListBox(this, PCS2_PREF_LBOX, wxDefaultPosition, wxSize(400, 100)), 1, wxEXPAND);
+	wxSizer* texture_paths_buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
+	texture_paths_buttons_sizer->Add(tadd = new wxButton(this, PCS2_PREF_TADD,	_("Add")));
+	texture_paths_buttons_sizer->AddSpacer(5);
+	texture_paths_buttons_sizer->Add(tdele = new wxButton(this, PCS2_PREF_TDELE, _("Delete")));
+	texture_paths_buttons_sizer->AddSpacer(5);
+	texture_paths_buttons_sizer->Add(tbrowse = new wxButton(this, PCS2_PREF_TBROWSE, _("Browse")));
+	texture_paths_sizer->Add(texture_paths_buttons_sizer);
 
-	
-	tadd = new wxButton(this, PCS2_PREF_TADD,	_("Add"),			wxPoint(5, 100), wxSize(50, 20));
-	tdele = new wxButton(this, PCS2_PREF_TDELE, _("Delete"),		wxPoint(60, 100), wxSize(50, 20));
-	tbrowse = new wxButton(this, PCS2_PREF_TBROWSE, _("Browse"),	wxPoint(115, 100), wxSize(50, 20));
+	texture_paths_sizer->Add(tpath = new wxTextCtrl(this, PCS2_PREF_TCTRL, _("")), 0, wxEXPAND);
+	sizer->Add(texture_paths_sizer, 0, wxEXPAND);
 
-	tpath = new wxTextCtrl(this, PCS2_PREF_TCTRL, _(""), wxPoint(5, 125), wxSize(430, 20));
+	wxSizer* grid_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-	// ------
-	cob_scale_text = new wxStaticText(this, -1,_("COB Scaling Factor"), wxPoint(5, 200));
-	cob_scale = new wxTextCtrl(this, PCS2_PREF_CSFTXT, _(""), wxPoint(25, 215), wxSize(50, 20));
-
-	geo_filter = new wxCheckBox(this, PCS2_PREF_CKBX_GFILT, _("Use Geometry Filter"), wxPoint(130, 200));
-	vbos = new wxCheckBox(this, PCS2_PREF_CKBX_VBO, _("Use OpenGL VBOs (if able)"), wxPoint(250, 200));;
-
-	// old positions
-	/*def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, _("Diffuse"),	wxPoint(170, 225), wxSize(50, 20));
-	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, _("Ambient"),	wxPoint(220, 225), wxSize(50, 20));
-	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, _("Color Options"),	wxPoint(170, 245), wxSize(100, 20));*/
-
-	def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, _("Diffuse"),	wxPoint(270, 225), wxSize(50, 20));
-	amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, _("Ambient"),	wxPoint(320, 225), wxSize(50, 20));
-	col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, _("Color Options"),	wxPoint(270, 245), wxSize(100, 20));
+	wxSizer* left_column_sizer = new wxBoxSizer(wxVERTICAL);
+	wxSizer* cob_scale_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _("COB Scaling Factor"));
+	cob_scale_sizer->Add(cob_scale = new wxTextCtrl(this, PCS2_PREF_CSFTXT, _("")), 0, wxEXPAND);
+	left_column_sizer->Add(cob_scale_sizer, 0, wxEXPAND);
+	wxSizer* rendering_settings_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _("Renderer settings"));
+	rendering_settings_sizer->Add(geo_filter = new wxCheckBox(this, PCS2_PREF_CKBX_GFILT, _("Use Geometry Filter")));
+	rendering_settings_sizer->AddSpacer(5);
+	rendering_settings_sizer->Add(vbos = new wxCheckBox(this, PCS2_PREF_CKBX_VBO, _("Use OpenGL VBOs (if able)")));
+	left_column_sizer->Add(rendering_settings_sizer, 1, wxEXPAND);
+	grid_sizer->Add(left_column_sizer, 5, wxEXPAND);
 
 	// Collada options
-	helpers = new wxCheckBox(this, PCS2_PREF_CKBX_HELPERS, _("Export helpers to DAE"), wxPoint(5, 240));
-	props_as_helpers = new wxCheckBox(this, PCS2_PREF_CKBX_PROPS_AS_HELPERS, _("Export properties as helpers"), wxPoint(5, 255));
+	wxSizer* collada_sizer = new wxStaticBoxSizer(wxVERTICAL, this, _("Collada settings"));
+	collada_sizer->Add(helpers = new wxCheckBox(this, PCS2_PREF_CKBX_HELPERS, _("Export helpers")));
+	collada_sizer->AddStretchSpacer(1);
+	collada_sizer->Add(props_as_helpers = new wxCheckBox(this, PCS2_PREF_CKBX_PROPS_AS_HELPERS, _("Export properties as helpers")));
+	collada_sizer->AddStretchSpacer(1);
 
-	dae_flip_axes = new wxStaticText(this, -1,_("Mirror DAE axes"), wxPoint(180, 240));
-	mirror_x = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_X, _("X"), wxPoint(180, 255));
-	mirror_y = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Y, _("Y"), wxPoint(210, 255));
-	mirror_z = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Z, _("Z"), wxPoint(240, 255));
+	wxSizer* collada_flip_axes_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Mirror axes on import"));
+	collada_flip_axes_sizer->Add(mirror_x = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_X, _("X")));
+	collada_flip_axes_sizer->AddStretchSpacer(1);
+	collada_flip_axes_sizer->Add(mirror_y = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Y, _("Y")));
+	collada_flip_axes_sizer->AddStretchSpacer(1);
+	collada_flip_axes_sizer->Add(mirror_z = new wxCheckBox(this, PCS2_PREF_CKBX_DAE_MIRROR_Z, _("Z")));
+	collada_flip_axes_sizer->AddStretchSpacer(1);
+	collada_sizer->Add(collada_flip_axes_sizer, 0, wxEXPAND);
+	collada_sizer->AddStretchSpacer(1);
+	grid_sizer->Add(collada_sizer, 4, wxEXPAND);
+	sizer->Add(grid_sizer, 1, wxEXPAND);
 
+	wxSizer* buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxSizer* suboptions_sizer = new wxBoxSizer(wxVERTICAL);
+	wxSizer* lighting_sizer = new wxBoxSizer(wxHORIZONTAL);
+	lighting_sizer->Add(def_col = new wxButton(this, PCS2_PREF_DEF_COL_BTN, _("Diffuse")), 1, wxEXPAND);
+	lighting_sizer->AddSpacer(5);
+	lighting_sizer->Add(amb_col = new wxButton(this, PCS2_PREF_AMB_COL_BTN, _("Ambient")), 1, wxEXPAND);
+	suboptions_sizer->Add(lighting_sizer, 0, wxEXPAND);
+	suboptions_sizer->AddSpacer(2);
+	suboptions_sizer->Add(col_ops = new wxButton(this, PCS2_PREF_COL_OP_BTN, _("Color Options")), 0, wxEXPAND);
+	buttons_sizer->Add(suboptions_sizer, 0, wxEXPAND);
+
+
+	wxSizer* ok_cancel_sizer = new wxBoxSizer(wxHORIZONTAL);
 	//wxID_CANCEL
 	//wxID_OK
-	ok = new wxButton(this, wxID_OK, _("Ok"),	wxPoint(385, 225), wxSize(50, 20));
-	cancel = new wxButton(this, wxID_CANCEL, _("Cancel"), wxPoint(385, 245), wxSize(50, 20));
+	ok_cancel_sizer->Add(ok = new wxButton(this, wxID_OK, _("OK")), 0, wxEXPAND);
+	ok_cancel_sizer->AddSpacer(5);
+	ok_cancel_sizer->Add(cancel = new wxButton(this, wxID_CANCEL, _("Cancel")), 0, wxEXPAND);
+	buttons_sizer->AddStretchSpacer(1);
+	buttons_sizer->Add(ok_cancel_sizer, 0, wxALIGN_BOTTOM);
+
+	sizer->Add(buttons_sizer, 0, wxEXPAND | wxALL, 10);
+
+	SetSizerAndFit(sizer);
 
 	// -----------------  Load Values ------------------
 	

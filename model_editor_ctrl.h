@@ -127,23 +127,10 @@ public:
 		undo_stack.reset();
 	}
 	void recalc_size(){
-		//figures out how big this panel should be, 
-		//is called by derived classes after they add
-		//all of there controls
-		wxWindowList&children = this->GetChildren();
-		int x=0;
-		int y=0;
-		for(wxWindowListNode*child = children.GetFirst();child;child=child->GetNext()){
-			int Y = child->GetData()->GetRect().GetBottom();
-			int X = child->GetData()->GetRect().GetRight();
-			if(Y>y)y=Y;
-			if(X>x)x=X;
-		}
-		this->SetMinSize(wxSize(x,y+6));//6 is for the border, this is an aproximation
 	}
 
 	editor_ctrl(wxWindow*parent, const wxString&Title, int orient = wxVERTICAL)
-		:editor<type>(parent,0,0,30,30,orient, Title)
+		:editor<type>(parent,orient, Title)
 	{
 	}
 	virtual ~editor_ctrl(){}

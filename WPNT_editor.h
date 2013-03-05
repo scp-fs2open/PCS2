@@ -28,23 +28,32 @@ class convergence_calculator :
 
 public:
 	convergence_calculator()
-		:wxDialog(NULL, -1, _("Convergence Calculator"), wxPoint(-1,-1), wxSize(238,235))
+		:wxDialog(NULL, -1, wxString(_("Convergence Calculator")))
 		,mask(0)
 	{
-		check_box[0] =	new wxCheckBox(this, CHECK_X, _("Converge X"), wxPoint(75,12), wxSize(80,16));
-		check_box[1] =	new wxCheckBox(this, CHECK_Y, _("Converge Y"), wxPoint(75,36), wxSize(80,16));
-		check_box[2] =	new wxCheckBox(this, CHECK_Z, _("Converge Z"), wxPoint(75,60), wxSize(80,16));
-
-		check_box[3] =	new wxCheckBox(this, CHECK_THIS_ONLY, _("This Point Only"), wxPoint(75,84), wxSize(80,16));
+		wxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
+		main_sizer->SetMinSize(wxSize(200, 150));
+		wxSizer* axes_sizer = new wxStaticBoxSizer(wxHORIZONTAL, this, _("Axes to converge"));
+		axes_sizer->Add(check_box[0] = new wxCheckBox(this, CHECK_X, _("X")));
+		axes_sizer->AddStretchSpacer(1);
+		axes_sizer->Add(check_box[1] = new wxCheckBox(this, CHECK_Y, _("Y")));
+		axes_sizer->AddStretchSpacer(1);
+		axes_sizer->Add(check_box[2] = new wxCheckBox(this, CHECK_Z, _("Z")));
+		axes_sizer->AddStretchSpacer(1);
+		main_sizer->Add(axes_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 10);
+		main_sizer->Add(check_box[3] = new wxCheckBox(this, CHECK_THIS_ONLY, _("This Point Only")), 0, wxALL, 15);
 		
 		for(int i = 0; i<4; i++){
 			check_box[i]->SetValue(i!=3);
 		}
-
-		pnt_ctrl =		new vector_ctrl(this, 12,108, 204,46, _("Point to Converge to"));
-
-		ok_btn =		new wxButton(this, CONVERGE_OK, _("OK"),			wxPoint(35, 165),  wxSize(75, 23));
-		cancel_btn =	new wxButton(this, CONVERGE_CANCEL, _("Cancel"),	wxPoint(116, 165), wxSize(75, 23));
+		main_sizer->AddStretchSpacer(1);
+		main_sizer->Add(pnt_ctrl = new vector_ctrl(this,_("Point to Converge to")), 0, wxEXPAND | wxALL, 10);
+		wxSizer* button_sizer = new wxBoxSizer(wxHORIZONTAL);
+		button_sizer->Add(ok_btn = new wxButton(this, CONVERGE_OK, _("OK")));
+		button_sizer->AddSpacer(20);
+		button_sizer->Add(cancel_btn = new wxButton(this, CONVERGE_CANCEL, _("Cancel")));
+		main_sizer->Add(button_sizer, 0, wxBOTTOM | wxTOP | wxALIGN_CENTER_HORIZONTAL, 10);
+		SetSizerAndFit(main_sizer);
 	};
 public:
 	~convergence_calculator(void){};
@@ -76,8 +85,8 @@ class weapon_hard_point_array_ctrl :
 {
 	wxButton*converge_btn;
 public:
-	weapon_hard_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:hard_point_array_ctrl(parent, x, y, w, h, Title, orient)
+	weapon_hard_point_array_ctrl(wxWindow*parent, wxString Title, int orient = wxHORIZONTAL)
+		:hard_point_array_ctrl(parent, Title, orient)
 	{
 		add_control(converge_btn = new wxButton(this, WPN_CONVERGENCE, _("Convergence")));
 	}
@@ -121,8 +130,8 @@ class weapon_point_type_ctrl :
 	public type_array_ctrl<std::vector<pcs_hardpoint>, weapon_hard_point_array_ctrl>
 {
 public:
-	weapon_point_type_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl<std::vector<pcs_hardpoint>, weapon_hard_point_array_ctrl>(parent,x,y,w,h,subtitle, _("Point"), wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	weapon_point_type_ctrl(wxWindow*parent, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
+		:type_array_ctrl<std::vector<pcs_hardpoint>, weapon_hard_point_array_ctrl>(parent, subtitle, _("Point"), wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 
@@ -180,7 +189,7 @@ public:
 		:editor_ctrl<std::vector<pcs_slot> >(parent, _("Weapon Points"))
 	{
 		//add controls
-		add_control(wpn=new weapon_point_type_ctrl(this,0,0,90,290,_("Gunpoint"),_("Bank")),0,wxEXPAND );
+		add_control(wpn=new weapon_point_type_ctrl(this, _("Gunpoint"),_("Bank")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

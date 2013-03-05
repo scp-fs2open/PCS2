@@ -21,7 +21,7 @@ public:
 		:editor_ctrl<std::vector<std::string> >(parent, _("Textures"))
 	{
 		//add controls
-		add_control(textures=new string_array_ctrl(this,0,0,90,90,_(""), _("texture")),0,wxEXPAND );
+		add_control(textures=new string_array_ctrl(this,_(""), _("texture")),0,wxEXPAND );
 		textures->set_index_name_function(get_texture_name);
 		add_control(reload_btn = new wxButton(this, TXTR_RELOAD, _("Reload Textures")));
 		add_control(open_texture_btn = new wxButton(this, TXTR_EXT_OPEN, _("Open Externaly")));

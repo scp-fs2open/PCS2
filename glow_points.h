@@ -16,13 +16,13 @@ protected:
 	normal_ctrl*norm;
 public:
 	
-	glow_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_thrust_glow>(parent,x,y,w,h, orient, Title)
+	glow_point_ctrl(wxWindow*parent,  wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_thrust_glow>(parent, orient, Title)
 	{
 		//add controls
-		add_control(rad=new float_ctrl(this,0,0,60,40,_("Radius")),0,wxEXPAND );
-		add_control(pos=new vector_ctrl(this,0,0,60,40,_("position")),0,wxEXPAND );
-		add_control(norm=new normal_ctrl(this,0,0,60,40,_("Normal")),0,wxEXPAND );
+		add_control(rad=new float_ctrl(this,_("Radius")),0,wxEXPAND );
+		add_control(pos=new vector_ctrl(this,_("position")),0,wxEXPAND );
+		add_control(norm=new normal_ctrl(this,_("Normal")),0,wxEXPAND );
 	};
 
 	virtual ~glow_point_ctrl(void){};
@@ -49,8 +49,8 @@ class glow_point_array_ctrl :
 	public type_array_ctrl<pcs_thrust_glow, glow_point_ctrl>
 {
 public:
-	glow_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_thrust_glow, glow_point_ctrl>(parent,x,y,w,h,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+	glow_point_array_ctrl(wxWindow*parent, wxString Title, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_thrust_glow, glow_point_ctrl>(parent, Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 	}
 

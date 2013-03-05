@@ -15,7 +15,7 @@ public:
 		:editor_ctrl<std::vector<std::string> >(parent, _("PINF"))
 	{
 		//add controls
-		add_control(coments=new multi_string_array_ctrl(this,0,0,120,575,_("Model Comments"), _(""),wxVERTICAL,wxEXPAND),0,wxEXPAND );
+		add_control(coments=new multi_string_array_ctrl(this,_("Model Comments"), _(""),wxVERTICAL,wxEXPAND),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

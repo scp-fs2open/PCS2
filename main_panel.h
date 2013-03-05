@@ -278,7 +278,7 @@ public:
 				matrix_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
 					wxGridSizer* sizer = new wxGridSizer(4);
 					for (int i = 0; i < 16; i++) {
-						matrix_entry[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"), wxDefaultPosition, wxSize(60, 20));
+						matrix_entry[i] = new wxTextCtrl(this, -1, ((i % 4) == (i / 4)) ? _("1") : _("0"), wxDefaultPosition, wxSize(60, -1));
 						if (i >= 12) {
 							matrix_entry[i]->SetEditable(false);
 						}
@@ -315,8 +315,8 @@ public:
 					values[4].title = "Custom:";
 					values[4].data = vector3d();
 					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, 0, 0, 60, -1, _("Axis")), 0, wxEXPAND);
-					sizer->Add(scale=new float_ctrl(this,0,0,60,40,_("Scale (negative values flip)")), 0, wxEXPAND);
+					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, _("Axis")), 0, wxEXPAND);
+					sizer->Add(scale=new float_ctrl(this,_("Scale (negative values flip)")), 0, wxEXPAND);
 					scale->set_value(1.0f);
 					SetSizerAndFit(sizer);
 				}
@@ -336,7 +336,7 @@ public:
 			public:
 				translate_transform(wxWindow* parent, int id=wxID_ANY) : transform_method(parent, id) {
 					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-					sizer->Add(translation=new vector_ctrl(this,0,0,60,40,_("Translation")), 0, wxEXPAND);
+					sizer->Add(translation=new vector_ctrl(this,_("Translation")), 0, wxEXPAND);
 					SetSizerAndFit(sizer);
 				}
 
@@ -365,8 +365,8 @@ public:
 					values[3].title = "Custom:";
 					values[3].data = vector3d();
 					wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, 0, 0, 60, -1, _("Axis")), 0, wxEXPAND);
-					sizer->Add(angle=new float_ctrl(this,0,0,60,40,_("Angle (degrees)")), 0, wxEXPAND);
+					sizer->Add(axis=new vector3d_radio_button_ctrl(this, values, _("Axis")), 0, wxEXPAND);
+					sizer->Add(angle=new float_ctrl(this,_("Angle (degrees)")), 0, wxEXPAND);
 					angle->set_value(0.0f);
 					SetSizerAndFit(sizer);
 				}

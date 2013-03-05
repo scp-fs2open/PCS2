@@ -17,7 +17,7 @@ public:
 		:editor_ctrl<std::vector<pcs_shield_triangle> >(parent, _("Shields"))
 	{
 		//add controls
-		add_control(info=new string_disp(this,0,0,60,80,_("Shield Info")),0,wxEXPAND );
+		add_control(info=new string_disp(this,_("Shield Info")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

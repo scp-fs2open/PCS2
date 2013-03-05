@@ -14,15 +14,15 @@ protected:
 
 public:
 	
-	dock_pnt_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_dock_point>(parent,x,y,w,h, orient, Title)
+	dock_pnt_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_dock_point>(parent, orient, Title)
 	{
 		//add controls
 		std::vector<std::string> op;
 		op.push_back("$name=Docking Point");
-		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Properties"),op),0,wxEXPAND );
-		add_control(paths=new path_idx_array_ctrl(this,0,0,60,110,_("Paths"), _(""), wxVERTICAL),0,wxEXPAND );
-		add_control(dockpoints=new hard_point_array_ctrl(this,0,0,60,170,_("Points")),0,wxEXPAND );
+		add_control(properties=new suggest_ctrl<std::string, string_ctrl>(this,_("Properties"),op),0,wxEXPAND );
+		add_control(paths=new path_idx_array_ctrl(this,_("Paths"), _(""), wxVERTICAL),0,wxEXPAND );
+		add_control(dockpoints=new hard_point_array_ctrl(this,_("Points")),0,wxEXPAND );
 	};
 
 	virtual ~dock_pnt_ctrl(void){};
@@ -64,8 +64,8 @@ class dock_pnt_array_ctrl
 	:public type_array_ctrl<pcs_dock_point, dock_pnt_ctrl>
 {
 public:
-	dock_pnt_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle)
-		:type_array_ctrl<pcs_dock_point, dock_pnt_ctrl>(parent,x,y,w,h,Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	dock_pnt_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle)
+		:type_array_ctrl<pcs_dock_point, dock_pnt_ctrl>(parent,Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 };
@@ -85,7 +85,7 @@ public:
 		:editor_ctrl<std::vector<pcs_dock_point> >(parent, _("Docking Points"))
 	{
 		//add controls
-		add_control(docking=new dock_pnt_array_ctrl(this,0,0,60,410,_("Point"), _("")),0,wxEXPAND );
+		add_control(docking=new dock_pnt_array_ctrl(this ,_("Point"), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

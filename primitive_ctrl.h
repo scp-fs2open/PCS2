@@ -57,13 +57,13 @@ protected:
 public:
 	
 	//constructor builds the text box and adds it to editor's static box sizer
-	primitive_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-	:editor<type>(parent,x,y,w,h, orient, Title)
+	primitive_ctrl(wxWindow*parent, wxString Title, int orient = wxHORIZONTAL, int Flags=0, int h=-1)
+	:editor<type>(parent,orient, Title)
 	{
 		//make the text editor
-		text_box = new data_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
+		text_box = new data_ctrl(this,-1,_(""),wxDefaultPosition,wxSize(-1, h),Flags);
 		//add it to our controls
-		add_control(text_box, 1,wxEXPAND ,1);
+		add_control(text_box, 1,wxEXPAND, 1);
 	};
 public:
 	virtual ~primitive_ctrl(void){};
@@ -98,14 +98,20 @@ public:
 	virtual void set_value(const std::string&s){set_string(this->text_box, s);}
 
 	//just passes parameters to primitive, and makes sure the box is clear, only doing that for completeness sake
-	_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<std::string, data_ctrl>(parent,x,y,w,h,Title)
+	_string_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<std::string, data_ctrl>(parent,Title)
 	{
 		set_value("");
 	}
 };
-class string_ctrl : public _string_ctrl<text_ctrl>{public:string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
-class string_disp : public _string_ctrl<wxStaticText>{public:string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_string_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
+class string_ctrl : public _string_ctrl<text_ctrl>{
+public:
+	string_ctrl(wxWindow*parent, wxString Title):_string_ctrl<text_ctrl>(parent,Title){}
+};
+class string_disp : public _string_ctrl<wxStaticText>{
+public:
+	string_disp(wxWindow*parent, wxString Title):_string_ctrl<wxStaticText>(parent,Title){}
+};
 
 
 //class for multi-line string interface
@@ -120,14 +126,20 @@ public:
 	virtual void set_value(const std::string&s){set_string(this->text_box, s);}
 
 	//just passes parameters to primitive, and makes sure the box is clear, only doing that for completeness sake
-	_multi_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<std::string, data_ctrl>(parent,x,y,w,h,Title, wxHORIZONTAL,wxTE_MULTILINE)
+	_multi_string_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<std::string, data_ctrl>(parent, Title, wxHORIZONTAL, wxTE_MULTILINE, 100)
 	{
 		set_value("");
 	}
 };
-class multi_string_ctrl : public _multi_string_ctrl<text_ctrl>{public:multi_string_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
-class multi_string_disp : public _multi_string_ctrl<wxStaticText>{public:multi_string_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_multi_string_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
+class multi_string_ctrl : public _multi_string_ctrl<text_ctrl>{
+public:
+	multi_string_ctrl(wxWindow*parent,wxString Title):_multi_string_ctrl<text_ctrl>(parent, Title){}
+};
+class multi_string_disp : public _multi_string_ctrl<wxStaticText>{
+public:
+	multi_string_disp(wxWindow*parent,wxString Title):_multi_string_ctrl<wxStaticText>(parent, Title){}
+};
 
 //class for float interface
 template<class data_ctrl = text_ctrl>
@@ -141,14 +153,20 @@ public:
 	virtual void set_value(const float&f){set_string(this->text_box, wxString().Format(_("%f"),f));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
-	_float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<float, data_ctrl>(parent,x,y,w,h,Title)
+	_float_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<float, data_ctrl>(parent, Title)
 	{
 		set_value(0.0f);
 	}
 };
-class float_ctrl : public _float_ctrl<text_ctrl>{public:float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
-class float_disp : public _float_ctrl<wxStaticText>{public:float_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_float_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
+class float_ctrl : public _float_ctrl<text_ctrl>{
+public:
+	float_ctrl(wxWindow*parent, wxString Title):_float_ctrl<text_ctrl>(parent,Title){}
+};
+class float_disp : public _float_ctrl<wxStaticText>{
+public:
+	float_disp(wxWindow*parent, wxString Title):_float_ctrl<wxStaticText>(parent,Title){}
+};
 
 //class for int interface
 template<class data_ctrl = text_ctrl>
@@ -162,14 +180,20 @@ public:
 	virtual void set_value(const int&i){set_string(this->text_box, wxString().Format(_("%d"),i));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
-	_int_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<int, data_ctrl>(parent,x,y,w,h,Title)
+	_int_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<int, data_ctrl>(parent,Title)
 	{
 		set_value(0);
 	}
 };
-class int_ctrl : public _int_ctrl<text_ctrl>{public:int_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
-class int_disp : public _int_ctrl<wxStaticText>{public:int_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_int_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
+class int_ctrl : public _int_ctrl<text_ctrl>{
+public:
+	int_ctrl(wxWindow*parent, wxString Title):_int_ctrl<text_ctrl>(parent,Title){}
+};
+class int_disp : public _int_ctrl<wxStaticText>{
+public:
+	int_disp(wxWindow*parent, wxString Title):_int_ctrl<wxStaticText>(parent,Title){}
+};
 
 
 //class for vector interface
@@ -200,15 +224,21 @@ public:
 	virtual void set_value(const vector3d&v){set_string(this->text_box, wxString().Format(_("%f:%f:%f"),v.x,v.y,v.z));}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
-	_vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<vector3d, data_ctrl>(parent,x,y,w,h,Title)
+	_vector_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<vector3d, data_ctrl>(parent,Title)
 	{
 		set_value(vector3d(0,0,0));
 	}
 };
 
-class vector_ctrl : public _vector_ctrl<text_ctrl>{public:vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<text_ctrl>(parent,x,y,w,h,Title){}};
-class vector_disp : public _vector_ctrl<wxStaticText>{public:vector_disp(wxWindow*parent, int x, int y, int w, int h, wxString Title):_vector_ctrl<wxStaticText>(parent,x,y,w,h,Title){}};
+class vector_ctrl : public _vector_ctrl<text_ctrl>{
+public:
+	vector_ctrl(wxWindow*parent, wxString Title):_vector_ctrl<text_ctrl>(parent,Title){}
+};
+class vector_disp : public _vector_ctrl<wxStaticText>{
+public:
+	vector_disp(wxWindow*parent, wxString Title):_vector_ctrl<wxStaticText>(parent,Title){}
+};
 
 template<class data_ctrl = text_ctrl>
 class _vector_button_ctrl
@@ -217,17 +247,17 @@ class _vector_button_ctrl
 	wxButton*button;
 
 public:
-	_vector_button_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString button_text, wxString button_tooltip, wxSize button_size)
-		:_vector_ctrl<data_ctrl>(parent,x,y,w,h,Title)
+	_vector_button_ctrl(wxWindow*parent, wxString Title, wxString button_text, wxString button_tooltip)
+		:_vector_ctrl<data_ctrl>(parent,Title)
 	{
-		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, button_size));
+		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT));
 		button->SetToolTip(button_tooltip);
 	}
 
 	void on_click(wxCommandEvent& event) {
 		handle_click_event();
 		wxCommandEvent done_event(EDIT_DONE);
-		GetEventHandler()->ProcessEvent(done_event);
+		this->GetEventHandler()->ProcessEvent(done_event);
 	}
 
 	virtual void handle_click_event() = 0;
@@ -244,15 +274,10 @@ public:
 class vector_button_ctrl : public _vector_button_ctrl<text_ctrl> {
 public:
 	vector_button_ctrl(wxWindow*parent,
-		int x,
-		int y,
-		int w,
-		int h,
 		wxString Title,
 		wxString button_text,
-		wxString button_tooltip,
-		wxSize button_size=wxSize(40,20))
-		:_vector_button_ctrl<text_ctrl>(parent, x, y, w, h, Title, button_text, button_tooltip, button_size) {}
+		wxString button_tooltip)
+		:_vector_button_ctrl<text_ctrl>(parent, Title, button_text, button_tooltip) {}
 
 	DECLARE_EVENT_TABLE();
 };
@@ -262,8 +287,8 @@ class default_value_vector_ctrl
 {
 	vector3d default_value;
 public:
-	default_value_vector_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:vector_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset to calculated value"), wxSize(40,20))
+		default_value_vector_ctrl(wxWindow*parent, wxString Title)
+		:vector_button_ctrl(parent,Title, _("Reset"), _("Reset to calculated value"))
 	{
 	}
 
@@ -303,16 +328,11 @@ class float_button_ctrl : public float_ctrl {
 
 public:
 	float_button_ctrl(wxWindow*parent,
-		int x,
-		int y,
-		int w,
-		int h,
 		wxString Title,
 		wxString button_text,
-		wxString button_tooltip,
-		wxSize button_size=wxSize(40,20))
-		:float_ctrl(parent, x, y, w, h, Title) {
-		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, button_size));
+		wxString button_tooltip)
+		:float_ctrl(parent, Title) {
+		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT));
 		button->SetToolTip(button_tooltip);
 	}
 
@@ -340,8 +360,8 @@ class default_value_float_ctrl
 {
 	float default_value;
 public:
-	default_value_float_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:float_button_ctrl(parent,x,y,w,h,Title, _("Reset"), _("Reset to calculated value"), wxSize(40,20))
+	default_value_float_ctrl(wxWindow*parent, wxString Title)
+		:float_button_ctrl(parent,Title, _("Reset"), _("Reset to calculated value"))
 	{
 	}
 
@@ -381,8 +401,8 @@ class normal_ctrl
 	:public vector_button_ctrl
 {
 public:
-	normal_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:vector_button_ctrl(parent,x,y,w,h,Title, _("Norm"), _("Normalize\nMake Unit length"), wxSize(40,20))
+	normal_ctrl(wxWindow*parent, wxString Title)
+		:vector_button_ctrl(parent,Title, _("Norm"), _("Normalize\nMake Unit length"))
 	{
 	}
 
@@ -431,12 +451,12 @@ public:
 	}
 
 	//just passes parameters to primitive, and makes sure the box is set to a proper default
-	matrix_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title)
-		:primitive_ctrl<bobboau::matrix>(parent,x,y,w,h,Title, wxVERTICAL)
+	matrix_ctrl(wxWindow*parent, wxString Title)
+		:primitive_ctrl<bobboau::matrix>(parent,Title, wxVERTICAL)
 	{
 		//make the text editor
-		text_box2 = new text_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20));
-		text_box3 = new text_ctrl(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20));
+		text_box2 = new text_ctrl(this,-1,_(""));
+		text_box3 = new text_ctrl(this,-1,_(""));
 		//add it to our controls
 		add_control(text_box2, 1,wxEXPAND ,1);
 		add_control(text_box3, 1,wxEXPAND ,1);
@@ -460,10 +480,11 @@ class suggest_ctrl
 	int mode;
 
 public:
-	suggest_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, std::vector<type>Options, int Mode = SUGGEST_REPLACE)
-		:ctrl(parent,x,y,w,h,Title),options(Options), mode(Mode)
+
+	suggest_ctrl(wxWindow*parent, wxString Title, std::vector<type>Options, int Mode = SUGGEST_REPLACE)
+		:ctrl(parent,Title),options(Options), mode(Mode)
 	{
-		add_control(suggest_btn = new wxBitmapButton(this, STRING_SUGGEST, wxBitmap(suggest), wxDefaultPosition, wxSize(16,16)));
+		add_control(suggest_btn = new wxBitmapButton(this, STRING_SUGGEST, wxBitmap(suggest)));
 		suggest_btn->SetToolTip(_("Suggest\nProvide Common Options"));
 	}
 
@@ -560,11 +581,11 @@ public:
 	}
 	
 	//constructor builds the text box and adds it to editor's static box sizer
-	primitive_list_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-	:editor<type>(parent,x,y,w,h, orient, Title)
+	primitive_list_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+	:editor<type>(parent, orient, Title)
 	{
 		//make the text editor
-		combo_box = new combo(this,-1,_(""),wxPoint(6+x,15+y),wxSize(w-12,20),Flags);
+		combo_box = new combo(this,-1,_(""),wxDefaultPosition, wxDefaultSize, Flags);
 		//add it to our controls
 		this->add_control(combo_box, 1,wxEXPAND ,1);
 
@@ -632,8 +653,8 @@ public:
 
 	
 	//constructor builds the text box and adds it to editor's static box sizer
-	primitive_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-	:editor<type>(parent,x,y,w,h, orient, Title)
+	primitive_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<type> >&list, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+	:editor<type>(parent, orient, Title)
 	{
 		//make the radio buttons
 		option.resize(list.size());
@@ -671,8 +692,8 @@ class model_list_ctrl
 	:public primitive_list_ctrl<int>
 {
 public:
-	model_list_ctrl(wxWindow*Parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-		:primitive_list_ctrl<int>(Parent, get_list(), x, y, w, h, Title, orient, Flags)
+	model_list_ctrl(wxWindow*Parent, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+		:primitive_list_ctrl<int>(Parent, get_list(), Title, orient, Flags)
 	{
 	}
 
@@ -689,8 +710,8 @@ class path_list_ctrl
 	:public primitive_list_ctrl<int>
 {
 public:
-	path_list_ctrl(wxWindow*Parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
-		:primitive_list_ctrl<int>(Parent, get_list(), x, y, w, h, Title, orient, Flags)
+	path_list_ctrl(wxWindow*Parent, wxString Title, int orient = wxHORIZONTAL, int Flags=0)
+		:primitive_list_ctrl<int>(Parent, get_list(), Title, orient, Flags)
 	{
 	}
 
@@ -740,12 +761,12 @@ public:
 
 	
 	//constructor builds the text box and adds it to editor's static box sizer
-	vector3d_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<vector3d> >&list, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL, int Flags=0)
-	:primitive_radio_button_ctrl<vector3d>(parent,list,x,y,w,h, Title, orient, Flags)
+	vector3d_radio_button_ctrl(wxWindow*parent, const std::vector<primitive_list_item<vector3d> >&list, wxString Title, int orient = wxVERTICAL, int Flags=0)
+	:primitive_radio_button_ctrl<vector3d>(parent,list, Title, orient, Flags)
 	{
-		add_control(custom=new vector_ctrl(this,0,0,60,20,_("")),0,wxEXPAND );
+		add_control(custom=new vector_ctrl(this,_("")),0,wxEXPAND );
 		custom->Disable();
-	};
+	}
 
 	void on_select(wxCommandEvent& event) {
 		if (event.GetSelection() == (int)combo_box->GetCount() - 1) {

@@ -15,11 +15,10 @@ protected:
     float_ctrl*radius;
 public:
 	
-	spcl_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_special>(parent,x,y,w,h, orient, Title)
+	spcl_point_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_special>(parent, orient, Title)
 	{
 		//add controls
-		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 		std::vector<std::string> op;
 		op.push_back("$Engine");
 		op.push_back("$Weapons");
@@ -29,13 +28,11 @@ public:
 		op.push_back("$Fighterbay");
 		op.push_back("$Bridge");
 		op.push_back("$Reactor");
-		sizer->Add(name=new suggest_ctrl<std::string, string_ctrl>(this,0,0,60,40,_("Name"),op, SUGGEST_REPLACE),1 );
-		sizer->Add(20,40);
-		sizer->Add(radius=new float_ctrl(this,0,0,60,40,_("Radius")),1 );
-		add_sizer(sizer,0,wxEXPAND );
-		add_control(properties=new multi_string_ctrl(this,0,0,60,80,_("Properties")),0,wxEXPAND );
-		add_control(point=new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
-	};
+		add_control(name=new suggest_ctrl<std::string, string_ctrl>(this,_("Name"),op, SUGGEST_REPLACE),0,wxEXPAND);
+		add_control(radius=new float_ctrl(this,_("Radius")),0,wxEXPAND);
+		add_control(properties=new multi_string_ctrl(this,_("Properties")),0,wxEXPAND );
+		add_control(point=new vector_ctrl(this,_("Position")),0,wxEXPAND );
+	}
 
 	virtual ~spcl_point_ctrl(void){};
 
@@ -68,8 +65,8 @@ class spcl_point_array_ctrl :
 	public type_array_ctrl<pcs_special, spcl_point_ctrl>
 {
 public:
-	spcl_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_special, spcl_point_ctrl>(parent,x,y,w,h,subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+	spcl_point_array_ctrl(wxWindow*parent, wxString Title, wxString subtitle, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_special, spcl_point_ctrl>(parent, subtitle, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 	}
 
@@ -92,7 +89,7 @@ public:
 		:editor_ctrl<std::vector<pcs_special> >(parent, _("Special Points"))
 	{
 		//add controls
-		add_control(points=new spcl_point_array_ctrl(this,0,0,60,230,_("Point"), _("")),0,wxEXPAND );
+		add_control(points=new spcl_point_array_ctrl(this, _("Point"), _("")),0,wxEXPAND );
 		points->set_index_name_function(get_subsystem_name);
 	}
 

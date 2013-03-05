@@ -91,12 +91,12 @@ void set_editor_colors(){
 
 
 ///////////////////////////control for selecting the color of a chunk////////////////////
-chunk_color_ctrl::chunk_color_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString Path, int Flags, wxString title1, wxString title2, wxString title3)
-	:editor<color_options>(parent,x,y,w,h, wxVERTICAL, Title), path(Path)
+chunk_color_ctrl::chunk_color_ctrl(wxWindow*parent, wxString Title, wxString Path, int Flags, wxString title1, wxString title2, wxString title3)
+	:editor<color_options>(parent,wxVERTICAL, Title), path(Path)
 {
-	add_control(unselected_btn = new wxButton(this, COLOP_UNSEL, title1,		wxPoint(0,0),	wxSize(60,20)), 1,wxEXPAND ,1);
-	add_control(selected_list = new wxButton(this, COLOP_SEL_L, title2,	wxPoint(0,25),	wxSize(60,20)), 1,wxEXPAND ,1);
-	add_control(selected_item = new wxButton(this, COLOP_SEL_I, title3,	wxPoint(0,50),	wxSize(60,20)), 1,wxEXPAND ,1);
+	add_control(unselected_btn = new wxButton(this, COLOP_UNSEL, title1, wxDefaultPosition, wxDefaultSize), 1,wxEXPAND, 5);
+	add_control(selected_list = new wxButton(this, COLOP_SEL_L, title2, wxDefaultPosition, wxDefaultSize), 1,wxEXPAND, 5);
+	add_control(selected_item = new wxButton(this, COLOP_SEL_I, title3, wxDefaultPosition, wxDefaultSize), 1,wxEXPAND);
 };
 
 
@@ -140,39 +140,55 @@ END_EVENT_TABLE()
 ///////////////////////////the dialog///////////////////////////////////
 
 color_options_dlg::color_options_dlg(wxWindow* parent)
-	:wxDialog(parent, COLOP_DLG, _("Color Options"), wxDefaultPosition, wxSize(300,580))
+	:wxDialog(parent, COLOP_DLG, wxString(_("Color Options")))
 {
 	if(!defaults_built)build_defaults();
 
+	wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+
+	wxSizer* controls_sizer = new wxGridSizer(3, 10, 5);
+
 	int i = 0;
-	color_selector[i] = new chunk_color_ctrl(this, 0,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 100,  0,   90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 200,0,   90, 120, chunk_titles[i], chunk_paths[i]);
-	i++;
-
-	color_selector[i] = new chunk_color_ctrl(this, 0,  130, 90, 120, chunk_titles[i], chunk_paths[i]);
-	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 100,130, 90, 120, chunk_titles[i], chunk_paths[i]);
-	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 200,130, 90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
 
-	color_selector[i] = new chunk_color_ctrl(this, 0,  260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 100,260, 90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this,  chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
-	color_selector[i] = new chunk_color_ctrl(this, 200,260, 90, 120, chunk_titles[i], chunk_paths[i]);
-	i++;
-
-	color_selector[i] = new chunk_color_ctrl(this, 50,390, 90, 120, chunk_titles[i], chunk_paths[i]);
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
 	i++;
 
-	color_selector[i] = new chunk_color_ctrl(this, 150,390, 90, 120, chunk_titles[i], chunk_paths[i], 0, _("Subobjects"), _("Textures"), _("Shields"));
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
+	i++;
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
+	i++;
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
+	i++;
 
-	ok_btn = new wxButton(this, wxID_OK, _("OK"),				wxPoint(200, 520), wxSize(30, 20));
-	cancel_btn = new wxButton(this, wxID_CANCEL, _("Cancel"),	wxPoint(235, 520), wxSize(50, 20));
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i]), 1, wxEXPAND);
+	i++;
+
+	controls_sizer->Add(color_selector[i] = new chunk_color_ctrl(this, chunk_titles[i], chunk_paths[i], 0, _("Subobjects"), _("Textures"), _("Shields")), 1, wxEXPAND);
+
+	sizer->Add(controls_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 5);
+
+	wxSizer* buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
+
+	buttons_sizer->AddStretchSpacer(3);
+	buttons_sizer->Add(ok_btn = new wxButton(this, wxID_OK, _("OK")));
+	buttons_sizer->AddStretchSpacer(2);
+	buttons_sizer->Add(cancel_btn = new wxButton(this, wxID_CANCEL, _("Cancel")));
+	buttons_sizer->AddStretchSpacer(3);
+	sizer->AddSpacer(15);
+	sizer->Add(buttons_sizer, 0, wxEXPAND);
+	sizer->AddSpacer(5);
+
+	SetSizerAndFit(sizer);
 
 	wxConfigBase *con = wxConfigBase::Get();
 		

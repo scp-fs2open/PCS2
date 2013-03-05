@@ -26,13 +26,13 @@ protected:
 
 public:
 
-	sobj_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_sobj>(parent,x,y,w,h, orient, Title)
+	sobj_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_sobj>(parent, orient, Title)
 	{
 		std::vector<primitive_list_item<int> > list;
 
 		//add controls
-		add_control(name=new string_ctrl(this,0,0,60,40,_("Name")),0,wxEXPAND );
+		add_control(name=new string_ctrl(this,_("Name")),0,wxEXPAND );
 
 		list.resize(4);
 
@@ -48,13 +48,13 @@ public:
 		list[3].title = "Z Axis";
 		list[3].data = MV_Z;
 
-		add_control(movement_axis=new primitive_radio_button_ctrl<int>(this, list,0,0,60,160,_("Rotation Axis")),0,wxEXPAND );
+		add_control(movement_axis=new primitive_radio_button_ctrl<int>(this, list,_("Rotation Axis")),0,wxEXPAND );
 
-		add_control(offset=new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
+		add_control(offset=new vector_ctrl(this,_("Offset")),0,wxEXPAND );
 
-		add_control(bbox_min=new default_value_vector_ctrl(this,0,0,60,40,_("Bounding Box Min")),0,wxEXPAND );
-		add_control(bbox_max=new default_value_vector_ctrl(this,0,30,60,40,_("Bounding Box Max")),0,wxEXPAND );
-		add_control(max_rad = new default_value_float_ctrl(this,0,90,60,40,_("Max Radius")), 0, wxEXPAND);
+		add_control(bbox_min=new default_value_vector_ctrl(this,_("Bounding Box Min")),0,wxEXPAND );
+		add_control(bbox_max=new default_value_vector_ctrl(this,_("Bounding Box Max")),0,wxEXPAND );
+		add_control(max_rad = new default_value_float_ctrl(this,_("Max Radius")), 0, wxEXPAND);
 
 		std::vector<std::string> op;
 		op.push_back("$special=subsystem\n");
@@ -88,7 +88,7 @@ public:
 		op.push_back("$no_collisions\n");
 		op.push_back("$nocollide_this_only\n");
 		op.push_back("$collide_invisible\n");
-		add_control(properties=new suggest_ctrl<std::string, multi_string_ctrl>(this,0,0,60,40,_("Properties"),op, SUGGEST_APPEND),1,wxEXPAND );
+		add_control(properties=new suggest_ctrl<std::string, multi_string_ctrl>(this,_("Properties"),op, SUGGEST_APPEND),1,wxEXPAND );
 		
 	};
 
@@ -161,18 +161,18 @@ public:
 	{
 		//add controls
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
-		b->Add(cpy_btn = new wxBitmapButton(this, SOBJ_BUTTON_CPY, wxBitmap(copy_btn),wxPoint(42,0),wxSize(16,16)));
-		b->Add(del_btn = new wxBitmapButton(this, SOBJ_BUTTON_DEL, wxBitmap(delete_btn),wxPoint(58,0),wxSize(16,16)));
+		b->Add(cpy_btn = new wxBitmapButton(this, SOBJ_BUTTON_CPY, wxBitmap(copy_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE));
+		b->Add(del_btn = new wxBitmapButton(this, SOBJ_BUTTON_DEL, wxBitmap(delete_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE));
 		add_sizer(b);
 
 		cpy_btn->SetToolTip(_("Copy"));
 		del_btn->SetToolTip(_("Delete"));
 
-		add_control(sobj=new sobj_ctrl(this,0,0,60,440,_("")),0,wxEXPAND );
+		add_control(sobj=new sobj_ctrl(this, _("")),0,wxEXPAND );
 
-		add_control(bsp_render_box=new wxCheckBox(this, BSP_DRAW, _("Draw BSP Debug Info"), wxPoint(0,415), wxSize(140,15)));
+		add_control(bsp_render_box=new wxCheckBox(this, BSP_DRAW, _("Draw BSP Debug Info")));
 		bsp_render_box->Disable();
-		add_control(sobj_info = new string_disp(this,0,0,60,160,_("Subobject Info")),0,wxEXPAND );
+		add_control(sobj_info = new string_disp(this,_("Subobject Info")),0,wxEXPAND );
 
 	}
 
@@ -223,7 +223,6 @@ public:
 		} else {
 			info += _("*NONE*");
 		}
-		info += _("\n");
 		sobj_info->set_value(std::string(info.mb_str()));
 	}
 

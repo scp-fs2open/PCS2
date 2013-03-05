@@ -10,13 +10,13 @@ protected:
 	normal_ctrl*norm;
 public:
 	
-	eye_point_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_eye_pos>(parent,x,y,w,h, orient, Title)
+	eye_point_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_eye_pos>(parent, orient, Title)
 	{
 		//add controls
-		add_control(sobj_number=new model_list_ctrl(this,0,0,60,40,_("Subobject Parent")),0,wxEXPAND );
-		add_control(sobj_offset=new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
-		add_control(norm=new normal_ctrl(this,0,0,60,40,_("Normal")),0,wxEXPAND );
+		add_control(sobj_number=new model_list_ctrl(this,_("Subobject Parent")),0,wxEXPAND );
+		add_control(sobj_offset=new vector_ctrl(this,_("Offset")),0,wxEXPAND );
+		add_control(norm=new normal_ctrl(this,_("Normal")),0,wxEXPAND );
 	};
 
 	virtual ~eye_point_ctrl(void){};
@@ -48,8 +48,8 @@ class eye_point_array_ctrl :
 	public type_array_ctrl<pcs_eye_pos, eye_point_ctrl>
 {
 public:
-	eye_point_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxHORIZONTAL)
-		:type_array_ctrl<pcs_eye_pos, eye_point_ctrl>(parent,x,y,w,h,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
+	eye_point_array_ctrl(wxWindow*parent, wxString Title, int orient = wxHORIZONTAL)
+		:type_array_ctrl<pcs_eye_pos, eye_point_ctrl>(parent,Title, _(""), wxVERTICAL, wxEXPAND, ARRAY_ITEM)
 	{
 	}
 
@@ -71,7 +71,7 @@ public:
 		:editor_ctrl<std::vector<pcs_eye_pos> >(parent, _("Eye Points"))
 	{
 		//add controls
-		add_control(eye=new eye_point_array_ctrl(this,0,0,90,190,_("")),0,wxEXPAND );
+		add_control(eye=new eye_point_array_ctrl(this, _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called

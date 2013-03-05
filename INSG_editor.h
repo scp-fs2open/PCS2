@@ -39,12 +39,12 @@ protected:
 
 public:
 	
-	insignia_vert_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_insig_face_vert>(parent,x,y,w,h, orient, Title)
+	insignia_vert_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_insig_face_vert>(parent, orient, Title)
 	{
-		add_control(vert =new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
-		add_control(u =new float_ctrl(this,0,0,60,40,_("u")),0,wxEXPAND );
-		add_control(v =new float_ctrl(this,0,0,60,40,_("v")),0,wxEXPAND );
+		add_control(vert =new vector_ctrl(this,_("Position")),0,wxEXPAND );
+		add_control(u =new float_ctrl(this,_("u")),0,wxEXPAND );
+		add_control(v =new float_ctrl(this,_("v")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_vert_ctrl(void){};
@@ -71,8 +71,8 @@ class insignia_vert_array_ctrl :
 	public type_array_ctrl<pcs_insig_face_vert, insignia_vert_ctrl>
 {
 	public:
-		insignia_vert_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle)
-			:type_array_ctrl<pcs_insig_face_vert, insignia_vert_ctrl>(parent,x,y,w,h,Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST, false)
+		insignia_vert_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle)
+			:type_array_ctrl<pcs_insig_face_vert, insignia_vert_ctrl>(parent, Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST, false)
 		{
 		}
 };
@@ -85,10 +85,10 @@ protected:
 
 public:
 	
-	insignia_face_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_insig_face>(parent,x,y,w,h, orient, Title)
+	insignia_face_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_insig_face>(parent, orient, Title)
 	{
-		add_control(verts =new insignia_vert_array_ctrl(this,0,0,60,410,_("Vertexes"), _("")),0,wxEXPAND );
+		add_control(verts =new insignia_vert_array_ctrl(this,_("Vertexes"), _("")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_face_ctrl(void){};
@@ -125,8 +125,8 @@ class insignia_face_array_ctrl
 	:public type_array_ctrl<pcs_insig_face, insignia_face_ctrl>
 {
 public:
-	insignia_face_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle)
-		:type_array_ctrl<pcs_insig_face, insignia_face_ctrl>(parent,x,y,w,h,Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	insignia_face_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle)
+		:type_array_ctrl<pcs_insig_face, insignia_face_ctrl>(parent, Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 };
@@ -145,16 +145,16 @@ protected:
 
 public:
 	
-	insignia_generator_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_insig_generator>(parent,x,y,w,h, orient, Title)
+	insignia_generator_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_insig_generator>(parent,orient, Title)
 	{
-		add_control(pos =new vector_ctrl(this,0,0,60,40,_("Position")),0,wxEXPAND );
-		add_control(forward =new vector_ctrl(this,0,0,60,40,_("Projection vector")),0,wxEXPAND );
-		add_control(up =new vector_ctrl(this,0,0,60,40,_("Up vector")),0,wxEXPAND );
-		add_control(radius =new float_ctrl(this,0,0,60,40,_("Length")),0,wxEXPAND );
-		add_control(distance =new float_ctrl(this,0,0,60,40,_("Back-off distance")),0,wxEXPAND );
-		add_control(subdivision =new int_ctrl(this,0,0,60,40,_("Subdivision")),0,wxEXPAND );
-		add_control(merge_eps =new float_ctrl(this,0,0,60,40,_("Polygon merge threshold")),0,wxEXPAND );
+		add_control(pos =new vector_ctrl(this,_("Position")),0,wxEXPAND );
+		add_control(forward =new vector_ctrl(this,_("Projection vector")),0,wxEXPAND );
+		add_control(up =new vector_ctrl(this,_("Up vector")),0,wxEXPAND );
+		add_control(radius =new float_ctrl(this,_("Length")),0,wxEXPAND );
+		add_control(distance =new float_ctrl(this,_("Back-off distance")),0,wxEXPAND );
+		add_control(subdivision =new int_ctrl(this,_("Subdivision")),0,wxEXPAND );
+		add_control(merge_eps =new float_ctrl(this,_("Polygon merge threshold")),0,wxEXPAND );
 	};
 
 	virtual ~insignia_generator_ctrl(void){};
@@ -199,13 +199,13 @@ protected:
 
 public:
 	
-	insignia_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, int orient = wxVERTICAL)
-	:editor<pcs_insig>(parent,x,y,w,h, orient, Title)
+	insignia_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL)
+	:editor<pcs_insig>(parent, orient, Title)
 	{
-		add_control(lod =new int_ctrl(this,0,0,60,40,_("LOD")),0,wxEXPAND );
-		add_control(offset =new vector_ctrl(this,0,0,60,40,_("Offset")),0,wxEXPAND );
-		add_control(faces=new insignia_face_array_ctrl(this,0,0,60,310,_("Faces"), _("")),0,wxEXPAND );
-		add_control(generator =new insignia_generator_ctrl(this,0,0,60,300,_("Projection")),0,wxEXPAND );
+		add_control(lod =new int_ctrl(this,_("LOD")),0,wxEXPAND );
+		add_control(offset =new vector_ctrl(this,_("Offset")),0,wxEXPAND );
+		add_control(faces=new insignia_face_array_ctrl(this, _("Faces"), _("")),0,wxEXPAND );
+		add_control(generator =new insignia_generator_ctrl(this,_("Projection")),0,wxEXPAND );
 		add_control(project_btn = new wxButton(this, INSG_PROJECT, _("Project")));
 	};
 
@@ -284,8 +284,8 @@ class insignia_array_ctrl
 	:public type_array_ctrl<pcs_insig, insignia_ctrl>
 {
 public:
-	insignia_array_ctrl(wxWindow*parent, int x, int y, int w, int h, wxString Title, wxString subTitle)
-		:type_array_ctrl<pcs_insig, insignia_ctrl>(parent,x,y,w,h,Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
+	insignia_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle)
+		:type_array_ctrl<pcs_insig, insignia_ctrl>(parent, Title, subTitle, wxVERTICAL, wxEXPAND, ARRAY_LIST)
 	{
 	}
 };
@@ -305,7 +305,7 @@ public:
 		:editor_ctrl<std::vector<pcs_insig> >(parent, _("Insignia"))
 	{
 		//add controls
-		add_control(insignia=new insignia_array_ctrl(this,0,0,60,790,_(""), _("")),0,wxEXPAND );
+		add_control(insignia=new insignia_array_ctrl(this,_(""), _("")),0,wxEXPAND );
 	}
 
 	//do nothing, needed so the base destructor will get called
