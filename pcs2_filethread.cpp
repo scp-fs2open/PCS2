@@ -94,8 +94,6 @@
  *
  */
 
-#pragma warning(disable:4786)
-
 #include "GLee.h"
 #include "pcs2_filethread.h"
 #include "pcs2.h"

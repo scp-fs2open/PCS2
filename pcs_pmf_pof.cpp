@@ -215,8 +215,6 @@
  *
  */
 
-#pragma warning(disable:4786)
-
 #include <fstream>
 #include <cfloat>
 #include "pcs_file.h"

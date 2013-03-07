@@ -3,7 +3,7 @@ import string
 # Edit this to suit your application
 defines = ['UNIX', 'HAVE_SYS_TYPES_H', 'HAVE_SYS_STAT_H', 'HAVE_UNISTD_H', 'ILUT_USE_OPENGL']
 include_path = ['pugixml']
-cc_flags = ['-Wall', '-Wno-unknown-pragmas']
+cc_flags = ['-Wall']
 libs = ['GL', 'GLU', 'boost_system', 'boost_filesystem', 'boost_regex', 'IL', 'ILU', 'ILUT']
 
 debug_cc_flags = ['-g']

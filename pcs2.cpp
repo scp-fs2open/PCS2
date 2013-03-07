@@ -315,9 +315,6 @@
  *
  */
 
-
-#pragma warning(disable: 4786)
-
 #include "pcs2.h"
 #include "pcs2_CIDs.h"
 #include <wx/image.h>

@@ -135,9 +135,6 @@
  *
  */
 
-
-#pragma warning(disable: 4786)
-
 #include "pcs_file.h"
 #include "COBHandler.h"
 #include "compat/sleep.h"
