@@ -1209,8 +1209,10 @@ vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 
 	if (up_axis == 1) {
 		broken = vector3d(-broken.x,-broken.y,broken.z);
-	} else {
+	} else if (up_axis == 2){
 		broken = vector3d(-broken.x,broken.z,broken.y);
+	} else {
+		broken = vector3d(broken.y,-broken.x,broken.z);
 	}
 	if (mirror_x) broken.x *= -1;
 	if (mirror_y) broken.y *= -1;
@@ -1227,14 +1229,14 @@ matrix DAEHandler::get_rotation(const pugi::xml_node& element, matrix old) {
 			temp = parse_float_array(child.child_value(), 4);
 			rot = matrix((*temp)[3]);
 			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
-			old = base.invert() % rot % base % old;
+			old = old % base.invert() % rot % base;
 		} else if (boost::algorithm::equals(child.name(), "scale")) {
 			temp = parse_float_array(child.child_value(), 3);
 			base = matrix();
 			for (int j = 0; j < 3; j++) {
 				base.a2d[j][j] = (*temp)[j];
 			}
-			old = base % old;
+			old = old % base;
 		} else if (boost::algorithm::equals(child.name(), "matrix")) {
 			temp = parse_float_array(child.child_value(), 16);
 			rot = matrix(temp.get());

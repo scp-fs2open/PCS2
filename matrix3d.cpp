@@ -61,7 +61,7 @@ matrix::matrix(float angle) {
 	} else {
 		angle = angle * M_PI / 180;
 		a2d[1][1] = cos(angle);
-		a2d[2][1] = -sin(angle);
+		a2d[2][1] = sin(angle);
 	}
 	a2d[2][2] = a2d[1][1];
 	a2d[1][2] = -a2d[2][1];
