@@ -22,6 +22,18 @@ namespace {
 		return base.select_single_node(xpath.c_str()).node();
 	}
 
+	std::vector<pugi::xml_node> find_nodes(pugi::xml_node base, const char* type) {
+		string xpath = ".//";
+		xpath += type;
+		pugi::xpath_node_set xpath_nodes = base.select_nodes(xpath.c_str());
+		std::vector<pugi::xml_node> nodes;
+		nodes.reserve(xpath_nodes.size());
+		for (const pugi::xpath_node* i = xpath_nodes.begin(); i != xpath_nodes.end(); ++i) {
+			nodes.push_back(i->node());
+		}
+		return nodes;
+	}
+
 	pugi::xml_node find_by_id(const char* type, const char* id, const pugi::xml_document& doc) {
 		string xpath = "//";
 		xpath += type;
@@ -214,6 +226,11 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 #if LOGGING_DAE
 	log << temp << endl;
 #endif
+	std::vector<pugi::xml_node> instance_materials = find_nodes(geom, "instance_material");
+	std::map<string, string> symbol_to_id;
+	for (std::vector<pugi::xml_node>::iterator i = instance_materials.begin(); i < instance_materials.end(); ++i) {
+		symbol_to_id.insert(make_pair(i->attribute("symbol").as_string(), i->attribute("target").as_string()));
+	}
 	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	boost::shared_ptr<pcs_sobj> subobj(new pcs_sobj());
 	subobj->bounding_box_min_point = vector3d(1e30f,1e30f,1e30f);
@@ -235,7 +252,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 	for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
 		// Add the polies to the subobj.
 		if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
-			process_poly_group(poly_group, subobj, rotation_matrix);
+			process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
 		}
 	}
 	pugi::xml_node trans = find_by_id("node", (string(element.attribute("id").value()) + "-trans").c_str(), root);
@@ -249,7 +266,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 					for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
 						// Add the polies to the subobj.
 						if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
-							process_poly_group(poly_group, subobj, rotation_matrix);
+							process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
 						}
 					}
 				}
@@ -305,7 +322,7 @@ void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
 }
 
 
-void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation) {
+void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, const std::map<string, string>& symbol_to_id) {
 	vector<int> refs;
 	DAEInputs inputs(element, root);
 	int poly_offset = subobj->polygons.size();
@@ -317,7 +334,7 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<p
 	}
 
 	string texture = element.attribute("material").value();
-	int texture_id = find_texture_id(texture);
+	int texture_id = find_texture_id(texture, symbol_to_id);
 
 	pugi::xml_node ref_element = element.child("p");
 	if (ref_element) {
@@ -703,7 +720,11 @@ string strip_texture(string name) {
 
 }
 
-int DAEHandler::find_texture_id(string name) {
+int DAEHandler::find_texture_id(string name, const std::map<std::string, std::string>& symbol_to_id) {
+	std::map<std::string, std::string>::const_iterator it = symbol_to_id.find(name);
+	if (it != symbol_to_id.end()) {
+		name.assign(it->second);
+	}
 	pugi::xml_node current = find_by_id("material", name.c_str(), root);
 	if (!current) {
 		return -1;

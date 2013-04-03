@@ -47,11 +47,11 @@ class DAEHandler
 
 
 		int find_or_add_texture(std::string name);
-		int find_texture_id(std::string name);
+		int find_texture_id(std::string name, const std::map<std::string, std::string>& symbol_to_id);
 		void subsystem_handler(pugi::xml_node& helper, bool isSubsystem);
 		void shield_handler(pugi::xml_node& helper);
 		void eyepoint_handler(pugi::xml_node& helper);
-		void process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation);
+		void process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, const std::map<std::string, std::string>& symbol_to_id);
 		void process_sobj_helpers(pugi::xml_node& element,int current_sobj_id, int parent_sobj_id, matrix rotation);
 		void process_special_helpers(pugi::xml_node& element, int idx, matrix rotation);
 		void process_properties(pugi::xml_node element,std::string *properties);
