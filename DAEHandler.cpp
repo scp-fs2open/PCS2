@@ -982,7 +982,10 @@ boost::shared_ptr<vector<float> > parse_float_array(const char* chars, unsigned 
 string write_int_array(vector<int> vec) {
 	stringstream result;
 	for (unsigned int i = 0; i < vec.size(); i++) {
-		result << vec[i] << " ";
+		result << vec[i];
+		if (i < vec.size() - 1) {
+			result << " ";
+		}
 	}
 	return string(result.str().c_str());
 }
@@ -990,7 +993,10 @@ string write_int_array(vector<int> vec) {
 string write_float_array(vector<float> vec) {
 	stringstream result;
 	for (unsigned int i = 0; i < vec.size(); i++) {
-		result << vec[i] << " ";
+		result << vec[i];
+		if (i < vec.size() - 1) {
+			result << " ";
+		}
 	}
 	return string(result.str().c_str());
 }
@@ -1417,6 +1423,7 @@ void DAESaver::add_textures() {
 		sampler = sampler.append_child("sampler2D").append_child("source");
 		sampler.text().set((string(model->Texture(i)) + "-surface").c_str());
 		shader = current_effect.append_child("technique");
+		shader.append_attribute("sid");
 		shader = shader.append_child("phong");
 		shader = shader.append_child("diffuse");
 		shader = shader.append_child("texture");
