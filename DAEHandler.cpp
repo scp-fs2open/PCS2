@@ -1350,6 +1350,9 @@ int DAESaver::save(void) {
 		add_glows();
 		progress->incrementWithMessage( "Adding insignia");
 		add_insignia();
+		for (int i = 0; i < model->GetSOBJCount(); i++) {
+			add_sobj_helpers(i);
+		}
 		progress->incrementWithMessage( "Adding mass");
 		add_mass();
 		progress->incrementWithMessage( "Adding moment of inertia");
@@ -1360,6 +1363,14 @@ int DAESaver::save(void) {
 		add_autocentering();
 	}
 
+	for (size_t i = 0; i < helpers.size(); i++) {
+		if (!helpers[i].first_child()) {
+			helpers[i].parent().remove_child(helpers[i]);
+		}
+	}
+
+	pugi::xml_node scene = root.append_child("scene").append_child("instance_visual_scene");
+	scene.append_attribute("url") = "#Scene";
 
 	progress->incrementWithMessage( "Saving DAE");
 	doc.save_file(filename.c_str());
@@ -1367,9 +1378,10 @@ int DAESaver::save(void) {
 }
 
 void DAESaver::add_header() {
-	root.append_attribute("version") = "1.4.0";
+	root.append_attribute("version") = "1.4.1";
 	root.append_attribute("xmlns") = "http://www.collada.org/2005/11/COLLADASchema";
 	pugi::xml_node asset = root.append_child("asset");
+	asset.append_child("contributor");
 	time_t now = time(NULL);
 	struct tm* tm = gmtime(&now);
 	char time_string[20];
@@ -1378,8 +1390,6 @@ void DAESaver::add_header() {
 	pugi::xml_node modified = asset.append_child("modified");
 	created.text().set(time_string);
 	modified.text().set(time_string);
-	pugi::xml_node scene = root.append_child("scene").append_child("instance_visual_scene");
-	scene.append_attribute("url") = "#Scene";
 	pugi::xml_node up = asset.append_child("up_axis");
 	up.text().set("Z_UP");
 }
@@ -1459,7 +1469,6 @@ void DAESaver::add_geom() {
 	for (int i = 0; i < model->GetSOBJCount(); i++) {
 		get_subobj(i);
 	}
-
 }
 
 void DAESaver::get_subobj(int idx,string *name) {
@@ -1476,8 +1485,7 @@ void DAESaver::get_subobj(int idx,string *name) {
 		}
 	}
 	subobjs[idx] = subobj;
-	pugi::xml_node helper = add_helper(subobj,sobj.properties);
-	pugi::xml_node translate = subobj.append_child("translate");
+	pugi::xml_node translate = subobj.prepend_child("translate");
 	translate.text().set(write_vector3d(sobj.offset).c_str());
 	if (name) {
 		progress->incrementWithMessage("Adding " + *name);
@@ -1520,18 +1528,18 @@ void DAESaver::get_subobj(int idx,string *name) {
 	pugi::xml_node current_group;
 	pugi::xml_node temp;
 	stringstream group_name;
-	temp = subobj.append_child("instance_geometry");
+	temp = subobj.insert_child_after("instance_geometry", translate);
 	temp.append_child("bind_material").append_child("technique_common");
 	temp.append_attribute("url") = (string("#") + get_name(subobj).c_str() + "-geometry").c_str();
 	group_name << get_name(subobj).c_str() << "-geometry";
 	current_group = get_polygroups(polies,string(group_name.str().c_str()),subobj);
 
-	if (export_helpers) {
-		add_sobj_helpers(subobj, helper, sobj);
-	}
 }
 
-void DAESaver::add_sobj_helpers(pugi::xml_node& subobj, pugi::xml_node& helper, const pcs_sobj& sobj) {
+void DAESaver::add_sobj_helpers(int idx) {
+	pcs_sobj& sobj = model->SOBJ(idx);
+	pugi::xml_node subobj = subobjs[idx];
+	pugi::xml_node helper = add_helper(subobj,sobj.properties);
 	if (sobj.movement_type == 1 && sobj.movement_axis != ANONE) {
 		vector3d direction;
 		double length = 1;
@@ -1549,11 +1557,6 @@ void DAESaver::add_sobj_helpers(pugi::xml_node& subobj, pugi::xml_node& helper, 
 			case MV_Z:
 				direction = vector3d(0,0,1);
 				break;
-		}
-		if (!helper) {
-			helper = subobj.append_child("node");
-			helper.append_attribute("id") = "helper";
-			helper.append_attribute("name") = "helper";
 		}
 		pugi::xml_node rotation = helper.append_child("node");
 		if (rotate_offset != string::npos) {
@@ -1661,7 +1664,7 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 			add_refs(mesh,name,ref,sizes,&node,i);
 		}
 	}
-	pugi::xml_node pos = mesh.append_child("source");
+	pugi::xml_node pos = mesh.prepend_child("source");
 	pos.append_attribute("id") = (name + "-position").c_str();
 	pugi::xml_node pos_float_array = pos.append_child("float_array");
 	pos_float_array.append_attribute("id") = (name + "-position-array").c_str();
@@ -1669,7 +1672,7 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 	add_accessor(pos,name + "-position-array",vert.size()/3);
 
-	pugi::xml_node norms = mesh.append_child("source");
+	pugi::xml_node norms = mesh.insert_child_after("source", pos);
 	norms.append_attribute("id") = (name + "-normals").c_str();
 	pugi::xml_node norms_float_array = norms.append_child("float_array");
 	norms_float_array.append_attribute("id") = (name + "-normals-array").c_str();
@@ -1677,12 +1680,12 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
 	add_accessor(norms,name + "-normals-array",norm.size()/3);
 
-	pugi::xml_node verts = mesh.append_child("vertices");
+	pugi::xml_node verts = mesh.insert_child_after("vertices", norms);
 	verts.append_attribute("id") = (name + "-vertex").c_str();
 	pugi::xml_node vert_input = verts.append_child("input");
 	vert_input.append_attribute("semantic") =  "POSITION";
 	vert_input.append_attribute("source") =  (string("#") + name + "-position").c_str();
-	pugi::xml_node uvs = mesh.append_child("source");
+	pugi::xml_node uvs = mesh.insert_child_after("source", norms);
 	uvs.append_attribute("id") = (name + "-uv").c_str();
 	pugi::xml_node uvs_float_array = uvs.append_child("float_array");
 	uvs_float_array.append_attribute("id") = (name + "-uv-array").c_str();
@@ -1752,7 +1755,7 @@ void DAESaver::add_turret_fps() {
 		if (!helper) {
 			helper = scene;
 		}
-		helper = helper.append_child("node");
+		helper = helper.prepend_child("node");
 		name.str("");
 		if (turret->sobj_parent == turret->sobj_par_phys) {
 			name << "firepoints" << i;
@@ -1784,7 +1787,6 @@ void DAESaver::add_docks() {
 		group = scene.append_child("node");
 		group.append_attribute("id") = name.str().c_str();
 		group.append_attribute("name") = name.str().c_str();
-		add_helper(group,dockpoint->properties);
 		docks.push_back(group);
 
 		for (unsigned int j = 0; j < dockpoint->dockpoints.size(); j++) {
@@ -1795,6 +1797,7 @@ void DAESaver::add_docks() {
 			element.append_attribute("name") = name.str().c_str();
 			write_transform(element,dockpoint->dockpoints[j].point,dockpoint->dockpoints[j].norm,vector3d(0,1,0));
 		}
+		add_helper(group,dockpoint->properties);
 	}
 }
 
@@ -1957,7 +1960,7 @@ void DAESaver::add_shield() {
 	}
 	pugi::xml_node mesh = geom.append_child("mesh");
 	add_refs(mesh,"shield",ref,size);
-	pugi::xml_node pos = mesh.append_child("source");
+	pugi::xml_node pos = mesh.prepend_child("source");
 	pos.append_attribute("id") = "shield-position";
 	pugi::xml_node pos_float_array = pos.append_child("float_array");
 	pos_float_array.append_attribute("id") = "shield-position-array";
@@ -1965,7 +1968,7 @@ void DAESaver::add_shield() {
 	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 	add_accessor(pos,"shield-position-array",vert.size()/3);
 
-	pugi::xml_node norms = mesh.append_child("source");
+	pugi::xml_node norms = mesh.insert_child_after("source", pos);
 	norms.append_attribute("id") = "shield-normals";
 	pugi::xml_node norms_float_array = norms.append_child("float_array");
 	norms_float_array.append_attribute("id") = "shield-normals-array";
@@ -1973,7 +1976,7 @@ void DAESaver::add_shield() {
 	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
 	add_accessor(norms,"shield-normals-array",norm.size()/3);
 
-	pugi::xml_node verts = mesh.append_child("vertices");
+	pugi::xml_node verts = mesh.insert_child_after("vertices", norms);
 	verts.append_attribute("id") = "shield-vertex";
 	pugi::xml_node vert_input = verts.append_child("input");
 	vert_input.append_attribute("semantic") =  "POSITION";
@@ -2036,7 +2039,6 @@ void DAESaver::add_glows() {
 		fields << endl << "off=" << glows.off_time;
 		fields << endl << "displacement=" << glows.disp_time;
 		fields << endl << "lod=" << glows.LOD;
-		add_helper(element, fields.str());
 		for (unsigned int j = 0; j < glows.lights.size(); j++) {
 			glow = glows.lights[j];
 			glowpoint = element.append_child("node");
@@ -2047,6 +2049,7 @@ void DAESaver::add_glows() {
 			trans.append_attribute("sid") = "translate";
 			trans.text().set(write_vector3d(glow.pos).c_str());
 		}
+		add_helper(element, fields.str());
 	}
 }
 
@@ -2108,7 +2111,7 @@ void DAESaver::add_insignia() {
 		}
 		pugi::xml_node mesh = geom.append_child("mesh");
 		add_refs(mesh,name.str().c_str(),ref,size,NULL, num_textures + 1);
-		pugi::xml_node pos = mesh.append_child("source");
+		pugi::xml_node pos = mesh.prepend_child("source");
 		pos.append_attribute("id") = (name.str() + "-position").c_str();
 		pugi::xml_node pos_float_array = pos.append_child("float_array");
 		pos_float_array.append_attribute("id") = (name.str() + "-position-array").c_str();
@@ -2116,7 +2119,7 @@ void DAESaver::add_insignia() {
 		pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
 		add_accessor(pos,(name.str() + "-position-array").c_str(),vert.size()/3);
 
-		pugi::xml_node uvs = mesh.append_child("source");
+		pugi::xml_node uvs = mesh.insert_child_after("source", pos);
 		uvs.append_attribute("id") = (name.str() + "-uv").c_str();
 		pugi::xml_node uvs_float_array = uvs.append_child("float_array");
 		uvs_float_array.append_attribute("id") = (name.str() + "-uv-array").c_str();
@@ -2124,7 +2127,7 @@ void DAESaver::add_insignia() {
 		uvs_float_array.append_attribute("count") = int_to_string(uv.size()).c_str();
 		add_accessor(uvs,(name.str() + "-uv-array").c_str(),uv.size()/2,true);
 
-		pugi::xml_node verts = mesh.append_child("vertices");
+		pugi::xml_node verts = mesh.insert_child_after("vertices", uvs);
 		verts.append_attribute("id") = (name.str() + "-vertex").c_str();
 		pugi::xml_node vert_input = verts.append_child("input");
 		vert_input.append_attribute("semantic") =  "POSITION";
@@ -2234,16 +2237,19 @@ void filter_string(std::string& base, const std::string& property) {
 
 pugi::xml_node DAESaver::add_helper(pugi::xml_node& element,string properties) {
 	if (export_helpers) {
+		pugi::xml_node helper = find_helper(element);
 		if (properties.size() > 0 && strlen(properties.c_str()) > 0) {
-			pugi::xml_node helper = element.append_child("node");
+			if (!helper) {
+				helper = element.append_child("node");
+				helper.append_attribute("id") =  "helper";
+				helper.append_attribute("name") =  "helper";
+			}
 			pugi::xml_node props;
 			stringstream temp;
 
 			string result;
 			string properti;
 			string previous;
-			helper.append_attribute("id") =  "helper";
-			helper.append_attribute("name") =  "helper";
 			filter_string(properties, "$rotate");
 			filter_string(properties, "$uvec");
 			filter_string(properties, "$fvec");
@@ -2269,8 +2275,8 @@ pugi::xml_node DAESaver::add_helper(pugi::xml_node& element,string properties) {
 				props.text().set(properties.c_str());
 
 			}
-			return helper;
 		}
+		return helper;
 	}
 	return pugi::xml_node();
 }
@@ -2333,15 +2339,14 @@ pugi::xml_node DAESaver::find_subsystem(string name, vector3d &offset, vector3d 
 
 pugi::xml_node DAESaver::find_helper(pugi::xml_node& element) {
 	if (!element) return element;
-	for (pugi::xml_node child = element.first_child(); child; child = child.next_sibling()) {
-		if (boost::algorithm::istarts_with(child.attribute("id").value(), "helper")) {
-			return child;
-		}
-	}
-	pugi::xml_node temp = element.append_child("node");
-	temp.append_attribute("id") = "helper";
-	temp.append_attribute("name") = "helper";
-	return temp;
+	pugi::xml_node helper = element.find_child_by_attribute("node", "id", "helper");
+	if (helper)
+		return helper;
+	helper = element.append_child("node");
+	helpers.push_back(helper);
+	helper.append_attribute("id") = "helper";
+	helper.append_attribute("name") = "helper";
+	return helper;
 }
 
 pugi::xml_node DAESaver::find_dockpoint(int idx,vector3d &offset) {

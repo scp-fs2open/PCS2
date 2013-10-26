@@ -98,6 +98,7 @@ private:
 	std::vector<pugi::xml_node> subobjs;
 	std::vector<pugi::xml_node> specials;
 	std::vector<pugi::xml_node> docks;
+	std::vector<pugi::xml_node> helpers;
 	pugi::xml_node geoms;
 	pugi::xml_node scene;
 	pugi::xml_node materials;
@@ -125,7 +126,7 @@ private:
 	void add_shield();
 	void add_paths();
 	pugi::xml_node add_helper(pugi::xml_node& element,std::string properties);
-	void add_sobj_helpers(pugi::xml_node& subobj, pugi::xml_node& helper, const pcs_sobj& sobj);
+	void add_sobj_helpers(int idx);
 	std::string add_material(int idx,pugi::xml_node& node);
 	void add_glows();
 	void add_insignia();
