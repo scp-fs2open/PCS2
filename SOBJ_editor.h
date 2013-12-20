@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <wx/event.h>
 
 #include"model_editor_ctrl.h"
@@ -216,6 +217,7 @@ public:
 			data.polygons.size(),
 			model.get_child_subobj_poly_count(sobj_num),
 			data.polygons.size() + model.get_child_subobj_poly_count(sobj_num)));
+		info += wxString::Format(_("Vertices: %i\n"), count_vertices());
 		info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  "),
 			fabs(size.y), fabs(size.x), fabs(size.z));
 		if (data.parent_sobj > -1) {
@@ -280,5 +282,31 @@ public:
 	virtual void transform(const matrix& transform, const vector3d& translation) {
 		sobj->transform(transform, translation, sobj_num);
 		set_data(get_main_window()->get_model());
+	}
+
+private:
+	size_t count_vertices() {
+		std::set<pcs_vertex, bool(*)(const pcs_vertex&, const pcs_vertex&) >
+			vertices(SOBJ_ctrl::pcs_vertex_comparator);
+		for (size_t i = 0; i < data.polygons.size(); i++) {
+			for (size_t j = 0; j < data.polygons[i].verts.size(); j++) {
+				vertices.insert(data.polygons[i].verts[j]);
+			}
+		}
+		return vertices.size();
+	}
+
+	static bool pcs_vertex_comparator(const pcs_vertex& a,
+			const pcs_vertex& b) {
+		if (a.point.x != b.point.x) {
+			return a.point.x < b.point.x;
+		}
+		if (a.point.y != b.point.y) {
+			return a.point.y < b.point.y;
+		}
+		if (a.point.z != b.point.z) {
+			return a.point.z < b.point.z;
+		}
+		return false;
 	}
 };
