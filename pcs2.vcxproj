@@ -70,8 +70,8 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>C:\libraries\wxWidgets\lib\vc_dll\msw;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_44;pugixml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;NDEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;WXUSINGDLL;__WIN95__;__WIN32__;WINVER=0x0400;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\libraries\wxWidgets\lib\vc_lib\msw;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_55_0;pugixml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;NDEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WIN95__;__WIN32__;WINVER=0x0400;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -90,10 +90,10 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>wxmsw28_core.lib;wxmsw28_adv.lib;wxmsw28_gl.lib;wxbase28.lib;devil.lib;ilu.lib;ilut.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>wxmsw28_core.lib;wxmsw28_adv.lib;wxmsw28_gl.lib;wxbase28.lib;devil.lib;ilu.lib;ilut.lib;glu32.lib;opengl32.lib;wxjpeg.lib;wxtiff.lib;wxpng.lib;wxzlib.lib;comctl32.lib;rpcrt4.lib;winmm.lib;advapi32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Release/pcs2.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>C:\libraries\wxWidgets\lib\vc_dll;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_44\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\libraries\wxWidgets\lib\vc_lib;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_55_0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC.lib;libci.lib;msvcrtd.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AssemblyDebug />
@@ -124,7 +124,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\libraries\wxWidgets\lib\vc_dll\mswd;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_44;pugixml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\libraries\wxWidgets\lib\vc_dll\mswd;C:\libraries\wxWidgets\include;C:\libraries\DevIL\include;C:\libraries\boost\boost_1_55_0;pugixml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;_DEBUG;WIN32;_WINDOWS;__WINDOWS__;__WXMSW__;__WXDEBUG__;WXUSINGDLL;WXDEBUG;__WIN95__;__WIN32__;WINVER=0x0400;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -147,7 +147,7 @@
       <AdditionalDependencies>wxmsw28d_adv.lib;wxmsw28d_core.lib;wxmsw28d_gl.lib;wxmsw28d_media.lib;wxjpegd.lib;wxbase28d.lib;devil.lib;ilu.lib;ilut.lib;opengl32.lib;glu32.lib;comctl32.lib;wsock32.lib;RPCRT4.LIB;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Debug/pcs2d.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>C:\libraries\wxWidgets\lib\vc_dll;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_44\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\libraries\wxWidgets\lib\vc_dll;C:\libraries\DevIL\lib;C:\libraries\boost\boost_1_55_0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBC.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/pcs2.pdb</ProgramDatabaseFile>
