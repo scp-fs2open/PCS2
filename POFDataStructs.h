@@ -65,7 +65,6 @@
 #define _POF_TYPES_H_
 #include "vector3d.h"
 #include <string>
-#include <boost/shared_array.hpp>
 // exists.. C/C++ internal type (int) == 4 bytes, signed
 #if !defined(uint)
 #define uint unsigned int 
@@ -297,10 +296,8 @@ struct SLDC_node_leaf // sz = 33 + num_polygons*4
 
 struct SLDC
 {
-      unsigned int tree_size;
-	  boost::shared_array<char> tree_data; // = new char[tree_size]
-
-	  SLDC() : tree_size(0) {}
+	  std::vector<char> tree_data;
+	  SLDC() {}
 };
 
 //****************************************************************************************************
@@ -450,11 +447,10 @@ struct OBJ2
 
 	// Begin Don't Touch Data
     int reserved;         // must be 0
-    unsigned int bsp_data_size;    // number of bytes now following
-	boost::shared_array<char> bsp_data; //size=[bsp_data_size]  -- contains actual polygons, etc.
+	std::vector<char> bsp_data; //size=[bsp_data_size]  -- contains actual polygons, etc.
 								  // Me: I'll just be blitting this into memory and leaving it alone;
 	// End Don't Touch data
-	OBJ2() : submodel_number(0), radius(0.0), submodel_parent(-1), movement_type(-1), movement_axis(-1), reserved(0), bsp_data_size(0) {}
+	OBJ2() : submodel_number(0), radius(0.0), submodel_parent(-1), movement_type(-1), movement_axis(-1), reserved(0) {}
 	~OBJ2() {}
 };
 

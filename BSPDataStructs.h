@@ -39,7 +39,6 @@
 #include "vector3d.h"
 #include <memory.h>
 #include <string>
-#include <boost/shared_array.hpp>
 
 #if !defined(_BSP_DATA_STRUCTS_H_)
 #define _BSP_DATA_STRUCTS_H_
@@ -65,7 +64,7 @@ struct BSP_BlockHeader
 struct vertdata
 {
 	vector3d vertex;
-	boost::shared_array<vector3d> norms;
+	std::vector<vector3d> norms;
 };
 
 struct BSP_DefPoints // 1 - Defines Verticies
@@ -74,10 +73,10 @@ struct BSP_DefPoints // 1 - Defines Verticies
 	int n_verts;					//4			|12
 	int n_norms;					//4			|16
 	int offset;						//4			|20			|from start of chunk to vertex data
-	boost::shared_array<unsigned char> norm_counts;		//n_norms	|20+n_norms	|n_verts in size;
+	std::vector<unsigned char> norm_counts;		//n_norms	|20+n_norms	|n_verts in size;
 	// DM: I don't know WTF data size/format the vertex data is in.. so im GUESSING it's vertex point followed by vertex norms
     // DM: Ok after staring at that insanely bad code written by Knudson i finally made sense of it.. and YES im correct :)
-	boost::shared_array<vertdata> vertex_data;			//Equasion	|20+n_norms+Equasion
+	std::vector<vertdata> vertex_data;			//Equasion	|20+n_norms+Equasion
 	//char *vertex_data // at startofmemory+BSP::DefPoints.offset; Each vertex n is a point followed by norm_counts[n] normals. 
 
 	//---------------------------------------
@@ -118,7 +117,7 @@ struct BSP_FlatPoly //2 - FLATPOLY - Flat (non-textured) polygon
 	byte green;				//1		|42
 	byte blue;				//1		|43
 	byte pad;				//1		|44
-	boost::shared_array<Flat_vertex> verts;		
+	std::vector<Flat_vertex> verts;
 
   	//---------------------------------------
 	int Read(char *buffer, BSP_BlockHeader hdr);
@@ -153,7 +152,7 @@ struct BSP_TmapPoly //3 - TMAPPOLY - Textured polygons
 	float radius;			//4		|36		|32
 	int nverts;				//4		|40		|36
 	int tmap_num;			//4		|44		|40
-	boost::shared_array<Tmap_vertex> verts;		//12 * nverts
+	std::vector<Tmap_vertex> verts;		//12 * nverts
 
 	//---------------------------------------
 	int Read(char *buffer, BSP_BlockHeader hdr);

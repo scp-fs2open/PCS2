@@ -31,7 +31,6 @@
 
 #include "BSPDataStructs.h"
 #include <ios>
-#include <boost/shared_array.hpp>
 
 
 #if !defined(_BSP_HANDLER_H_)
@@ -41,16 +40,20 @@
 class BSP
 {
 	public:
-		boost::shared_array<BSP_BoundBox> bounders;
-		boost::shared_array<BSP_DefPoints> points;
-		boost::shared_array<BSP_FlatPoly> fpolys;
-		boost::shared_array<BSP_SortNorm> snorms;
-		boost::shared_array<BSP_TmapPoly> tpolys;
+		std::vector<BSP_BoundBox> bounders;
+		std::vector<BSP_DefPoints> points;
+		std::vector<BSP_FlatPoly> fpolys;
+		std::vector<BSP_SortNorm> snorms;
+		std::vector<BSP_TmapPoly> tpolys;
 
 		int numbounders, numpoints, numfpolys, numsnorms, numtpolys;
 		void Clear()
 		{
-			numbounders = numpoints = numfpolys = numsnorms = numtpolys = 0;
+			bounders.clear();
+			points.clear();
+			fpolys.clear();
+			snorms.clear();
+			tpolys.clear();
 		}
 
 		BSP()
@@ -65,19 +68,27 @@ class BSP
 		std::ostream& BSPDump(std::ostream &os); // dumps human readable BSP information into ostream;
 
 		int Count_Bounding()
-			{ return numbounders; }
+			{ return bounders.size(); }
 
 		int Count_Points()
-			{ return numpoints; }
+		{
+			return points.size();
+		}
 		
 		int Count_FlatPolys()
-			{ return numfpolys; }
+		{
+			return fpolys.size();
+		}
 
 		int Count_SortNorms()
-			{ return numsnorms; }
+		{
+			return snorms.size();
+		}
 
 		int Count_TmapPolys()
-			{ return numtpolys; }
+		{
+			return tpolys.size();
+		}
 
 		//--------------------------------
 		

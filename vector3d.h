@@ -192,6 +192,21 @@ vector3d closest_point_on_line(vector3d p, vector3d lp, vector3d ln);
 //returns non zero on sucsess
 int point_face(vector3d *checkp, std::vector<vector3d> verts, vector3d * norm1);
 
+namespace std {
+	template<>
+	struct hash<vector3d> 	{
+		typedef vector3d argument_type;
+		typedef std::size_t value_type;
+
+		value_type operator()(argument_type const& v) const {
+			value_type const h1(std::hash<float>()(v.x));
+			value_type const h2(std::hash<float>()(v.y));
+			value_type const h3(std::hash<float>()(v.z));
+			return h1 ^ (h2 << 7) ^ (h3 << 13);
+		}
+	};
+}
+
 
 //there is probly a better place for this, but as of now it's only used in the header
 namespace bobboau {

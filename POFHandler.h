@@ -59,7 +59,6 @@
  *
  */
 
-#include <boost/shared_array.hpp>
 #include <iostream>
 
 
@@ -203,9 +202,10 @@ class POF {
 			{}
 
 		// Shield collision tree
-		int SLDC_GetSize() { return shield_collision.tree_size; }
-		boost::shared_array<char> SLDC_GetTree() { return shield_collision.tree_data; }
-		void SLDC_SetTree(boost::shared_array<char> sldc_tree, unsigned int sz); // setting this to NULL will empty the tree
+		int SLDC_GetSize() { return shield_collision.tree_data.size(); }
+		const std::vector<char>& SLDC_GetTree() { return shield_collision.tree_data; }
+		void SLDC_SetTree(const std::vector<char>& sldc_tree); // setting this to empty will empty the tree
+		void SLDC_SetTree(std::vector<char>&& sldc_tree); // setting this to empty will empty the tree
 
 		// Texture Functions
 		int TXTR_AddTexture(std::string texname);
@@ -294,7 +294,6 @@ class POF {
 		bool OBJ2_Set_Props					(int SOBJNum, std::string properties);
 		bool OBJ2_Set_MoveType				(int SOBJNum, int type);
 		bool OBJ2_Set_MoveAxis				(int SOBJNum, int axis);
-		bool OBJ2_Set_BSPData				(int SOBJNum, int size, const char *bsp_data);
 
 
 		unsigned int OBJ2_BSP_Datasize(int SOBJNum);
@@ -311,7 +310,7 @@ class POF {
 		bool OBJ2_Get_Props					(int SOBJNum, std::string &properties);
 		bool OBJ2_Get_MoveType				(int SOBJNum, int &type);
 		bool OBJ2_Get_MoveAxis				(int SOBJNum, int &axis);
-		bool OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char> &bsp_data);
+		bool OBJ2_Get_BSPData				(int SOBJNum, std::vector<char> &bsp_data);
 		bool OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data);
 		//'SPCL' specials functions
 		void SPCL_AddSpecial				(std::string Name, std::string Properties, vector3d point, float radius);

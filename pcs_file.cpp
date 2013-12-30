@@ -2098,7 +2098,7 @@ void PCS_Model::RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_v
 	
 
 	// (maybe) render BSP debug
-	if (draw_bsp && can_bsp_cache && bsp_cache[sobj].bsp_size != 0)
+	if (draw_bsp && can_bsp_cache && bsp_cache[sobj].bsp_data.size() != 0)
 	{
 		/*GLUquadricObj *quadratic=gluNewQuadric();			// Create A Pointer To The Quadric Object ( NEW )
 		gluQuadricNormals(quadratic, GLU_SMOOTH);
@@ -2106,7 +2106,7 @@ void PCS_Model::RenderGeometryRecursive(int sobj, TextureControl &tc, bool use_v
 		gluSphere(quadratic,subobjects[sobj].radius,32,32);
 		gluDeleteQuadric(quadratic);				// Delete Quadratic - Free Resources*/
 		
-		RenderBSP(0, (unsigned char*)bsp_cache[sobj].bsp_data.get(), subobjects[sobj].geometric_center);
+		RenderBSP(0, (unsigned char*)&bsp_cache[sobj].bsp_data.front(), subobjects[sobj].geometric_center);
 	}
 
 	// return to parents position

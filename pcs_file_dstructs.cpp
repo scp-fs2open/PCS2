@@ -520,20 +520,20 @@ void pmf_bsp_cache::Read(std::istream& in, int ver)
 {
 	if (ver >= 102)
 	{
+		int bsp_size;
 		BFRead(bsp_size, int)
 		if (bsp_size != 0) 
 		{
-			bsp_data.reset(new char[bsp_size]);
+			bsp_data.resize(bsp_size);
 			// XXX FIXME: Reads sizeof(bsp_size): 4 bytes.
 			// XXX: Fixing this would require a PMF version bump as older
 			// readers would expect a broken PMF.
-			BFRead(*bsp_data.get(), bsp_size)
+			BFRead(bsp_data.front(), bsp_size)
 		}
 		BFRead(changed, bool)
 		// Any values read will be useless, so we might as well override them
 		// with some values that shouldn't crash.
-		bsp_size = 0;
-		bsp_data.reset();
+		bsp_data.clear();
 		changed = true;
 	}
 }

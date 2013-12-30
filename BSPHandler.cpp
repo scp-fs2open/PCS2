@@ -353,14 +353,7 @@ std::ostream& BSP::BSPDump(std::ostream &os) // dumps human readable BSP informa
 
 void BSP::Add_BoundBox(BSP_BoundBox bound)
 {
-	boost::shared_array<BSP_BoundBox> temp(new BSP_BoundBox[numbounders + 1]);
-
-	for (int i = 0; i < numbounders; i++)
-		temp[i] = bounders[i];
-	temp[numbounders] = bound;
-
-	numbounders++;
-	bounders = temp;
+	bounders.push_back(bound);
 
 }
 
@@ -368,20 +361,7 @@ bool BSP::Del_BoundBox(int index)
 {
 	if (index < 0 || index >= numbounders)
 		return false;
-
-	boost::shared_array<BSP_BoundBox> temp(new BSP_BoundBox[numbounders - 1]);
-
-	for (int i = 0; i < numbounders; i++)
-	{
-		if (i < index)
-			temp[i] = bounders[i];
-		if (i > index)
-			temp[i-1] = bounders[i];
-	}
-
-	numbounders--;
-	bounders = temp;
-
+	bounders.erase(bounders.begin() + index);
 	return true;
 }
 
@@ -390,38 +370,14 @@ bool BSP::Del_BoundBox(int index)
 
 void BSP::Add_DefPoints(BSP_DefPoints pnts)
 {
-	boost::shared_array<BSP_DefPoints> temp(new BSP_DefPoints[numpoints + 1]);
-
-	for (int i = 0; i < numpoints; i++)
-		temp[i] = points[i];
-	temp[numpoints] = pnts;
-
-	numpoints++;
-	points = temp;
-
+	points.push_back(pnts);
 }
 
 bool BSP::Del_DefPoints(int index)
 {
 	if (index < 0 || index >= numpoints)
 		return false;
-
-	boost::shared_array<BSP_DefPoints> temp(new BSP_DefPoints[numpoints - 1]);
-
-	for (int i = 0; i < numpoints; i++)
-	{
-		if (i < index)
-			temp[i] = points[i];
-		if (i > index)
-			temp[i-1] = points[i];
-	}
-
-	points[index].norm_counts.reset();
-	points[index].vertex_data.reset();
-
-	numpoints--;
-	points = temp;
-
+	points.erase(points.begin() + index);
 	return true;
 }
 
@@ -429,37 +385,14 @@ bool BSP::Del_DefPoints(int index)
 
 void BSP::Add_FlatPoly(BSP_FlatPoly fpol)
 {
-	boost::shared_array<BSP_FlatPoly> temp(new BSP_FlatPoly[numfpolys + 1]);
-
-	for (int i = 0; i < numfpolys; i++)
-		temp[i] = fpolys[i];
-	temp[numfpolys] = fpol;
-
-	numfpolys++;
-	fpolys = temp;
-
+	fpolys.push_back(fpol);
 }
 
 bool BSP::Del_FlatPoly(int index)
 {
 	if (index < 0 || index >= numfpolys)
 		return false;
-
-	boost::shared_array<BSP_FlatPoly> temp(new BSP_FlatPoly[numfpolys - 1]);
-
-	for (int i = 0; i < numfpolys; i++)
-	{
-		if (i < index)
-			temp[i] = fpolys[i];
-		if (i > index)
-			temp[i-1] = fpolys[i];
-	}
-
-	fpolys[index].verts.reset();
-
-	numfpolys--;
-	fpolys = temp;
-
+	fpolys.erase(fpolys.begin() + index);
 	return true;
 }
 
@@ -467,36 +400,14 @@ bool BSP::Del_FlatPoly(int index)
 
 void BSP::Add_SortNorm(BSP_SortNorm sn)
 {
-	boost::shared_array<BSP_SortNorm> temp(new BSP_SortNorm[numsnorms + 1]);
-
-	for (int i = 0; i < numsnorms; i++)
-		temp[i] = snorms[i];
-	temp[numsnorms] = sn;
-
-	numsnorms++;
-	snorms = temp;
-
+	snorms.push_back(sn);
 }
 
 bool BSP::Del_SortNorm(int index)
 {
 	if (index < 0 || index >= numsnorms)
 		return false;
-
-	boost::shared_array<BSP_SortNorm> temp(new BSP_SortNorm[numsnorms - 1]);
-
-	for (int i = 0; i < numsnorms; i++)
-	{
-		if (i < index)
-			temp[i] = snorms[i];
-		if (i > index)
-			temp[i-1] = snorms[i];
-	}
-
-
-	numsnorms--;
-	snorms = temp;
-
+	snorms.erase(snorms.begin() + index);
 	return true;
 }
 
@@ -504,15 +415,7 @@ bool BSP::Del_SortNorm(int index)
 
 void BSP::Add_TmapPoly(BSP_TmapPoly tpol)
 {
-	boost::shared_array<BSP_TmapPoly> temp(new BSP_TmapPoly[numtpolys + 1]);
-
-	for (int i = 0; i < numtpolys; i++)
-		temp[i] = tpolys[i];
-	temp[numtpolys] = tpol;
-
-	numtpolys++;
-	tpolys = temp;
-
+	tpolys.push_back(tpol);
 }
 
 
@@ -520,22 +423,7 @@ bool BSP::Del_TmapPoly(int index)
 {
 	if (index < 0 || index >= numtpolys)
 		return false;
-
-	boost::shared_array<BSP_TmapPoly> temp(new BSP_TmapPoly[numtpolys - 1]);
-
-	for (int i = 0; i < numtpolys; i++)
-	{
-		if (i < index)
-			temp[i] = tpolys[i];
-		if (i > index)
-			temp[i-1] = tpolys[i];
-	}
-
-	tpolys[index].verts.reset();
-
-	numtpolys--;
-	tpolys = temp;
-
+	tpolys.erase(tpolys.begin() + index);
 	return true;
 }
 

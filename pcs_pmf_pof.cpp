@@ -305,7 +305,7 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 	can_bsp_cache = true;
 	bsp_cache.resize(subobjects.size());
 	for (i = 0; i < subobjects.size(); i++)
-		poffile.OBJ2_Get_BSPData(i, bsp_cache[i].bsp_size, bsp_cache[i].bsp_data);
+		poffile.OBJ2_Get_BSPData(i, bsp_cache[i].bsp_data);
 
 
 	// --------- ---------------------- ---------
@@ -563,15 +563,16 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 
 		// make the tree
 		vector3d smin, smax;
-		boost::shared_ptr<bsp_tree_node> shld_root = MakeTree(shldmesh, smax, smin);
+		std::unique_ptr<bsp_tree_node> shld_root = MakeTree(shldmesh, smax, smin);
 
 		// pack the tree
-		int sldc_size = CalcSLDCTreeSize(shld_root);
-		boost::shared_array<char> sldc(new char[sldc_size]);
+		int sldc_size = CalcSLDCTreeSize(shld_root.get());
+		std::vector<char> sldc;
+		sldc.resize(sldc_size);
 		
-		PackTreeInSLDC(shld_root, 0, sldc.get(), sldc_size);
+		PackTreeInSLDC(shld_root.get(), 0, &sldc.front(), sldc_size);
 
-		poffile.SLDC_SetTree(sldc, sldc_size); // POFHandler will make it's own copy of the buffer
+		poffile.SLDC_SetTree(std::move(sldc)); // POFHandler will steal our copy of the buffer
 	}
 
 	// --------- insignia --------- 
@@ -1092,7 +1093,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		obj->polygons.resize(used_polygons); // resize to exact size
 
 		if (can_bsp_cache)
-			poffile.OBJ2_Get_BSPData(i, bsp_cache[i].bsp_size, bsp_cache[i].bsp_data);
+			poffile.OBJ2_Get_BSPData(i, bsp_cache[i].bsp_data);
 
 		//if (bspdata)
 		//	delete[] bspdata;
@@ -1201,21 +1202,27 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 		// assemble points list
 		std::vector<bsp_vert> points_list;
 		std::vector<vector3d> pnts;
+		std::unordered_map<vector3d, int> point_to_index;
+		for (size_t i = 0; i < pnts.size(); i++) {
+			point_to_index.insert(std::make_pair(pnts[i], i));
+		}
 		bsp_vert temp;
 		points_list.reserve(clean_list.size());
 		for (i = 0; i < clean_list.size(); i++)
 		{
 			for (j = 0; j < clean_list[i].verts.size(); j++)
 			{
-				temp.point = clean_list[i].verts[j].point;
-				l = FindInList(points_list, temp);
-				if (l == (unsigned)-1)
-				{
+				auto point = point_to_index.find(clean_list[i].verts[j].point);
+				if (point == point_to_index.end()) {
 					l = points_list.size();
+					point_to_index.insert(std::make_pair(clean_list[i].verts[j].point, l));
 					points_list.resize(l+1);
 					pnts.resize(l+1);
 					points_list[l].point = clean_list[i].verts[j].point;
 					pnts[l] = points_list[l].point;
+				}
+				else {
+					l = point->second;
 				}
 
 				k = FindInList(points_list[l].norms, clean_list[i].verts[j].norm);
@@ -1237,16 +1244,12 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 		vector3d AvgNormal;
 
 		// create tree
-		boost::shared_ptr<bsp_tree_node> root = MakeTree(clean_list, dst.bounding_box_max_point, dst.bounding_box_min_point);
-
-		// calc tree size 
-		dst.bsp_data_size = points.head.size + CalculateTreeSize(root, clean_list) + 8; // extra 8byte padd at the end - an extra BSP::EOF
+		std::unique_ptr<bsp_tree_node> root = MakeTree(clean_list, dst.bounding_box_max_point, dst.bounding_box_min_point);
 
 		// allocate buffer and write the defpoints
-		dst.bsp_data.reset(new char[dst.bsp_data_size]);
-		memset(dst.bsp_data.get(), 0, dst.bsp_data_size);
+		dst.bsp_data.resize(points.head.size + CalculateTreeSize(root.get(), clean_list));
 
-		if (points.Write(dst.bsp_data.get()) != points.head.size)
+		if (points.Write(&dst.bsp_data.front()) != points.head.size)
 			return false; // calculation error
 
 		//std::ofstream bsp_debug("c:\\bsp.txt");
@@ -1254,7 +1257,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 
 		// pack the tree
 		int error_flags = 0;
-		PackTreeInBSP(root, points.head.size, dst.bsp_data.get(), clean_list, points_list, pnts, points, dst.geometric_center, dst.bsp_data_size, error_flags);
+		PackTreeInBSP(root.get(), points.head.size, &dst.bsp_data.front(), clean_list, points_list, point_to_index, points, dst.geometric_center, dst.bsp_data.size(), error_flags);
 		
 		// we got errors!
 		if (error_flags != BSP_NOERRORS)
@@ -1268,9 +1271,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 		{
 			// clear the saved - stale cache
 			bsp_cache[src_num].decache();
-			bsp_cache[src_num].bsp_size = dst.bsp_data_size;
-			bsp_cache[src_num].bsp_data.reset(new char[dst.bsp_data_size]);
-			memcpy(bsp_cache[src_num].bsp_data.get(), dst.bsp_data.get(), dst.bsp_data_size);
+			bsp_cache[src_num].bsp_data = dst.bsp_data;
 			bsp_cache[src_num].changed = false;
 		}
 
@@ -1278,14 +1279,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 	}
 	else // Used cached copy!
 	{
-
-		dst.bsp_data_size = bsp_cache[src_num].bsp_size; // extra 8byte padd at the end - an extra BSP::EOF
-
-		// allocate buffer and write the defpoints
-		dst.bsp_data.reset(new char[dst.bsp_data_size]);
-		memcpy(dst.bsp_data.get(), bsp_cache[src_num].bsp_data.get(), dst.bsp_data_size);
-
-
+		dst.bsp_data = bsp_cache[src_num].bsp_data;
 	}
 	dst.radius = 0.0f;
 	dst.bounding_box_max_point = vector3d(FLT_MIN, FLT_MIN, FLT_MIN);

@@ -134,17 +134,16 @@ void write_to_buffer(char* buffer, const T& value) {
 
 //**********************************************************************************************************************
 
-void POF::SLDC_SetTree(boost::shared_array<char> sldc_tree, unsigned int sz)
-// setting this to NULL will empty the tree
+void POF::SLDC_SetTree(const std::vector<char>& sldc_tree)
+// setting this to empty will empty the tree
 {
-	shield_collision.tree_size = sz;
-	if (sldc_tree != NULL && sz != 0)
-	{
-		shield_collision.tree_data.reset(new char[sz]);
-		memcpy(shield_collision.tree_data.get(), sldc_tree.get(), sz);
-	} else {
-		shield_collision.tree_data.reset();
-	}
+	shield_collision.tree_data = sldc_tree;
+}
+
+void POF::SLDC_SetTree(std::vector<char>&& sldc_tree)
+// setting this to empty will empty the tree
+{
+	shield_collision.tree_data.swap(sldc_tree);
 }
 
 //**********************************************************************************************************************
@@ -450,12 +449,13 @@ void POF::Parse_Memory_OBJ2(char *buffer)
 	memcpy(&temp.reserved, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	memcpy(&temp.bsp_data_size, localptr, sizeof(int));
+	int size = temp.bsp_data.size();
+	memcpy(&size, localptr, sizeof(int));
 	localptr += sizeof(int);
 
-	temp.bsp_data.reset(new char[temp.bsp_data_size]);
+	temp.bsp_data.resize(size);
 
-	memcpy(temp.bsp_data.get(), localptr, temp.bsp_data_size);
+	memcpy(&temp.bsp_data.front(), localptr, temp.bsp_data.size());
 	
 	//done!
 	temp.reserved = 0;
@@ -814,11 +814,12 @@ void POF::Parse_Memory_SLDC(char *buffer)
 {
 	char *localptr = buffer;
 
-	memcpy(&shield_collision.tree_size, localptr, sizeof(unsigned int));
+	int size;
+	memcpy(&size, localptr, sizeof(unsigned int));
 	localptr += sizeof(unsigned int);
 
-	shield_collision.tree_data.reset(new char[shield_collision.tree_size]);
-	memcpy(shield_collision.tree_data.get(), localptr, shield_collision.tree_size);
+	shield_collision.tree_data.resize(size);
+	memcpy(&shield_collision.tree_data.front(), localptr, size);
 }
 
 void POF::Parse_Memory_PINF (char *buffer, int size)
@@ -1240,7 +1241,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		outfile.write("OBJ2", 4);
 		
 		//struct size
-		size = 84 + local_sobj->submodel_name.length() + local_sobj->properties.length() + local_sobj->bsp_data_size;
+		size = 84 + local_sobj->submodel_name.length() + local_sobj->properties.length() + local_sobj->bsp_data.size();
 		
 		memcpy(temp_buf, &size, 4);
 		outfile.write(temp_buf, 4);
@@ -1287,10 +1288,10 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		write_to_buffer(temp_buf, local_sobj->reserved); 
 		outfile.write(temp_buf, sizeof(int));
 
-		write_to_buffer(temp_buf, local_sobj->bsp_data_size); 
+		write_to_buffer(temp_buf, local_sobj->bsp_data.size());
 		outfile.write(temp_buf, sizeof(int));
 
-		outfile.write(local_sobj->bsp_data.get(), local_sobj->bsp_data_size);
+		outfile.write(&local_sobj->bsp_data.front(), local_sobj->bsp_data.size());
 	}
 
 	//4  SPCL ----------------------------------------
@@ -1887,16 +1888,16 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	}
 
 	//17 SLDC ----------------------------------------
-	if (shield_collision.tree_size != 0)
+	if (!shield_collision.tree_data.empty())
 	{
 		outfile.write("SLDC", 4);
-		k = sizeof(int) + shield_collision.tree_size;
+		int size = shield_collision.tree_data.size();
+		k = sizeof(int) + size;
 
 		write_to_buffer(temp_buf, k); 
 		outfile.write(temp_buf, sizeof(int));
-
-		outfile.write((char*)&shield_collision.tree_size, sizeof(int));
-		outfile.write(shield_collision.tree_data.get(), shield_collision.tree_size);
+		outfile.write((char*)&size, sizeof(int));
+		outfile.write(&shield_collision.tree_data.front(), size);
 	}
 
 	//18 PINF ----------------------------------------
@@ -2603,28 +2604,11 @@ unsigned int POF::OBJ2_BSP_Datasize(int SOBJNum)
 {
 	if ((unsigned)SOBJNum > OBJ2_Count())
 		return -1;
-	return objects[SOBJNum].bsp_data_size;
+	return objects[SOBJNum].bsp_data.size();
 
 }
 
 //----------------------------------------------
-
-
-
-bool POF::OBJ2_Set_BSPData				(int SOBJNum, int size, const char *bsp_data)
-{
-	if ((unsigned)SOBJNum > OBJ2_Count() || SOBJNum < 0)
-		return false;
-
-
-	objects[SOBJNum].bsp_data.reset(new char[size]);
-
-	memcpy(objects[SOBJNum].bsp_data.get(), bsp_data, size);
-
-	return true;
-
-
-}
 
 bool POF::OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data)
 {
@@ -2638,26 +2622,23 @@ bool POF::OBJ2_Get_BSPDataPtr			(int SOBJNum, int &size, char* &bsp_data)
 		return true;
 	}
 
-	bsp_data = objects[SOBJNum].bsp_data.get();
+	bsp_data = &objects[SOBJNum].bsp_data.front();
 
 	return true;
 }
 
-bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char> &bsp_data)
+bool POF::OBJ2_Get_BSPData				(int SOBJNum, std::vector<char> &bsp_data)
 {
 	if ((unsigned)SOBJNum > OBJ2_Count() || SOBJNum < 0)
 		return false;
-	size = OBJ2_BSP_Datasize(SOBJNum);
+	int size = OBJ2_BSP_Datasize(SOBJNum);
 
 	if (size == 0)
 	{
-		bsp_data.reset();
+		bsp_data.clear();
 		return true;
 	}
-
-	bsp_data.reset(new char[size]);
-
-	memcpy(bsp_data.get(), objects[SOBJNum].bsp_data.get(), size);
+	bsp_data = objects[SOBJNum].bsp_data;
 
 	return true;
 }
