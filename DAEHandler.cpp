@@ -11,13 +11,27 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
-#define VECTOR_GROWTH_FACTOR 4
-#define VECTOR_INITIAL_SIZE 100
 #undef max
 
 using namespace std;
 
 namespace {
+
+	std::vector<std::string> split_string(const std::string& str) {
+		std::vector<std::string> result;
+		size_t last = 0;
+		for (size_t i = 0; i < str.size(); i++) {
+			if (isspace(str[i])) {
+				result.push_back(str.substr(last, i - last));
+				last = i;
+			}
+		}
+		if (last != str.size()) {
+			result.push_back(str.substr(last));
+		}
+		return result;
+	}
+
 	pugi::xml_node find_node(pugi::xml_node base, const char* type) {
 		string xpath = ".//";
 		xpath += type;
@@ -326,7 +340,7 @@ void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
 
 void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, const std::map<string, string>& symbol_to_id) {
 	vector<int> refs;
-	DAEInputs inputs(element, root);
+	DAEInputs inputs(element);
 	int poly_offset = subobj->polygons.size();
 	bool triangles = false;
 
@@ -801,7 +815,7 @@ void DAEHandler::shield_handler(pugi::xml_node& helper) {
 	
 	vector<int> refs;
 
-	DAEInputs inputs(mesh, root);
+	DAEInputs inputs(mesh);
 	if (!inputs.pos.is_valid()) {
 		wxMessageBox(wxT("Positions not found for shield"));
 		return;
@@ -871,7 +885,7 @@ void DAEHandler::process_insignia(pugi::xml_node& element) {
 	matrix rotation = get_rotation(element);
 	
 	vector<int> refs;
-	DAEInputs inputs(mesh, root);
+	DAEInputs inputs(mesh);
 
 
 	pugi::xml_node ref_element = find_node(mesh, "p");
@@ -944,18 +958,9 @@ void parse_int_array(const char* chars, std::vector<int> *result, unsigned int c
 	if (count != (unsigned)-1) {
 		result->reserve(count);
 	}
-	stringstream in(chars);
-	int temp;
-	unsigned int i = 0;
-	while(!in.eof() && i < count) {
-		in >> temp;
-		result->push_back(temp);
-		i++;
-	}
-	if (result->size() < count && count != (unsigned)-1) {
-		stringstream error;
-		error << "Found " << result->size() << " items \"" << chars << "\", expected " << count << ". This may break something later...";
-		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
+	auto values = split_string(chars);
+	for (const auto& value : values) {
+		result->push_back(stoi(value));
 	}
 }
 
@@ -965,49 +970,33 @@ boost::shared_ptr<vector<float> > parse_float_array(const char* chars, unsigned 
 	if (count != (unsigned)-1) {
 		result->reserve(count);
 	}
-	stringstream in(chars);
-	float temp;
-	unsigned int i = 0;
-	while(!in.eof() && i < count) {
-		in >> temp;
-		result->push_back(temp);
-	}
-
-	if (result->size() < count && count != (unsigned)-1) {
-		stringstream error;
-		error << "Found " << result->size() << " items \"" << chars << "\", expected " << count << ". This may break something later...";
-		wxMessageBox(wxString(error.str().c_str(), wxConvUTF8));
+	auto values = split_string(chars);
+	for (const auto& value : values) {
+		result->push_back(stof(value));
 	}
 	return result;
 }
 
-string write_int_array(vector<int> vec) {
-	stringstream result;
+string write_int_array(const vector<int>& vec) {
+	std::string result;
 	for (unsigned int i = 0; i < vec.size(); i++) {
-		result << vec[i];
-		if (i < vec.size() - 1) {
-			result << " ";
-		}
+		if (i != 0) {
+			result.push_back(' ');
+		}		result.append(std::to_string(vec[i]));
 	}
-	return string(result.str().c_str());
+	return result;
 }
 
-string write_float_array(vector<float> vec) {
-	stringstream result;
+string write_float_array(const vector<float>& vec) {
+	std::string result;
 	for (unsigned int i = 0; i < vec.size(); i++) {
-		result << vec[i];
-		if (i < vec.size() - 1) {
-			result << " ";
+		if (i != 0) {
+			result.push_back(' ');
 		}
+		result.append(std::to_string(vec[i]));
+
 	}
-	return string(result.str().c_str());
-}
-
-
-string int_to_string(int i) {
-	stringstream temp;
-	temp << i;
-	return string(temp.str().c_str());
+	return result;
 }
 
 vector3d DAEHandler::get_translation(const pugi::xml_node& element, matrix rotation) {
@@ -1082,72 +1071,65 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 	return vec;
 }
 
-DAEInput::DAEInput(const pugi::xml_document& doc, const char* id) {
+DAEInput::DAEInput(pugi::xml_node element) {
 	valid = false;
-	pugi::xml_node element = find_by_id("*", id, doc);
-
 	pugi::xml_node next = element.child("input");
-	if (next) {
-		DAEInput other(doc, next.attribute("source").value());
-		*this = other;
-	} else {
-		next = element.child("technique_common");
-		if (!next) {
-			return;
-		}
-		next = next.child("accessor");
-		if (!next) {
-			return;
-		}
-		strides = atoi(next.attribute("stride").value());
+	next = element.child("technique_common");
+	if (!next) {
+		return;
+	}
+	next = next.child("accessor");
+	if (!next) {
+		return;
+	}
+	strides = atoi(next.attribute("stride").value());
 
-		// find coord order
-		int found = 0;
-		int uvs = 0;
-		int i = 0;
-		for (pugi::xml_node child = next.first_child(); child; child = child.next_sibling(), i++) {
-			switch (get_name(child).c_str()[0]) {
-				case 'X':
-					x = i;
-					found++;
-					break;
-				case 'Y':
-					y = i;
-					found++;
-					break;
-				case 'Z':
-					z = i;
-					found++;
-					break;
-				case 'S':
-					u = i;
-					uvs++;
-					break;
-				case 'T':
-					v = i;
-					uvs++;
-					break;
-				default:
-					string error = "Unexpected axis '";
-					error += get_name(child).c_str();
-					error += "' found";
-					//wxMessageBox(error.c_str());
-					break;
-			}
+	// find coord order
+	int found = 0;
+	int uvs = 0;
+	int i = 0;
+	for (pugi::xml_node child = next.first_child(); child; child = child.next_sibling(), i++) {
+		switch (get_name(child).c_str()[0]) {
+			case 'X':
+				x = i;
+				found++;
+				break;
+			case 'Y':
+				y = i;
+				found++;
+				break;
+			case 'Z':
+				z = i;
+				found++;
+				break;
+			case 'S':
+				u = i;
+				uvs++;
+				break;
+			case 'T':
+				v = i;
+				uvs++;
+				break;
+			default:
+				string error = "Unexpected axis '";
+				error += get_name(child).c_str();
+				error += "' found";
+				//wxMessageBox(error.c_str());
+				break;
 		}
-		if (found != 3 && uvs != 2) {
-			wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
-			exit(1);
-		}
-		next = find_by_id("*", next.attribute("source").value(), doc);
-		if (!next) {
-			return;
-		}
-		if (next.attribute("count")) {
-			value = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
-		} else {
-			value = parse_float_array(next.child_value());
-		}
+	}
+	if (found != 3 && uvs != 2) {
+		wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
+		exit(1);
+	}
+	next = element.find_child_by_attribute("id", &next.attribute("source").value()[1]);
+	if (!next) {
+		return;
+	}
+	if (next.attribute("count")) {
+		value = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
+	} else {
+		value = parse_float_array(next.child_value());
 	}
 	valid = true;
 }
@@ -1191,28 +1173,29 @@ int DAEInput::v_offset() {
 	return v;
 }
 
-DAEInputs::DAEInputs(pugi::xml_node& element, const pugi::xml_document& root) {
+DAEInputs::DAEInputs(pugi::xml_node& element) {
 	int vert_offset;
 	max_offset = 0;
 	int uv_set_id = std::numeric_limits<int>::max();
+	pugi::xml_node mesh = element.parent();
 	for (pugi::xml_node poly_bit = element.first_child(); poly_bit; poly_bit = poly_bit.next_sibling()) {
 		if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "VERTEX")) {
 			vert_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset,vert_offset);
-			pugi::xml_node vertices = find_by_id("*", poly_bit.attribute("source").value(), root);
+			pugi::xml_node vertices = mesh.child("vertices");
 			for (pugi::xml_node vertex = vertices.first_child(); vertex; vertex = vertex.next_sibling()) {
 				if (boost::algorithm::equals(vertex.attribute("semantic").value(), "POSITION")) {
 					pos_offset = vert_offset;
-					pos = DAEInput(root, vertex.attribute("source").value());
+					pos = DAEInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
 				} else if (boost::algorithm::equals(vertex.attribute("semantic").value(), "NORMAL")) {
 					norm_offset = vert_offset;
-					norm = DAEInput(root, vertex.attribute("source").value());
+					norm = DAEInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
 				}
 			}
 		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "NORMAL")) {
 			norm_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset,norm_offset);
-			norm = DAEInput(root, poly_bit.attribute("source").value());
+			norm = DAEInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
 		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "TEXCOORD")) {
 			int current_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset, current_offset);
@@ -1224,7 +1207,7 @@ DAEInputs::DAEInputs(pugi::xml_node& element, const pugi::xml_document& root) {
 				uv_set_id = current_uv_set_id;
 			}
 			uv_offset = current_offset;
-			uv = DAEInput(root, poly_bit.attribute("source").value());
+			uv = DAEInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
 		} else if (!poly_bit.attribute("offset").empty()) {
 			max_offset = max(max_offset,atoi(poly_bit.attribute("offset").value()));
 		}
@@ -1504,21 +1487,12 @@ void DAESaver::get_subobj(int idx,string *name) {
 	polies.resize(num_textures + 1);
 	vector<unsigned int> counters;
 	counters.resize(num_textures + 1, 0);
-	for (int i = 0; i <= num_textures; i++) {
-		polies[i].resize(VECTOR_INITIAL_SIZE);
-	}
 	for (unsigned int i = 0; i < sobj.polygons.size(); i++) {
 		if (sobj.polygons[i].texture_id < num_textures && sobj.polygons[i].texture_id >= 0) {
-			if (counters[sobj.polygons[i].texture_id] >= polies[sobj.polygons[i].texture_id].size()) {
-				polies[sobj.polygons[i].texture_id].resize(polies[sobj.polygons[i].texture_id].size() * VECTOR_GROWTH_FACTOR);
-			}
-			polies[sobj.polygons[i].texture_id][counters[sobj.polygons[i].texture_id]] = &(sobj.polygons[i]);
+			polies[sobj.polygons[i].texture_id].push_back(&(sobj.polygons[i]));
 			counters[sobj.polygons[i].texture_id]++;
 		} else {
-			if (counters[num_textures] >= polies[num_textures].size()) {
-				polies[num_textures].resize(polies[num_textures].size() * VECTOR_GROWTH_FACTOR);
-			}
-			polies[num_textures][counters[num_textures]] = &(sobj.polygons[i]);
+			polies[num_textures].push_back(&(sobj.polygons[i]));
 			counters[num_textures]++;
 		}
 	}
@@ -1604,9 +1578,6 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
 	map<pair<float,float>,int,bool(*)(const pair<float,float>&, const pair<float,float>&)> uv_map(float_pair_comparator);
 	unsigned int vert_idx = 0, norm_idx = 0, uv_idx = 0;
-	vert.resize(VECTOR_INITIAL_SIZE);
-	norm.resize(VECTOR_INITIAL_SIZE);
-	uv.resize(VECTOR_INITIAL_SIZE);
 
 	for (unsigned int i = 0; i < polies.size(); i++) {
 		if (polies[i].size() > 0) {
@@ -1619,32 +1590,23 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 				for (int k = polies[i][j]->verts.size() - 1; k >= 0; k--) {
 					if (vert_map.find(polies[i][j]->verts[k].point) == vert_map.end()) {
 						vert_map.insert(make_pair(polies[i][j]->verts[k].point, vert_map.size()));
-						if (vert.size() <= vert_idx + 2) {
-							vert.resize(vert.size() * VECTOR_GROWTH_FACTOR);
-						}
-						vert[vert_idx] = -(polies[i][j]->verts[k].point.x);
-						vert[vert_idx + 1] = polies[i][j]->verts[k].point.z;
-						vert[vert_idx + 2] = polies[i][j]->verts[k].point.y;
+						vert.push_back(-polies[i][j]->verts[k].point.x);
+						vert.push_back(polies[i][j]->verts[k].point.z);
+						vert.push_back(polies[i][j]->verts[k].point.y);
 						vert_idx += 3;
 					}
 					if (norm_map.find(polies[i][j]->verts[k].norm) == norm_map.end()) {
 						norm_map.insert(make_pair(polies[i][j]->verts[k].norm, norm_map.size()));
-						if (norm.size() <= norm_idx + 2) {
-							norm.resize(norm.size() * VECTOR_GROWTH_FACTOR);
-						}
-						norm[norm_idx] = -(polies[i][j]->verts[k].norm.x);
-						norm[norm_idx + 1] = polies[i][j]->verts[k].norm.z;
-						norm[norm_idx + 2] = polies[i][j]->verts[k].norm.y;
+						norm.push_back(-polies[i][j]->verts[k].norm.x);
+						norm.push_back(polies[i][j]->verts[k].norm.z);
+						norm.push_back(polies[i][j]->verts[k].norm.y);
 						norm_idx += 3;
 
 					}
 					if (uv_map.find(make_pair(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v)) == uv_map.end()) {
 						uv_map.insert(make_pair(make_pair(polies[i][j]->verts[k].u,polies[i][j]->verts[k].v), uv_map.size()));
-						if (uv.size() <= uv_idx + 1) {
-							uv.resize(uv.size() * VECTOR_GROWTH_FACTOR);
-						}
-						uv[uv_idx] = polies[i][j]->verts[k].u;
-						uv[uv_idx + 1] = 1.0f - polies[i][j]->verts[k].v;
+						uv.push_back(polies[i][j]->verts[k].u);
+						uv.push_back(1.0f - polies[i][j]->verts[k].v);
 						uv_idx += 2;
 					}
 					count += 3;
@@ -1671,7 +1633,7 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	pugi::xml_node pos_float_array = pos.append_child("float_array");
 	pos_float_array.append_attribute("id") = (name + "-position-array").c_str();
 	pos_float_array.text().set(write_float_array(vert).c_str());
-	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
+	pos_float_array.append_attribute("count") = std::to_string(vert.size()).c_str();
 	add_accessor(pos,name + "-position-array",vert.size()/3);
 
 	pugi::xml_node norms = mesh.insert_child_after("source", pos);
@@ -1679,7 +1641,7 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	pugi::xml_node norms_float_array = norms.append_child("float_array");
 	norms_float_array.append_attribute("id") = (name + "-normals-array").c_str();
 	norms_float_array.text().set(write_float_array(norm).c_str());
-	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
+	norms_float_array.append_attribute("count") = std::to_string(norm.size()).c_str();
 	add_accessor(norms,name + "-normals-array",norm.size()/3);
 
 	pugi::xml_node verts = mesh.insert_child_after("vertices", norms);
@@ -1692,7 +1654,7 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	pugi::xml_node uvs_float_array = uvs.append_child("float_array");
 	uvs_float_array.append_attribute("id") = (name + "-uv-array").c_str();
 	uvs_float_array.text().set(write_float_array(uv).c_str());
-	uvs_float_array.append_attribute("count") = int_to_string(uv.size()).c_str();
+	uvs_float_array.append_attribute("count") = std::to_string(uv.size()).c_str();
 	add_accessor(uvs,name + "-uv-array",uv.size()/2,true);
 
 	return result;
@@ -1743,7 +1705,7 @@ void DAESaver::add_refs(pugi::xml_node& mesh, string name, vector<int> refs, vec
 
 	pugi::xml_node p = polylist.append_child("p");
 	p.text().set(write_int_array(refs).c_str());
-	polylist.append_attribute("count") = int_to_string(sizes.size()).c_str();
+	polylist.append_attribute("count") = std::to_string(sizes.size()).c_str();
 }
 
 void DAESaver::add_turret_fps() {
@@ -1967,7 +1929,7 @@ void DAESaver::add_shield() {
 	pugi::xml_node pos_float_array = pos.append_child("float_array");
 	pos_float_array.append_attribute("id") = "shield-position-array";
 	pos_float_array.text().set(write_float_array(vert).c_str());
-	pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
+	pos_float_array.append_attribute("count") = std::to_string(vert.size()).c_str();
 	add_accessor(pos,"shield-position-array",vert.size()/3);
 
 	pugi::xml_node norms = mesh.insert_child_after("source", pos);
@@ -1975,7 +1937,7 @@ void DAESaver::add_shield() {
 	pugi::xml_node norms_float_array = norms.append_child("float_array");
 	norms_float_array.append_attribute("id") = "shield-normals-array";
 	norms_float_array.text().set(write_float_array(norm).c_str());
-	norms_float_array.append_attribute("count") = int_to_string(norm.size()).c_str();
+	norms_float_array.append_attribute("count") = std::to_string(norm.size()).c_str();
 	add_accessor(norms,"shield-normals-array",norm.size()/3);
 
 	pugi::xml_node verts = mesh.insert_child_after("vertices", norms);
@@ -2118,7 +2080,7 @@ void DAESaver::add_insignia() {
 		pugi::xml_node pos_float_array = pos.append_child("float_array");
 		pos_float_array.append_attribute("id") = (name.str() + "-position-array").c_str();
 		pos_float_array.text().set(write_float_array(vert).c_str());
-		pos_float_array.append_attribute("count") = int_to_string(vert.size()).c_str();
+		pos_float_array.append_attribute("count") = std::to_string(vert.size()).c_str();
 		add_accessor(pos,(name.str() + "-position-array").c_str(),vert.size()/3);
 
 		pugi::xml_node uvs = mesh.insert_child_after("source", pos);
@@ -2126,7 +2088,7 @@ void DAESaver::add_insignia() {
 		pugi::xml_node uvs_float_array = uvs.append_child("float_array");
 		uvs_float_array.append_attribute("id") = (name.str() + "-uv-array").c_str();
 		uvs_float_array.text().set(write_float_array(uv).c_str());
-		uvs_float_array.append_attribute("count") = int_to_string(uv.size()).c_str();
+		uvs_float_array.append_attribute("count") = std::to_string(uv.size()).c_str();
 		add_accessor(uvs,(name.str() + "-uv-array").c_str(),uv.size()/2,true);
 
 		pugi::xml_node verts = mesh.insert_child_after("vertices", uvs);
@@ -2368,7 +2330,7 @@ pugi::xml_node DAESaver::find_dockpoint(int idx,vector3d &offset) {
 
 void add_accessor(pugi::xml_node element, string source, int count, bool uv) {
 	pugi::xml_node accessor = element.append_child("technique_common").append_child("accessor");
-	accessor.append_attribute("count") = int_to_string(count).c_str();
+	accessor.append_attribute("count") = std::to_string(count).c_str();
 	accessor.append_attribute("source") =  (string("#") + source).c_str();
 	if (uv) {
 		accessor.append_attribute("stride") = "2";

@@ -14,7 +14,7 @@ class DAEInput {
 			valid = false;
 		}
 
-		DAEInput(const pugi::xml_document& doc, const char* id);
+		DAEInput(pugi::xml_node element);
 		int x_offset();
 		int y_offset();
 		int z_offset();
@@ -31,7 +31,7 @@ class DAEInput {
 
 class DAEInputs {
 public:
-	DAEInputs(pugi::xml_node& element, const pugi::xml_document& document);
+	DAEInputs(pugi::xml_node& element);
 	virtual ~DAEInputs() {}
 	int max_offset;
 	int pos_offset;
@@ -44,8 +44,8 @@ public:
 void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count = -1);
 // parses floats into a vector
 boost::shared_ptr<std::vector<float> > parse_float_array(const char* chars, unsigned int count = -1);
-std::string write_int_array(std::vector<int> vec);
-std::string write_float_array(std::vector<float> vec);
+std::string write_int_array(const std::vector<int>& vec);
+std::string write_float_array(const std::vector<float>& vec);
 std::string write_vector3d(vector3d vec,vector3d scale = vector3d(1,1,1));
 vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj, std::vector<pcs_sobj*> *subobjs);
 std::string int_to_string(int i);
