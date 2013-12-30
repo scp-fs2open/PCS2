@@ -1139,8 +1139,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	size = 104; // static size;
 	size += (header.sobj_detaillevels.size() * 4);
 	size += (header.sobj_debris.size() * 4);
-	if (header.cross_sections.size() >= 0)
-		size += (header.cross_sections.size() * sizeof(cross_section));
+	size += (header.cross_sections.size() * sizeof(cross_section));
 	size += (header.lights.size() * sizeof(muzzle_light));
 	
 	memcpy(temp_buf, &size, 4);
@@ -2741,7 +2740,7 @@ void POF::DOCK_Add_Dock				(std::string properties)
 
 bool POF::DOCK_Add_SplinePath		(int dock, int path)
 {
-	if ((unsigned)dock < 0  || (unsigned)dock > DOCK_Count_Docks())
+	if (dock < 0  || (unsigned)dock > DOCK_Count_Docks())
 		return false;
 	docking.points[dock].path_number.push_back(path);
 	return true;
@@ -2749,7 +2748,7 @@ bool POF::DOCK_Add_SplinePath		(int dock, int path)
 
 bool POF::DOCK_Add_Point			(int dock, vector3d point, vector3d norm)
 {
-	if ((unsigned)dock < 0  || (unsigned)dock > DOCK_Count_Docks())
+	if (dock < 0  || (unsigned)dock > DOCK_Count_Docks())
 		return false;
 	gun np;
 	np.norm = norm;
@@ -2767,14 +2766,14 @@ unsigned int POF::DOCK_Count_Docks			()
 
 unsigned int POF::DOCK_Count_SplinePaths		(int dock)
 {
-	if ((unsigned)dock < 0  || (unsigned)dock > docking.points.size())
+	if (dock < 0  || (unsigned)dock > docking.points.size())
 		return -1;
 	return docking.points[dock].path_number.size();
 }
 
 unsigned int POF::DOCK_Count_Points			(int dock)
 {
-	if ((unsigned)dock < 0  || (unsigned)dock > docking.points.size())
+	if (dock < 0  || (unsigned)dock > docking.points.size())
 		return -1;
 	return docking.points[dock].points.size();
 }
@@ -2804,7 +2803,7 @@ bool POF::DOCK_Get_Point			(int dock, int point, vector3d &pnt, vector3d &norm)
 bool POF::DOCK_Get_DockProps		(int dock, std::string &properties)
 {
 {
-	if ((unsigned)dock < 0  || (unsigned)dock > DOCK_Count_Docks())
+	if (dock < 0  || (unsigned)dock > DOCK_Count_Docks())
 		return false;
 
 	properties = StringToAPS(docking.points[dock].properties);

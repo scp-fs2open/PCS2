@@ -114,11 +114,11 @@ public:
 	}
 	void undo(){
 		undo_stack.undo(data);
-		set_value(data);//update the UI
+		this->set_value(data);//update the UI
 	}
 	void redo(){
 		undo_stack.redo(data);
-		set_value(data);//update the UI
+		this->set_value(data);//update the UI
 	}
 	void fix_buttons(){
 		undo_stack.fix_buttons();

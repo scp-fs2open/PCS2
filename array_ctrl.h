@@ -366,7 +366,7 @@ public:
 	type_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable=true)
 		:resizeable_array_ctrl<type>(parent, Title,orient, ID, user_resizeable)
 	{
-		add_control(ctrl=new type_control(this,subTitle),1,flags);
+		this->add_control(ctrl=new type_control(this,subTitle),1,flags);
 	}
 
 	virtual type get_curent_value(){this->array[this->index] = ctrl->get_value(); return this->array[this->index];}

@@ -1,6 +1,7 @@
 #include "DAEHandler.h"
 #include "pcs_file.h"
 #include "BSPHandler.h"
+#include <cstdlib>
 #include <ctime>
 #include <sstream>
 #include <iomanip>
@@ -8,6 +9,7 @@
 #include <map>
 #include <boost/tr1/regex.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #define VECTOR_GROWTH_FACTOR 4
 #define VECTOR_INITIAL_SIZE 100
@@ -192,7 +194,7 @@ int DAEHandler::populate(void) {
 	int num_guns = guns.size();
 	guns.resize(guns.size() + missiles.size());
 	for (unsigned int i = 0; i < missiles.size(); i++) {
-		progress->incrementWithMessage("Finalising gun " + i);
+		progress->incrementWithMessage("Finalising gun " + boost::lexical_cast<std::string>(i));
 		guns[i + num_guns] = missiles[i];
 	}
 	model->set_weapons(guns);

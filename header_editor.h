@@ -103,11 +103,20 @@ public:
 	void set_value(const header_data&t){
 		data=t;
 
-		bbox_min->set_value(data.min_bounding_overridden ? data.min_bounding_override : data.min_bounding, data.min_bounding);
-		bbox_max->set_value(data.max_bounding_overridden ? data.max_bounding_override : data.max_bounding, data.max_bounding);
+		bbox_min->set_value_with_default(
+				data.min_bounding_overridden ?
+				data.min_bounding_override :
+				data.min_bounding, data.min_bounding);
+		bbox_max->set_value_with_default(
+				data.max_bounding_overridden ?
+				data.max_bounding_override :
+				data.max_bounding, data.max_bounding);
 		cent_mass->set_value(data.mass_center);
 
-		max_rad->set_value(data.max_radius_overridden ? data.max_radius_override : data.max_radius, data.max_radius);
+		max_rad->set_value_with_default(
+				data.max_radius_overridden ?
+				data.max_radius_override :
+				data.max_radius, data.max_radius);
 		mass->set_value(data.mass);
 		
 		detail_levels->set_value(data.detail_levels);

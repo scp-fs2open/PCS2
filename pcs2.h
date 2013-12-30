@@ -318,7 +318,7 @@ class PCS2_MainWindow : public wxFrame
 		wxStatusBar *mystatus;
 		wxToolBar *toolBar;
 		wxMenuBar* mymenu;
-		wxMenu *m_pFileMenu, *m_pModelMenu;
+		wxMenu *m_pFileMenu;
 		wxMenu *m_pFileHistoryMenu;
 		wxFileHistory file_history;
 		

@@ -104,9 +104,18 @@ public:
 			movement_axis->set_value(ANONE);
 		}
 		offset->set_value(t.offset);
-		bbox_min->set_value(data.bounding_box_min_point_overridden ? data.bounding_box_min_point_override : data.bounding_box_min_point, data.bounding_box_min_point);
-		bbox_max->set_value(data.bounding_box_max_point_overridden ? data.bounding_box_max_point_override : data.bounding_box_max_point, data.bounding_box_max_point);
-		max_rad->set_value(data.radius_overridden? data.radius_override : data.radius, data.radius);
+		bbox_min->set_value_with_default(
+				data.bounding_box_min_point_overridden ?
+				data.bounding_box_min_point_override :
+				data.bounding_box_min_point, data.bounding_box_min_point);
+		bbox_max->set_value_with_default(
+				data.bounding_box_max_point_overridden ?
+				data.bounding_box_max_point_override :
+				data.bounding_box_max_point, data.bounding_box_max_point);
+		max_rad->set_value_with_default(
+				data.radius_overridden ?
+				data.radius_override :
+				data.radius, data.radius);
 
 		properties->set_value(t.properties);
 	}

@@ -63,7 +63,7 @@ public:
 		//make the text editor
 		text_box = new data_ctrl(this,-1,_(""),wxDefaultPosition,wxSize(-1, h),Flags);
 		//add it to our controls
-		add_control(text_box, 1,wxEXPAND, 1);
+		this->add_control(text_box, 1,wxEXPAND, 1);
 	};
 public:
 	virtual ~primitive_ctrl(void){};
@@ -250,7 +250,7 @@ public:
 	_vector_button_ctrl(wxWindow*parent, wxString Title, wxString button_text, wxString button_tooltip)
 		:_vector_ctrl<data_ctrl>(parent,Title)
 	{
-		add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT));
+		this->add_control(button = new wxButton(this, BUTTON_CTRL_BUTTON, button_text, wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT));
 		button->SetToolTip(button_tooltip);
 	}
 
@@ -293,13 +293,13 @@ public:
 	}
 
 	virtual void handle_click_event(){
-		vector_button_ctrl::set_value(default_value);
+		set_value(default_value);
 		DisableButton();
 	}
 
-	virtual void set_value(const vector3d& v, const vector3d& default_value){
+	virtual void set_value_with_default(const vector3d& v, const vector3d& default_value){
 		this->default_value = default_value;
-		vector_button_ctrl::set_value(v);
+		set_value(v);
 		if (Distance(v, default_value) > 1e-5f) {
 			EnableButton();
 		} else {
@@ -366,13 +366,13 @@ public:
 	}
 
 	virtual void handle_click_event(){
-		float_button_ctrl::set_value(default_value);
+		set_value(default_value);
 		DisableButton();
 	}
 
-	virtual void set_value(float v, float default_value){
+	virtual void set_value_with_default(float v, float default_value){
 		this->default_value = default_value;
-		float_button_ctrl::set_value(v);
+		set_value(v);
 		if (fabs(v - default_value) > 1e-5f) {
 			EnableButton();
 		} else {
@@ -484,7 +484,7 @@ public:
 	suggest_ctrl(wxWindow*parent, wxString Title, std::vector<type>Options, int Mode = SUGGEST_REPLACE)
 		:ctrl(parent,Title),options(Options), mode(Mode)
 	{
-		add_control(suggest_btn = new wxBitmapButton(this, STRING_SUGGEST, wxBitmap(suggest)));
+		this->add_control(suggest_btn = new wxBitmapButton(this, STRING_SUGGEST, wxBitmap(suggest)));
 		suggest_btn->SetToolTip(_("Suggest\nProvide Common Options"));
 	}
 
