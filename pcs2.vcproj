@@ -1016,22 +1016,6 @@
 			Name="FileTypes"
 			>
 			<Filter
-				Name="ASE"
-				>
-				<File
-					RelativePath=".\ase_dstructs.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ase_file.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ase_file.h"
-					>
-				</File>
-			</Filter>
-			<Filter
 				Name="COB"
 				>
 				<File
@@ -1121,10 +1105,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\pcs_pmf_ase.cpp"
-					>
-				</File>
-				<File
 					RelativePath="pcs_pmf_cob.cpp"
 					>
 					<FileConfiguration
@@ -1196,22 +1176,6 @@
 				</File>
 				<File
 					RelativePath="pcs_pof_bspfuncs.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="OBJ"
-				>
-				<File
-					RelativePath=".\obj_dstructs.h"
-					>
-				</File>
-				<File
-					RelativePath=".\obj_file.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\obj_file.h"
 					>
 				</File>
 			</Filter>
