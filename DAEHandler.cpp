@@ -62,13 +62,28 @@ namespace {
 		return doc.select_single_node(xpath.c_str()).node();
 	}
 
+	vector3d relative_to_absolute(vector3d vec, const pcs_sobj* subobj, const std::vector<pcs_sobj*>& subobjs) {
+		while (subobj->parent_sobj != -1) {
+			vec += subobj->offset;
+			subobj = subobjs[subobj->parent_sobj];
+		}
+		vec += subobj->offset;
+		return vec;
+	}
+
+	vector3d relative_to_absolute(vector3d vec, const pcs_sobj* subobj, PCS_Model* model) {
+		while (subobj->parent_sobj != -1) {
+			vec += subobj->offset;
+			subobj = &model->SOBJ(subobj->parent_sobj);
+		}
+		vec += subobj->offset;
+		return vec;
+	}
+
 }
 
 DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) :
 	filename(filename),
-#if LOGGING_DAE
-	log((filename.substr(filename.size() - 4) + ".log").c_str()),
-#endif
 	model(model) {
 	root.load_file(filename.c_str());
 
@@ -109,10 +124,6 @@ int DAEHandler::populate(void) {
 	map<string, pugi::xml_node> detail, debris;
 	model->SetMass(-1);
 	for (pugi::xml_node helper = scene.first_child(); helper; helper = helper.next_sibling()) {
-#if LOGGING_DAE
-		log << "Found " << helper.attribute("name").value();
-		log << endl;
-#endif
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			name = get_name(helper);
 			progress->incrementWithMessage("Processing " + name);
@@ -180,30 +191,16 @@ int DAEHandler::populate(void) {
 
 	}
 	for (map<string, pugi::xml_node>::iterator it = detail.begin(); it != detail.end(); ++it) {
-		model->AddLOD(subobjs.size());
+		model->AddLOD(model->GetSOBJCount());
 		process_subobj(it->second, -1);
 	}
 	for (map<string, pugi::xml_node>::iterator it = debris.begin(); it != debris.end(); ++it) {
-		model->AddDebris(subobjs.size());
+		model->AddDebris(model->GetSOBJCount());
 		process_subobj(it->second, -1);
 	}
-	progress->setTarget(203 + subobjs.size() + specials.size() + docks.size() + missiles.size() + 3);
+	progress->setTarget(203 + missiles.size() + 3);
 	progress->SetProgress(203);
 
-	vector<pcs_sobj> final_subobjs(subobjs.size());
-	for (unsigned int i = 0; i < subobjs.size(); i++) {
-		progress->incrementWithMessage("Finalising " + subobjs[i]->name);
-		final_subobjs[i] = *subobjs[i];
-	}
-	model->set_subobjects(final_subobjs);
-	for (unsigned int i = 0; i < specials.size(); i++) {
-		progress->incrementWithMessage("Finalising " + specials[i]->name);
-		model->AddSpecial(specials[i].get());
-	}
-	for (unsigned int i = 0; i < docks.size(); i++) {
-		progress->incrementWithMessage("Finalising " + docks[i]->properties);
-		model->AddDocking(docks[i].get());
-	}
 	model->set_eyes(eyes);
 	int num_guns = guns.size();
 	guns.resize(guns.size() + missiles.size());
@@ -239,16 +236,14 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 	}
 	progress->incrementWithMessage("Processing " + get_name(element));
 
-#if LOGGING_DAE
-	log << temp << endl;
-#endif
 	std::vector<pugi::xml_node> instance_materials = find_nodes(geom, "instance_material");
 	std::map<string, string> symbol_to_id;
 	for (std::vector<pugi::xml_node>::iterator i = instance_materials.begin(); i < instance_materials.end(); ++i) {
 		symbol_to_id.insert(make_pair(i->attribute("symbol").as_string(), i->attribute("target").as_string()));
 	}
 	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
-	boost::shared_ptr<pcs_sobj> subobj(new pcs_sobj());
+	model->AddSOBJ();
+	auto subobj = &model->SOBJ(model->GetSOBJCount() - 1);
 	subobj->bounding_box_min_point = vector3d(1e30f,1e30f,1e30f);
 	subobj->bounding_box_max_point = vector3d(-1e30f,-1e30f,-1e30f);
 	subobj->name = get_name(element).c_str();
@@ -258,7 +253,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 	subobj->offset = get_translation(element,rotation_matrix);
 
 	if (subobj->parent_sobj != -1) {
-		subobj->geometric_center = relative_to_absolute(subobj->offset,subobjs[subobj->parent_sobj],subobjs);
+		subobj->geometric_center = relative_to_absolute(subobj->offset, &model->SOBJ(subobj->parent_sobj), model);
 	} else {
 		subobj->geometric_center = vector3d(0,0,0);
 	}
@@ -290,8 +285,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 		}
 	}
 
-	this->subobjs.push_back(subobj);
-	int current_sobj_id = this->subobjs.size() - 1;
+	int current_sobj_id = model->GetSOBJCount() - 1;
 
 	pugi::xml_node sobj_helpers;
 	std::map<std::string, pugi::xml_node> subobj_map;
@@ -322,23 +316,22 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 }
 
 void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
-	boost::shared_ptr<pcs_dock_point> dockpoint(new pcs_dock_point());
+	model->AddDocking();
+	pcs_dock_point* dockpoint = &model->Dock(model->GetDockingCount() - 1);
 	pcs_hardpoint temp;
 	for (pugi::xml_node helper = dockpoint_helper.first_child(); helper; helper = helper.next_sibling()) {
 		if (boost::algorithm::equals(helper.name(), "node") &&
 			!boost::algorithm::istarts_with(get_name(helper), "helper")) {
-			temp.norm = fix_axes(up,get_rotation(helper));
+			temp.norm = fix_axes(up, get_rotation(helper));
 			temp.point = get_translation(helper);
 			dockpoint->dockpoints.push_back(temp);
 		}
 	}
-	docks.push_back(dockpoint);
-	process_dock_helpers(dockpoint_helper);
-
+	process_dock_helpers(dockpoint_helper, dockpoint);
 }
 
 
-void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<pcs_sobj> subobj, matrix rotation, const std::map<string, string>& symbol_to_id) {
+void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, matrix rotation, const std::map<string, string>& symbol_to_id) {
 	vector<int> refs;
 	DAEInputs inputs(element);
 	int poly_offset = subobj->polygons.size();
@@ -404,16 +397,13 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, boost::shared_ptr<p
 	}
 }
 
-void DAEHandler::process_sobj_helpers(pugi::xml_node& element, 
-																			int current_sobj_id, int parent_sobj_id, 
-																			matrix rotation_matrix) {
-	vector3d offset = relative_to_absolute(vector3d(0,0,0), subobjs[current_sobj_id],
-		subobjs);
+void DAEHandler::process_sobj_helpers(pugi::xml_node& element, int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
+	vector3d offset = relative_to_absolute(vector3d(0,0,0), &model->SOBJ(current_sobj_id), model);
 	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
 			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper, &subobjs[current_sobj_id]->properties);
+				process_properties(helper, &model->SOBJ(current_sobj_id).properties);
 			}
 		}
 	}
@@ -421,7 +411,7 @@ void DAEHandler::process_sobj_helpers(pugi::xml_node& element,
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			std::string name = get_name(helper);
 			if (boost::algorithm::istarts_with(name, "thrusters")) {
-				process_thrusters(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_thrusters(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "multifirepoints")) {
 				process_firepoints(helper,parent_sobj_id,current_sobj_id,rotation_matrix);
 			} else if (boost::algorithm::istarts_with(name, "firepoints")) {
@@ -429,15 +419,15 @@ void DAEHandler::process_sobj_helpers(pugi::xml_node& element,
 			} else if (boost::algorithm::istarts_with(name, "glowbank")) {
 				process_glowpoints(helper,current_sobj_id,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "bay")) {
-				process_path(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_path(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
 			} else if (boost::algorithm::istarts_with(name, "path")) {
-				process_path(helper,subobjs[current_sobj_id]->name,rotation_matrix,offset);
+				process_path(helper, model->SOBJ(current_sobj_id).name, rotation_matrix, offset);
 			} else if (boost::algorithm::istarts_with(name, "vec")) {
-				process_sobj_vec(helper,rotation_matrix, &subobjs[current_sobj_id]->properties);
+				process_sobj_vec(helper,rotation_matrix, &model->SOBJ(current_sobj_id).properties);
 			} else if (boost::algorithm::istarts_with(name, "rotate-nospeed")) {
-				process_sobj_rotate(helper,rotation_matrix, subobjs[current_sobj_id], false);
+				process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id), false);
 			} else if (boost::algorithm::istarts_with(name, "rotate")) {
-				process_sobj_rotate(helper,rotation_matrix, subobjs[current_sobj_id]);
+				process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id));
 			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
 				unsigned int eye;
 				if (name.length() > strlen("eyepoint")) {
@@ -450,10 +440,10 @@ void DAEHandler::process_sobj_helpers(pugi::xml_node& element,
 			}
 		}
 	}
-	trim_extra_spaces(subobjs[current_sobj_id]->properties);
+	trim_extra_spaces(model->SOBJ(current_sobj_id).properties);
 }
 
-void DAEHandler::process_special_helpers(pugi::xml_node& element, int idx, matrix rotation) {
+void DAEHandler::process_special_helpers(pugi::xml_node& element, pcs_special* special, matrix rotation) {
 	pugi::xml_node helper_parent;
 	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
 		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
@@ -464,30 +454,29 @@ void DAEHandler::process_special_helpers(pugi::xml_node& element, int idx, matri
 		return;
 	}
 	
-	vector3d offset = specials[idx]->point;
+	vector3d offset = special->point;
 	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
 			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper,&specials[idx]->properties);
+				process_properties(helper, &special->properties);
 			}
 		}
 	}
 	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			if (boost::algorithm::istarts_with(get_name(helper), "thrusters")) {
-				process_thrusters(helper,specials[idx]->name,rotation,offset);
+				process_thrusters(helper, special->name, rotation, offset);
 			} else if (boost::algorithm::istarts_with(get_name(helper), "bay")) {
-				process_path(helper,specials[idx]->name,rotation,offset);
+				process_path(helper, special->name, rotation, offset);
 			} else if (boost::algorithm::istarts_with(get_name(helper), "path")) {
-				process_path(helper,specials[idx]->name,rotation,offset);
+				process_path(helper, special->name, rotation, offset);
 			}
 		}
 	}
 }
 
-void DAEHandler::process_dock_helpers(pugi::xml_node& element) {
-	int idx = docks.size() - 1;
+void DAEHandler::process_dock_helpers(pugi::xml_node& element, pcs_dock_point* dockpoint) {
 	pugi::xml_node helper_parent;
 	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
 		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
@@ -496,7 +485,7 @@ void DAEHandler::process_dock_helpers(pugi::xml_node& element) {
 	}
 	pugi::xml_node props = find_node(element, "user_properties");
 	if (props) {
-		docks[idx]->properties = props.child_value();
+		dockpoint->properties = props.child_value();
 	}
 
 	if (!helper_parent) {
@@ -508,14 +497,14 @@ void DAEHandler::process_dock_helpers(pugi::xml_node& element) {
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			// better check for custom properties first
 			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper,&docks[idx]->properties);
+				process_properties(helper, &dockpoint->properties);
 			}
 		}
 	}
 	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
 		if (boost::algorithm::equals(helper.name(), "node")) {
 			if (boost::algorithm::istarts_with(get_name(helper), "path")) {
-				process_path(helper, "", matrix(), offset, idx);
+				process_path(helper, "", matrix(), offset, dockpoint);
 			}
 		}
 	}
@@ -560,7 +549,7 @@ void DAEHandler::process_sobj_vec(pugi::xml_node& element, matrix rotation, std:
 	}
 }
 
-void DAEHandler::process_sobj_rotate(pugi::xml_node& element, matrix rotation, boost::shared_ptr<pcs_sobj> sobj, bool speed) {
+void DAEHandler::process_sobj_rotate(pugi::xml_node& element, matrix rotation, pcs_sobj* sobj, bool speed) {
 	rotation = get_rotation(element, rotation);
 	vector3d rotate = fix_axes(up, rotation);
 	float x, y, z, x_abs, y_abs, z_abs;
@@ -634,27 +623,24 @@ void DAEHandler::process_firepoints(pugi::xml_node& element,int parent, int arm,
 			turret.fire_points.push_back(get_translation(turret_node,rotation_matrix));
 		}
 	}
-	if (subobjs[parent]->properties.size() == 0) {
-		subobjs[parent]->properties = "$special=subsystem\n$fov=180\n$name=GunTurret\n";
+	if (model->SOBJ(parent).properties.size() == 0) {
+		model->SOBJ(parent).properties = "$special=subsystem\n$fov=180\n$name=GunTurret\n";
 	} else {
-		if (!strstr(subobjs[parent]->properties.c_str(),"special")) {
-			subobjs[parent]->properties += "$special=subsystem\n";
+		if (!strstr(model->SOBJ(parent).properties.c_str(), "special")) {
+			model->SOBJ(parent).properties += "$special=subsystem\n";
 		}
-		if (!strstr(subobjs[parent]->properties.c_str(),"fov")) {
-			subobjs[parent]->properties += "$fov=180\n";
+		if (!strstr(model->SOBJ(parent).properties.c_str(), "fov")) {
+			model->SOBJ(parent).properties += "$fov=180\n";
 		}
 	}
 	turret.turret_normal = MakeUnitVector(turret.turret_normal);
 	model->AddTurret(&turret);
 }
 
-void DAEHandler::process_path(pugi::xml_node& element,string parent,matrix rotation_matrix, vector3d offset, int dock) {
+void DAEHandler::process_path(pugi::xml_node& element, string parent, matrix rotation_matrix, vector3d offset, pcs_dock_point* dockpoint) {
 	pcs_path path;
 	path.name = string ("$") + get_name(element).c_str();
 	trim_extra_spaces(path.name);
-#if LOGGING_DAE
-	log << element.attribute("id").value() << endl;
-#endif
 	path.parent = parent;
 	std::multimap<std::string, pcs_pvert> ordered_paths;
 	pcs_pvert vert;
@@ -670,8 +656,8 @@ void DAEHandler::process_path(pugi::xml_node& element,string parent,matrix rotat
 		path.verts.push_back(it->second);
 	}
 
-	if (dock > -1) {
-		docks[dock]->paths.push_back(model->GetPathCount());
+	if (dockpoint) {
+		dockpoint->paths.push_back(model->GetPathCount());
 	}
 
 	model->AddPath(&path);
@@ -777,7 +763,8 @@ int DAEHandler::find_or_add_texture(string name) {
 }
 
 void DAEHandler::subsystem_handler(pugi::xml_node& helper, bool isSubsystem) {
-	boost::shared_ptr<pcs_special> special(new pcs_special);
+	model->AddSpecial();
+	pcs_special* special = &model->Special(model->GetSpecialCount() - 1);
 	matrix rot = get_rotation(helper);
 	special->name = "$";
 	if (isSubsystem) {
@@ -788,8 +775,7 @@ void DAEHandler::subsystem_handler(pugi::xml_node& helper, bool isSubsystem) {
 	}
 	special->point = get_translation(helper);
 	special->radius = rot.scale();
-	specials.push_back(special);
-	process_special_helpers(helper,specials.size() - 1, rot);
+	process_special_helpers(helper, special, rot);
 }
 
 void DAEHandler::shield_handler(pugi::xml_node& helper) {
@@ -797,11 +783,6 @@ void DAEHandler::shield_handler(pugi::xml_node& helper) {
 	if (!geom) {
 		return;
 	}
-
-#if LOGGING_DAE
-	log << geom.attribute("url") << endl;
-#endif
-
 	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	bool use_triangles = false;
 	pugi::xml_node triangles = mesh.child("triangles");
@@ -964,15 +945,14 @@ void parse_int_array(const char* chars, std::vector<int> *result, unsigned int c
 	}
 }
 
-boost::shared_ptr<vector<float> > parse_float_array(const char* chars, unsigned int count) {
-	boost::shared_ptr<vector<float> > result;
-	result.reset(new vector<float>());
+vector<float> parse_float_array(const char* chars, unsigned int count) {
+	vector<float> result;
 	if (count != (unsigned)-1) {
-		result->reserve(count);
+		result.reserve(count);
 	}
 	auto values = split_string(chars);
 	for (const auto& value : values) {
-		result->push_back(stof(value));
+		result.push_back(stof(value));
 	}
 	return result;
 }
@@ -1002,19 +982,17 @@ string write_float_array(const vector<float>& vec) {
 vector3d DAEHandler::get_translation(const pugi::xml_node& element, matrix rotation) {
 	const pugi::xml_node& position = element.child("translate");
 	const pugi::xml_node& matrix = element.child("matrix"); 
-	boost::shared_ptr<vector<float> > points;
-	vector3d result;
 	if (position) {
-		points = parse_float_array(position.child_value(), 3);
-		result = fix_axes(vector3d((*points)[0],(*points)[1],(*points)[2]),rotation);
+		vector<float> points = parse_float_array(position.child_value(), 3);
+		return fix_axes(vector3d(points[0], points[1], points[2]), rotation);
 	} else if (matrix) {
-		points = parse_float_array(matrix.child_value(), 16);
-		result = fix_axes(vector3d((*points)[3],(*points)[7],(*points)[11]),rotation);
+		vector<float> points = parse_float_array(matrix.child_value(), 16);
+		return fix_axes(vector3d(points[3], points[7], points[11]), rotation);
 	}
-	return result;
+	return vector3d();
 }
 
-void DAEHandler::process_vector3d(vector3d vec, boost::shared_ptr<pcs_sobj> subobj) {
+void DAEHandler::process_vector3d(vector3d vec, pcs_sobj* subobj) {
 	if (subobj != NULL) {
 		if (vec.x > subobj->bounding_box_max_point.x) {
 			subobj->bounding_box_max_point.x = vec.x;
@@ -1037,7 +1015,7 @@ void DAEHandler::process_vector3d(vector3d vec, boost::shared_ptr<pcs_sobj> subo
 		if (Magnitude(vec) > subobj->radius) {
 			subobj->radius = Magnitude(vec);
 		}
-		vec = relative_to_absolute(vec, subobj, subobjs);
+		vec = relative_to_absolute(vec, subobj, model);
 	}
 	if (vec.x > max_bounding_box.x) {
 		max_bounding_box.x = vec.x;
@@ -1069,6 +1047,22 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 	}
 	vec += subobj->offset;
 	return vec;
+}
+
+DAEInput::DAEInput(DAEInput&& other) : x(other.x), y(other.y), z(other.z), strides(other.strides), u(other.u), v(other.v), value(std::move(other.value)), valid(other.valid) {}
+
+DAEInput& DAEInput::operator=(DAEInput&& other) {
+	valid = other.valid;
+	if (valid) {
+		x = other.x;
+		y = other.y;
+		z = other.z;
+		strides = other.strides;
+		u = other.u;
+		v = other.v;
+		value = std::move(other.value);
+	}
+	return *this;
 }
 
 DAEInput::DAEInput(pugi::xml_node element) {
@@ -1143,9 +1137,9 @@ int DAEInput::stride() {
 	return strides;
 }
 
-const vector<float> &DAEInput::values() {
+const vector<float>& DAEInput::values() {
 	assert(valid);
-	return *value;
+	return value;
 }
 
 int DAEInput::x_offset() {
@@ -1235,23 +1229,22 @@ vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 matrix DAEHandler::get_rotation(const pugi::xml_node& element, matrix old) {
 	matrix rot;
 	matrix base;
-	boost::shared_ptr<vector<float> > temp;
 	for (pugi::xml_node child = element.first_child(); child; child = child.next_sibling()) {
 		if (boost::algorithm::equals(child.name(), "rotate")) {
-			temp = parse_float_array(child.child_value(), 4);
-			rot = matrix((*temp)[3]);
-			base = matrix(vector3d((*temp)[0],(*temp)[1],(*temp)[2]));
+			auto temp = parse_float_array(child.child_value(), 4);
+			rot = matrix(temp[3]);
+			base = matrix(vector3d(temp[0], temp[1], temp[2]));
 			old = old % base.invert() % rot % base;
 		} else if (boost::algorithm::equals(child.name(), "scale")) {
-			temp = parse_float_array(child.child_value(), 3);
+			auto temp = parse_float_array(child.child_value(), 3);
 			base = matrix();
 			for (int j = 0; j < 3; j++) {
-				base.a2d[j][j] = (*temp)[j];
+				base.a2d[j][j] = temp[j];
 			}
 			old = old % base;
 		} else if (boost::algorithm::equals(child.name(), "matrix")) {
-			temp = parse_float_array(child.child_value(), 16);
-			rot = matrix(temp.get());
+			auto temp = parse_float_array(child.child_value(), 16);
+			rot = matrix(&temp);
 			old = old % rot;
 		}
 	}

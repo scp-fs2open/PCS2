@@ -1,5 +1,5 @@
+#include <memory>
 #include "matrix3d.h"
-#include <boost/shared_ptr.hpp>
 #include <pugixml.hpp>
 
 #ifndef _DAEDataStructs_H_
@@ -13,6 +13,10 @@ class DAEInput {
 		DAEInput() {
 			valid = false;
 		}
+		DAEInput(const DAEInput&) = delete;
+		DAEInput& operator=(const DAEInput&) = delete;
+		DAEInput(DAEInput&& other);
+		DAEInput& operator=(DAEInput&& other);
 
 		DAEInput(pugi::xml_node element);
 		int x_offset();
@@ -25,7 +29,7 @@ class DAEInput {
 		int v_offset();
 	private:
 		int x,y,z, strides,u,v;
-		boost::shared_ptr<std::vector<float> > value;
+		std::vector<float> value;
 		bool valid;
 };
 
@@ -43,7 +47,7 @@ public:
 // parses ints into a vector
 void parse_int_array(const char* chars, std::vector<int> *result, unsigned int count = -1);
 // parses floats into a vector
-boost::shared_ptr<std::vector<float> > parse_float_array(const char* chars, unsigned int count = -1);
+std::vector<float> parse_float_array(const char* chars, unsigned int count = -1);
 std::string write_int_array(const std::vector<int>& vec);
 std::string write_float_array(const std::vector<float>& vec);
 std::string write_vector3d(vector3d vec,vector3d scale = vector3d(1,1,1));
@@ -60,13 +64,4 @@ void filter_string(std::string& base, const std::string& property);
 void trim_extra_spaces(std::string& s);
 std::string get_name(const pugi::xml_node& element);
 
-template <typename T>
-vector3d relative_to_absolute(vector3d vec, T subobj,const std::vector<T>& subobjs) {
-	while (subobj->parent_sobj != -1) {
-		vec += subobj->offset;
-		subobj = subobjs[subobj->parent_sobj];
-	}
-	vec += subobj->offset;
-	return vec;
-}
 #endif
