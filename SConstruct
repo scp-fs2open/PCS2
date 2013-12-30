@@ -14,15 +14,17 @@ subdirs = ['compat/']
 prog_name = 'pcs2'
 
 release = Environment()
-clang_path = ARGUMENTS.get('CLANG')
-if clang_path:
-  release.Replace(CC=os.path.join(clang_path, 'bin/clang'),
-                  CXX=os.path.join(clang_path, 'bin/clang++'))
-  release.Append(CCFLAGS='-fcolor-diagnostics')
 release.Append(CPPPATH=include_path)
 release.Append(CPPDEFINES=defines)
 release.Append(LIBS=libs)
 release.Append(CCFLAGS=cc_flags)
+clang_path = ARGUMENTS.get('CLANG')
+if clang_path:
+  release.Replace(CC=os.path.join(clang_path, 'bin/clang'),
+                  CXX=os.path.join(clang_path, 'bin/clang++'))
+  release.Append(CCFLAGS=['-fcolor-diagnostics', '-std=c++11'])
+else:
+  release.Append(CCFLAGS='-std=gnu++0x')
 
 debug = release.Clone()
 
