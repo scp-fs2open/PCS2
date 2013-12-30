@@ -694,11 +694,11 @@ struct pmf_bsp_cache
 	boost::shared_array<char> bsp_data;
 	bool changed;
 
-	pmf_bsp_cache() : bsp_size(0), bsp_data(NULL), changed(false) {}
+	pmf_bsp_cache() : bsp_size(0), changed(false) {}
 
 	void decache() // use this when it's been changed
 	{
-		bsp_data.reset(NULL);
+		bsp_data.reset();
 		bsp_size = 0;
 		changed = true;
 	}

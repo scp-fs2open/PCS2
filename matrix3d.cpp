@@ -1,8 +1,7 @@
 #include "matrix3d.h"
 #include <sstream>
-#define _USE_MATH_DEFINES
-#include <cmath>
 #include <cassert>
+#include <boost/math/constants/constants.hpp>
 
 
 matrix::matrix(void) {
@@ -35,10 +34,6 @@ matrix::matrix(vector3d basis) {
 	}
 }
 
-static float round(float x) {
-	return floor(x + 0.5);
-}
-
 // Construct a rotation matrix from a given rotation angle
 matrix::matrix(float angle) {
 	memset(a2d,0,sizeof(a2d));
@@ -59,7 +54,7 @@ matrix::matrix(float angle) {
 				break;
 		}
 	} else {
-		angle = angle * M_PI / 180;
+		angle = angle * boost::math::constants::pi<float>() / 180;
 		a2d[1][1] = cos(angle);
 		a2d[2][1] = sin(angle);
 	}

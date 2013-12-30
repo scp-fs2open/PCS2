@@ -533,7 +533,7 @@ void pmf_bsp_cache::Read(std::istream& in, int ver)
 		// Any values read will be useless, so we might as well override them
 		// with some values that shouldn't crash.
 		bsp_size = 0;
-		bsp_data.reset(NULL);
+		bsp_data.reset();
 		changed = true;
 	}
 }

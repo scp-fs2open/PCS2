@@ -143,7 +143,7 @@ void POF::SLDC_SetTree(boost::shared_array<char> sldc_tree, unsigned int sz)
 		shield_collision.tree_data.reset(new char[sz]);
 		memcpy(shield_collision.tree_data.get(), sldc_tree.get(), sz);
 	} else {
-		shield_collision.tree_data.reset(NULL);
+		shield_collision.tree_data.reset();
 	}
 }
 
@@ -2651,7 +2651,7 @@ bool POF::OBJ2_Get_BSPData				(int SOBJNum, int &size, boost::shared_array<char>
 
 	if (size == 0)
 	{
-		bsp_data.reset(NULL);
+		bsp_data.reset();
 		return true;
 	}
 

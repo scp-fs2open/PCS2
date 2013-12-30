@@ -416,8 +416,8 @@ bool BSP::Del_DefPoints(int index)
 			temp[i-1] = points[i];
 	}
 
-	points[index].norm_counts.reset(NULL);
-	points[index].vertex_data.reset(NULL);
+	points[index].norm_counts.reset();
+	points[index].vertex_data.reset();
 
 	numpoints--;
 	points = temp;
@@ -455,7 +455,7 @@ bool BSP::Del_FlatPoly(int index)
 			temp[i-1] = fpolys[i];
 	}
 
-	fpolys[index].verts.reset(NULL);
+	fpolys[index].verts.reset();
 
 	numfpolys--;
 	fpolys = temp;
@@ -531,7 +531,7 @@ bool BSP::Del_TmapPoly(int index)
 			temp[i-1] = tpolys[i];
 	}
 
-	tpolys[index].verts.reset(NULL);
+	tpolys[index].verts.reset();
 
 	numtpolys--;
 	tpolys = temp;

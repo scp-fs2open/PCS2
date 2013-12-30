@@ -107,7 +107,7 @@ int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 			buffer += (sizeof(vector3d) * norm_counts[i]);
 		}
 		else
-			vertex_data[i].norms.reset(NULL);
+			vertex_data[i].norms.reset();
 	}
 	//vertex_data
 

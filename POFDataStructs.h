@@ -300,7 +300,7 @@ struct SLDC
       unsigned int tree_size;
 	  boost::shared_array<char> tree_data; // = new char[tree_size]
 
-	  SLDC() : tree_size(0), tree_data(NULL) {}
+	  SLDC() : tree_size(0) {}
 };
 
 //****************************************************************************************************
