@@ -783,20 +783,20 @@ void DAEHandler::shield_handler(pugi::xml_node& helper) {
 	// add each polygon
 	pcs_shield_triangle shield_bit;
 	for (int j = 0; j < num_polies; j++) {
-		shield_bit.face_normal = vector3d(0,0,0);
-		for (int k = 2; k >= 0; k--) {
-			shield_bit.corners[k] = fix_axes(inputs.position(position), rotation);
+		vector3d common_vertex = fix_axes(inputs.position(position), rotation);
+		position++;
+		for (int i = 0; i < (use_triangles ? 1 : (vcount[j] - 2)); i++) {
+			shield_bit.corners[2] = common_vertex;
+			shield_bit.corners[1] = fix_axes(inputs.position(position), rotation);
+			shield_bit.corners[0] = fix_axes(inputs.position(position + 1), rotation);
+			shield_bit.face_normal = MakeUnitVector(FigureNormal(
+				shield_bit.corners[0],
+				shield_bit.corners[1],
+				shield_bit.corners[2]));
+			model->AddShldTri(&shield_bit);
 			position++;
 		}
-		// TODO: deal with untriangulated shield meshes properly.
-		if (!use_triangles) {
-			position += vcount[j] - 3;
-		}
-		shield_bit.face_normal = MakeUnitVector(FigureNormal(
-					shield_bit.corners[0],
-					shield_bit.corners[1],
-					shield_bit.corners[2]));
-		model->AddShldTri(&shield_bit);
+		position++;
 	}
 }
 
@@ -833,22 +833,30 @@ void DAEHandler::process_insignia(pugi::xml_node& element) {
 
 	DAEInputs inputs(mesh);
 	int position = 0;
-	insignia.faces.resize(num_polies);
+	insignia.faces.reserve(num_polies);
 
 	// add each polygon
 	for (int j = 0; j < num_polies; j++) {
-		auto face = insignia.faces[j];
-		for (int k = 2; k >= 0; k--) {
-			face.verts[k] = fix_axes(inputs.position(position), rotation);
+		vector3d common_vertex = fix_axes(inputs.position(position), rotation);
+		std::pair<float, float> common_uv = inputs.uv(position);
+		position++;
+		for (int i = 0; i < (use_triangles ? 1 : (vcount[j] - 2)); i++) {
+			insignia.faces.emplace_back();
+			auto& face = insignia.faces.back();
+			face.verts[2] = common_vertex;
+			face.u[2] = common_uv.first;
+			face.v[2] = 1.0f - common_uv.second;
+			face.verts[1] = fix_axes(inputs.position(position), rotation);
 			std::pair<float, float> uv = inputs.uv(position);
-			face.u[k] = uv.first;
-			face.v[k] = 1.0f - uv.second;
+			face.u[1] = uv.first;
+			face.v[1] = 1.0f - uv.second;
+			face.verts[0] = fix_axes(inputs.position(position + 1), rotation);
+			uv = inputs.uv(position + 1);
+			face.u[0] = uv.first;
+			face.v[0] = 1.0f - uv.second;
 			position++;
 		}
-		// TODO: deal with untriangulated insignia properly.
-		if (!use_triangles) {
-			position += vcount[j] - 3;
-		}
+		position++;
 	}
 	model->AddInsignia(&insignia);
 }
