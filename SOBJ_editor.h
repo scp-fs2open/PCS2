@@ -1,6 +1,6 @@
 #pragma once
 
-#include <set>
+#include <unordered_set>
 #include <wx/event.h>
 
 #include"model_editor_ctrl.h"
@@ -227,6 +227,7 @@ public:
 			model.get_child_subobj_poly_count(sobj_num),
 			data.polygons.size() + model.get_child_subobj_poly_count(sobj_num)));
 		info += wxString::Format(_("Vertices: %i\n"), count_vertices());
+		info += wxString::Format(_("Normals: %i\n"), count_normals());
 		info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  "),
 			fabs(size.y), fabs(size.x), fabs(size.z));
 		if (data.parent_sobj > -1) {
@@ -234,7 +235,7 @@ public:
 		} else {
 			info += _("*NONE*");
 		}
-		sobj_info->set_value(std::string(info.mb_str()));
+		sobj_info->set_value(info.mb_str());
 	}
 
 	//applies the data in the control to the model
@@ -295,8 +296,17 @@ public:
 
 private:
 	size_t count_vertices() {
-		std::set<pcs_vertex, bool(*)(const pcs_vertex&, const pcs_vertex&) >
-			vertices(SOBJ_ctrl::pcs_vertex_comparator);
+		std::unordered_set<vector3d> points;
+		for (size_t i = 0; i < data.polygons.size(); i++) {
+			for (size_t j = 0; j < data.polygons[i].verts.size(); j++) {
+				points.insert(data.polygons[i].verts[j].point);
+			}
+		}
+		return points.size();
+	}
+
+	size_t count_normals() {
+		std::unordered_set<pcs_vertex> vertices;
 		for (size_t i = 0; i < data.polygons.size(); i++) {
 			for (size_t j = 0; j < data.polygons[i].verts.size(); j++) {
 				vertices.insert(data.polygons[i].verts[j]);
@@ -305,17 +315,4 @@ private:
 		return vertices.size();
 	}
 
-	static bool pcs_vertex_comparator(const pcs_vertex& a,
-			const pcs_vertex& b) {
-		if (a.point.x != b.point.x) {
-			return a.point.x < b.point.x;
-		}
-		if (a.point.y != b.point.y) {
-			return a.point.y < b.point.y;
-		}
-		if (a.point.z != b.point.z) {
-			return a.point.z < b.point.z;
-		}
-		return false;
-	}
 };

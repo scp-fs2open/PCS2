@@ -185,6 +185,22 @@ inline bool operator == (const pcs_vertex&t, const pcs_vertex&o){
 		t.facet_angle == o.facet_angle;
 }
 
+namespace std {
+	template<>
+	struct hash<pcs_vertex> 	{
+		typedef pcs_vertex argument_type;
+		typedef std::size_t value_type;
+
+		value_type operator()(argument_type const& v) const {
+			value_type const h1(std::hash<vector3d>()(v.point));
+			value_type const h2(std::hash<vector3d>()(v.norm));
+			value_type const h3(std::hash<float>()(v.u));
+			value_type const h4(std::hash<float>()(v.v));
+			value_type const h5(std::hash<float>()(v.facet_angle));
+			return h1 ^ (h2 << 7) ^ (h3 << 13) ^ (h4 << 17) ^ (h4 << 5);
+		}
+	};
+}
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
