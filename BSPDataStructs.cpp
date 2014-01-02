@@ -104,6 +104,9 @@ int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 		{
 			vertex_data[i].norms.resize(norm_counts[i]);
 			memcpy(&vertex_data[i].norms.front(), buffer, sizeof(vector3d) * int(norm_counts[i]));
+			size_t offset = normals.size();
+			normals.resize(normals.size() + norm_counts[i]);
+			memcpy(&normals.front() + offset, buffer, sizeof(vector3d)* int(norm_counts[i]));
 			buffer += (sizeof(vector3d) * norm_counts[i]);
 		}
 		else

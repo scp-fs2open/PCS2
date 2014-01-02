@@ -135,19 +135,6 @@
 
 #undef max
 
-namespace {
-	vector3d LookupNormal(BSP_DefPoints& points, int offset) {
-		int progress = 0;
-		for (int i = 0; i < points.n_verts; i++) {
-			if (progress + points.norm_counts[i] > offset) {
-				return points.vertex_data[i].norms[offset - progress];
-			}
-			progress += points.norm_counts[i];
-		}
-		return{};
-	}
-}
-
 vector3d POFTranslate(vector3d v)
 {
 	v.x = -v.x;
@@ -1157,7 +1144,7 @@ void TranslateFPoly(unsigned int offset, unsigned char *data,
 	for (int i = 0; i < fpoly.nverts; i++)
 	{
 		temp_poly.verts[i].point = POFTranslate(points.vertex_data[fpoly.verts[i].vertnum].vertex);
-		temp_poly.verts[i].norm = POFTranslate(LookupNormal(points, fpoly.verts[i].normnum));
+		temp_poly.verts[i].norm = POFTranslate(points.normals[fpoly.verts[i].normnum]);
 
 		temp_poly.verts[i].u = 0;
 		temp_poly.verts[i].v = 0;
@@ -1201,7 +1188,7 @@ void TranslateTPoly(unsigned int offset, unsigned char *data,
 	for (int i = 0; i < tpoly.nverts; i++)
 	{
 		temp_poly.verts[i].point = POFTranslate(points.vertex_data[tpoly.verts[i].vertnum].vertex);
-		temp_poly.verts[i].norm = POFTranslate(LookupNormal(points, tpoly.verts[i].normnum));
+		temp_poly.verts[i].norm = POFTranslate(points.normals[tpoly.verts[i].normnum]);
 
 		temp_poly.verts[i].u = tpoly.verts[i].u;
 		temp_poly.verts[i].v = tpoly.verts[i].v;

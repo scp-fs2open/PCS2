@@ -79,6 +79,8 @@ struct BSP_DefPoints // 1 - Defines Verticies
 	std::vector<vertdata> vertex_data;			//Equasion	|20+n_norms+Equasion
 	//char *vertex_data // at startofmemory+BSP::DefPoints.offset; Each vertex n is a point followed by norm_counts[n] normals. 
 
+	std::vector<vector3d> normals;
+
 	//---------------------------------------
 	BSP_DefPoints() {
 		head.id = 0;
