@@ -6,42 +6,64 @@
 #define _DAEDataStructs_H_
 
 
+class DAEVectorInput {
+public:
 
-class DAEInput {
-	public:
+	DAEVectorInput() {
+		valid = false;
+	}
+	DAEVectorInput(const DAEVectorInput&) = delete;
+	DAEVectorInput& operator=(const DAEVectorInput&) = delete;
+	DAEVectorInput(DAEVectorInput&& other);
+	DAEVectorInput& operator=(DAEVectorInput&& other);
 
-		DAEInput() {
-			valid = false;
-		}
-		DAEInput(const DAEInput&) = delete;
-		DAEInput& operator=(const DAEInput&) = delete;
-		DAEInput(DAEInput&& other);
-		DAEInput& operator=(DAEInput&& other);
+	DAEVectorInput(pugi::xml_node element);
+	bool is_valid() const;
+	vector3d operator[](size_t index) const;
+private:
+	int x, y, z, strides;
+	std::vector<float> values;
+	bool valid;
+};
 
-		DAEInput(pugi::xml_node element);
-		int x_offset();
-		int y_offset();
-		int z_offset();
-		const std::vector<float> &values();
-		int stride();
-		bool is_valid();
-		int u_offset();
-		int v_offset();
-	private:
-		int x,y,z, strides,u,v;
-		std::vector<float> value;
-		bool valid;
+class DAEUvInput {
+public:
+
+	DAEUvInput() {
+		valid = false;
+	}
+	DAEUvInput(const DAEUvInput&) = delete;
+	DAEUvInput& operator=(const DAEUvInput&) = delete;
+	DAEUvInput(DAEUvInput&& other);
+	DAEUvInput& operator=(DAEUvInput&& other);
+
+	DAEUvInput(pugi::xml_node element);
+	bool is_valid() const;
+	std::pair<float, float> operator[](size_t index) const;
+private:
+	int u, v, strides;
+	std::vector<float> values;
+	bool valid;
 };
 
 class DAEInputs {
 public:
 	DAEInputs(pugi::xml_node& element);
 	virtual ~DAEInputs() {}
+
+	vector3d position(size_t index) const;
+	vector3d normal(size_t index) const;
+	std::pair<float, float> uv(size_t index) const;
+
+private:
 	int max_offset;
 	int pos_offset;
 	int norm_offset;
 	int uv_offset;
-	DAEInput pos, norm, uv;
+	DAEVectorInput pos;
+	DAEVectorInput norm;
+	DAEUvInput uvs;
+	std::vector<int> refs;
 };
 
 // parses ints into a vector

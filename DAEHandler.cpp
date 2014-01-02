@@ -354,8 +354,6 @@ void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
 
 
 void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, matrix rotation, const std::map<string, string>& symbol_to_id) {
-	vector<int> refs;
-	DAEInputs inputs(element);
 	int poly_offset = subobj->polygons.size();
 	bool triangles = false;
 
@@ -366,11 +364,6 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, m
 
 	string texture = element.attribute("material").value();
 	int texture_id = find_texture_id(texture, symbol_to_id);
-
-	pugi::xml_node ref_element = element.child("p");
-	if (ref_element) {
-		parse_int_array(ref_element.child_value(), &refs);
-	}
 	int num_polies = element.attribute("count").as_int();
 
 	subobj->polygons.resize(num_polies + poly_offset);
@@ -379,43 +372,34 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, m
 		parse_int_array(vcount.child_value(), &counts, num_polies);
 	}
 
+	DAEInputs inputs(element);
 	int position = 0;
-
 	// add each polygon
 	for (int j = poly_offset; j < num_polies + poly_offset; j++) {
-		subobj->polygons[j].verts.resize(triangles ? 3 : counts[j - poly_offset]);
+		auto& polygon = subobj->polygons[j];
+		polygon.verts.resize(triangles ? 3 : counts[j - poly_offset]);
 
-		for (int k = subobj->polygons[j].verts.size() - 1; k >= 0; k--) {
-			subobj->polygons[j].verts[k].point = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
+		for (int k = polygon.verts.size() - 1; k >= 0; k--) {
+			auto& vertex = polygon.verts[k];
+			vertex.point = fix_axes(inputs.position(position), rotation);
 
-			process_vector3d(subobj->polygons[j].verts[k].point,subobj);
-			subobj->polygons[j].centeroid += subobj->polygons[j].verts[k].point;
-			if (inputs.norm.is_valid()) {
-				subobj->polygons[j].verts[k].norm = fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
-			} else {
-				subobj->polygons[j].verts[k].norm = vector3d(0,0,0);
-			}
-			subobj->polygons[j].norm += subobj->polygons[j].verts[k].norm;
-			if (inputs.uv.is_valid()) {
-				subobj->polygons[j].verts[k].u = (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
-				// upside down textures...
-				subobj->polygons[j].verts[k].v = 1.0f - (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
-			} else {
-				subobj->polygons[j].verts[k].u = 0.0f;
-				subobj->polygons[j].verts[k].v = 0.0f;
-			}
+			process_vector3d(vertex.point,subobj);
+			polygon.centeroid += vertex.point;
+			vertex.norm = fix_axes(inputs.normal(position), rotation);
+			std::pair<float, float> uv = inputs.uv(position);
+			vertex.u = uv.first;
+			// upside down textures...
+			vertex.v = 1.0f - uv.second;
 
-
-			// TODO: something here
-			subobj->polygons[j].verts[k].facet_angle = 180;
-			position += inputs.max_offset;
+			vertex.facet_angle = 180;
+			position++;
 		}
-		subobj->polygons[j].norm = MakeUnitVector(FigureNormal(
-					subobj->polygons[j].verts[0].point,
-					subobj->polygons[j].verts[1].point,
-				   	subobj->polygons[j].verts[2].point));
-		subobj->polygons[j].centeroid = subobj->polygons[j].centeroid / subobj->polygons[j].verts.size();
-		subobj->polygons[j].texture_id = texture_id;
+		polygon.norm = MakeUnitVector(FigureNormal(
+					polygon.verts[0].point,
+					polygon.verts[1].point,
+					polygon.verts[2].point));
+		polygon.centeroid = polygon.centeroid / polygon.verts.size();
+		polygon.texture_id = texture_id;
 	}
 }
 
@@ -786,22 +770,6 @@ void DAEHandler::shield_handler(pugi::xml_node& helper) {
 	}
 	matrix rotation = get_rotation(helper);
 	
-	vector<int> refs;
-
-	DAEInputs inputs(mesh);
-	if (!inputs.pos.is_valid()) {
-		wxMessageBox(wxT("Positions not found for shield"));
-		return;
-	}
-	if (!inputs.norm.is_valid()) {
-		wxMessageBox(wxT("Normals not found for shield"));
-		return;
-	}
-
-	pugi::xml_node ref_element = find_node(mesh, "p");
-	if (ref_element) {
-		parse_int_array(ref_element.child_value(), &refs);
-	}
 
 	int num_polies = mesh.attribute("count").as_int();
 
@@ -810,26 +778,24 @@ void DAEHandler::shield_handler(pugi::xml_node& helper) {
 		parse_int_array(mesh.child("vcount").child_value(), &vcount, num_polies);
 	}
 
+	DAEInputs inputs(mesh);
 	int position = 0;
 	// add each polygon
 	pcs_shield_triangle shield_bit;
 	for (int j = 0; j < num_polies; j++) {
 		shield_bit.face_normal = vector3d(0,0,0);
 		for (int k = 2; k >= 0; k--) {
-			shield_bit.corners[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
-			shield_bit.face_normal += fix_axes(vector3d((inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.x_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.y_offset()],(inputs.norm.values())[refs[position + inputs.norm_offset] * inputs.norm.stride() + inputs.norm.z_offset()]),rotation);
-
-			position += inputs.max_offset;
+			shield_bit.corners[k] = fix_axes(inputs.position(position), rotation);
+			position++;
 		}
 		// TODO: deal with untriangulated shield meshes properly.
-		if (!use_triangles && vcount[j] > 3) {
-			position += inputs.max_offset * (vcount[j] - 2);
+		if (!use_triangles) {
+			position += vcount[j] - 3;
 		}
 		shield_bit.face_normal = MakeUnitVector(FigureNormal(
 					shield_bit.corners[0],
 					shield_bit.corners[1],
 					shield_bit.corners[2]));
-		shield_bit.face_normal = shield_bit.face_normal / 3;
 		model->AddShldTri(&shield_bit);
 	}
 }
@@ -857,23 +823,6 @@ void DAEHandler::process_insignia(pugi::xml_node& element) {
 
 	matrix rotation = get_rotation(element);
 	
-	vector<int> refs;
-	DAEInputs inputs(mesh);
-
-
-	pugi::xml_node ref_element = find_node(mesh, "p");
-	if (ref_element) {
-		parse_int_array(ref_element.child_value(), &refs);
-	}
-	if (!inputs.pos.is_valid()) {
-		wxMessageBox(wxT("Positions not found for insignia"));
-		return;
-	}
-	if (!inputs.uv.is_valid()) {
-		wxMessageBox(wxT("UV not found for insignia"));
-		return;
-	}
-
 	int num_polies = mesh.attribute("count").as_int();
 
 	std::vector<int> vcount;
@@ -882,20 +831,23 @@ void DAEHandler::process_insignia(pugi::xml_node& element) {
 	}
 
 
+	DAEInputs inputs(mesh);
 	int position = 0;
 	insignia.faces.resize(num_polies);
 
 	// add each polygon
 	for (int j = 0; j < num_polies; j++) {
+		auto face = insignia.faces[j];
 		for (int k = 2; k >= 0; k--) {
-			insignia.faces[j].verts[k] = fix_axes(vector3d((inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.x_offset()],(inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.y_offset()], (inputs.pos.values())[refs[position + inputs.pos_offset] * inputs.pos.stride() + inputs.pos.z_offset()]),rotation);
-			insignia.faces[j].u[k] = (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.u_offset()];
-			insignia.faces[j].v[k] = 1.0f - (inputs.uv.values())[refs[position + inputs.uv_offset] * inputs.uv.stride() + inputs.uv.v_offset()];
-			position += inputs.max_offset;
+			face.verts[k] = fix_axes(inputs.position(position), rotation);
+			std::pair<float, float> uv = inputs.uv(position);
+			face.u[k] = uv.first;
+			face.v[k] = 1.0f - uv.second;
+			position++;
 		}
 		// TODO: deal with untriangulated insignia properly.
-		if (!use_triangles && vcount[j] > 3) {
-			position += inputs.max_offset * (vcount[j] - 2);
+		if (!use_triangles) {
+			position += vcount[j] - 3;
 		}
 	}
 	model->AddInsignia(&insignia);
@@ -1041,23 +993,21 @@ vector3d absolute_to_relative(vector3d vec, pcs_sobj *subobj,vector<pcs_sobj*> *
 	return vec;
 }
 
-DAEInput::DAEInput(DAEInput&& other) : x(other.x), y(other.y), z(other.z), strides(other.strides), u(other.u), v(other.v), value(std::move(other.value)), valid(other.valid) {}
+DAEVectorInput::DAEVectorInput(DAEVectorInput&& other) : x(other.x), y(other.y), z(other.z), strides(other.strides), values(std::move(other.values)), valid(other.valid) {}
 
-DAEInput& DAEInput::operator=(DAEInput&& other) {
+DAEVectorInput& DAEVectorInput::operator=(DAEVectorInput&& other) {
 	valid = other.valid;
 	if (valid) {
 		x = other.x;
 		y = other.y;
 		z = other.z;
 		strides = other.strides;
-		u = other.u;
-		v = other.v;
-		value = std::move(other.value);
+		values = std::move(other.values);
 	}
 	return *this;
 }
 
-DAEInput::DAEInput(pugi::xml_node element) {
+DAEVectorInput::DAEVectorInput(pugi::xml_node element) {
 	valid = false;
 	pugi::xml_node next = element.child("input");
 	next = element.child("technique_common");
@@ -1072,7 +1022,6 @@ DAEInput::DAEInput(pugi::xml_node element) {
 
 	// find coord order
 	int found = 0;
-	int uvs = 0;
 	int i = 0;
 	for (auto child : next.children()) {
 		switch (get_name(child).c_str()[0]) {
@@ -1088,76 +1037,105 @@ DAEInput::DAEInput(pugi::xml_node element) {
 				z = i;
 				found++;
 				break;
-			case 'S':
-				u = i;
-				uvs++;
-				break;
-			case 'T':
-				v = i;
-				uvs++;
-				break;
 			default:
-				string error = "Unexpected axis '";
-				error += get_name(child).c_str();
-				error += "' found";
-				//wxMessageBox(error.c_str());
 				break;
 		}
 		i++;
 	}
-	if (found != 3 && uvs != 2) {
+	if (found != 3) {
 		wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
-		exit(1);
+		return;
 	}
 	next = element.find_child_by_attribute("id", &next.attribute("source").value()[1]);
 	if (!next) {
 		return;
 	}
 	if (next.attribute("count")) {
-		value = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
+		values = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
 	} else {
-		value = parse_float_array(next.child_value());
+		values = parse_float_array(next.child_value());
 	}
 	valid = true;
 }
 
-bool DAEInput::is_valid() {
+bool DAEVectorInput::is_valid() const {
 	return valid;
 }
 
-int DAEInput::stride() {
-	assert(valid);
-	return strides;
+vector3d DAEVectorInput::operator[](size_t index) const {
+	size_t index_offset = strides * index;
+	return vector3d(values[index_offset + x],
+		values[index_offset + y],
+		values[index_offset + z]);
+}
+DAEUvInput::DAEUvInput(DAEUvInput&& other) : u(other.u), v(other.v), strides(other.strides), values(std::move(other.values)), valid(other.valid) {}
+
+DAEUvInput& DAEUvInput::operator=(DAEUvInput&& other) {
+	valid = other.valid;
+	if (valid) {
+		u = other.u;
+		v = other.v;
+		strides = other.strides;
+		values = std::move(other.values);
+	}
+	return *this;
 }
 
-const vector<float>& DAEInput::values() {
-	assert(valid);
-	return value;
+DAEUvInput::DAEUvInput(pugi::xml_node element) {
+	valid = false;
+	pugi::xml_node next = element.child("input");
+	next = element.child("technique_common");
+	if (!next) {
+		return;
+	}
+	next = next.child("accessor");
+	if (!next) {
+		return;
+	}
+	strides = atoi(next.attribute("stride").value());
+
+	// find coord order
+	int found = 0;
+	int i = 0;
+	for (auto child : next.children()) {
+		switch (get_name(child).c_str()[0]) {
+			case 'S':
+				u = i;
+				found++;
+				break;
+			case 'T':
+				v = i;
+				found++;
+				break;
+			default:
+				break;
+		}
+		i++;
+	}
+	if (found != 2) {
+		wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
+		return;
+	}
+	next = element.find_child_by_attribute("id", &next.attribute("source").value()[1]);
+	if (!next) {
+		return;
+	}
+	if (next.attribute("count")) {
+		values = parse_float_array(next.child_value(), atoi(next.attribute("count").value()));
+	}
+	else {
+		values = parse_float_array(next.child_value());
+	}
+	valid = true;
 }
 
-int DAEInput::x_offset() {
-	assert(valid);
-	return x;
+bool DAEUvInput::is_valid() const {
+	return valid;
 }
 
-int DAEInput::y_offset() {
-	assert(valid);
-	return y;
-}
-
-int DAEInput::z_offset() {
-	assert(valid);
-	return z;
-}
-
-int DAEInput::u_offset() {
-	assert(valid);
-	return u;
-}
-
-int DAEInput::v_offset() {
-	assert(valid);
-	return v;
+std::pair<float, float> DAEUvInput::operator[](size_t index) const {
+	size_t index_offset = strides * index;
+	return make_pair(values[index_offset + u], values[index_offset + v]);
 }
 
 DAEInputs::DAEInputs(pugi::xml_node& element) {
@@ -1168,21 +1146,22 @@ DAEInputs::DAEInputs(pugi::xml_node& element) {
 	for (auto poly_bit : element.children()) {
 		if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "VERTEX")) {
 			vert_offset = atoi(poly_bit.attribute("offset").value());
-			max_offset = max(max_offset,vert_offset);
+			max_offset = max(max_offset, vert_offset);
 			pugi::xml_node vertices = mesh.child("vertices");
 			for (auto vertex : vertices.children()) {
 				if (boost::algorithm::equals(vertex.attribute("semantic").value(), "POSITION")) {
 					pos_offset = vert_offset;
-					pos = DAEInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
-				} else if (boost::algorithm::equals(vertex.attribute("semantic").value(), "NORMAL")) {
+					pos = DAEVectorInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
+				}
+				else if (boost::algorithm::equals(vertex.attribute("semantic").value(), "NORMAL")) {
 					norm_offset = vert_offset;
-					norm = DAEInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
+					norm = DAEVectorInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
 				}
 			}
 		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "NORMAL")) {
 			norm_offset = atoi(poly_bit.attribute("offset").value());
-			max_offset = max(max_offset,norm_offset);
-			norm = DAEInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
+			max_offset = max(max_offset, norm_offset);
+			norm = DAEVectorInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
 		} else if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "TEXCOORD")) {
 			int current_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset, current_offset);
@@ -1194,14 +1173,37 @@ DAEInputs::DAEInputs(pugi::xml_node& element) {
 				uv_set_id = current_uv_set_id;
 			}
 			uv_offset = current_offset;
-			uv = DAEInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
+			uvs = DAEUvInput(mesh.find_child_by_attribute("id", &poly_bit.attribute("source").value()[1]));
 		} else if (!poly_bit.attribute("offset").empty()) {
-			max_offset = max(max_offset,atoi(poly_bit.attribute("offset").value()));
+			max_offset = max(max_offset, atoi(poly_bit.attribute("offset").value()));
 		}
 	}
 	max_offset++;
+	pugi::xml_node ref_element = element.child("p");
+	if (ref_element) {
+		parse_int_array(ref_element.child_value(), &refs);
+	}
 }
 
+vector3d DAEInputs::position(size_t index) const {
+	size_t index_offset = max_offset * index;
+	return pos[refs[index_offset + pos_offset]];
+}
+vector3d DAEInputs::normal(size_t index) const {
+	if (!norm.is_valid()) {
+		return vector3d();
+	}
+	size_t index_offset = max_offset * index;
+	return norm[refs[index_offset + norm_offset]];
+}
+
+std::pair<float, float> DAEInputs::uv(size_t index) const {
+	if (!uvs.is_valid()) {
+		return std::make_pair(0.0f, 1.0f);
+	}
+	size_t index_offset = max_offset * index;
+	return uvs[refs[index_offset + uv_offset]];
+}
 
 vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 	broken = rotation * broken;
