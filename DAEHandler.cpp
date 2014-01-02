@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <unordered_map>
 #include <boost/tr1/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -14,6 +15,21 @@
 #undef max
 
 using namespace std;
+
+namespace std {
+	template<>
+	struct hash<std::pair<float, float>> {
+		typedef std::pair<float, float> argument_type;
+		typedef std::size_t value_type;
+
+		value_type operator()(argument_type const& v) const {
+			value_type const h1(std::hash<float>()(v.first));
+			value_type const h2(std::hash<float>()(v.second));
+			return h1 ^ (h2 << 3);
+		}
+	};
+}
+
 
 namespace {
 
@@ -1568,8 +1584,9 @@ pugi::xml_node DAESaver::get_polygroups(vector <vector <pcs_polygon*> > polies, 
 	pugi::xml_node mesh = result.append_child("mesh");
 	vector<float> vert,norm,uv;
 	vector<int> ref, sizes;
-	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
-	map<pair<float,float>,int,bool(*)(const pair<float,float>&, const pair<float,float>&)> uv_map(float_pair_comparator);
+	unordered_map<vector3d, int> vert_map;
+	unordered_map<vector3d, int> norm_map;
+	unordered_map<pair<float, float>, int> uv_map;
 	unsigned int vert_idx = 0, norm_idx = 0, uv_idx = 0;
 
 	for (unsigned int i = 0; i < polies.size(); i++) {
@@ -1879,7 +1896,8 @@ void DAESaver::add_shield() {
 	if (model->GetShldTriCount() == 0) {
 		return;
 	}
-	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator),norm_map(vector3d_comparator);
+	unordered_map<vector3d, int> vert_map;
+	unordered_map<vector3d, int> norm_map;
 	int vert_idx = 0,norm_idx = 0;
 	pugi::xml_node element = scene.append_child("node");
 	element.append_attribute("id") = "shield";
@@ -2011,8 +2029,8 @@ void DAESaver::add_glows() {
 }
 
 void DAESaver::add_insignia() {
-	map<vector3d,int,bool(*)(const vector3d&, const vector3d&)> vert_map(vector3d_comparator);
-	map<pair<float,float>,int,bool(*)(const pair<float,float>&, const pair<float,float>&)> uv_map(float_pair_comparator);
+	unordered_map<vector3d, int> vert_map;
+	unordered_map<pair<float, float>, int> uv_map;
 	int vert_idx = 0,uv_idx = 0;
 	vector<int>counts(model->GetLODCount(), 1);
 
@@ -2400,29 +2418,6 @@ void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d&
 	}
 	output << "0 0 0 1";
 	element.text().set(output.str().c_str());
-}
-
-bool vector3d_comparator(const vector3d& a, const vector3d& b) {
-	if (a.x != b.x) {
-		return a.x < b.x;
-	}
-	if (a.y != b.y) {
-		return a.y < b.y;
-	}
-	if (a.z != b.z) {
-		return a.z < b.z;
-	}
-	return false;
-}
-
-bool float_pair_comparator(const pair<float,float>& a, const pair<float,float>& b) {
-	if (a.first != b.first) {
-		return a.first < b.first;
-	}
-	if (a.second != b.second) {
-		return a.second < b.second;
-	}
-	return false;
 }
 
 vector3d radius_to_scale(float radius) {
