@@ -275,12 +275,12 @@ bool operator<=(const vector3d &one, const vector3d &two)
 
 bool operator==(vector3d &one, vector3d &two)
 {
-	return (fabs(one.x - two.x) < 0.0001 && fabs(one.y - two.y) < 0.0001  && fabs(one.z - two.z) < 0.0001 );
+	return one.x == two.x && one.y == two.y && one.z == two.z;
 }
 
 bool operator==(const vector3d &one, const vector3d &two)
 {
-	return (fabs(one.x - two.x) < 0.0001 && fabs(one.y - two.y) < 0.0001  && fabs(one.z - two.z) < 0.0001 );
+	return one.x == two.x && one.y == two.y && one.z == two.z;
 }
 
 bool operator!=(const vector3d &one, const vector3d &two)

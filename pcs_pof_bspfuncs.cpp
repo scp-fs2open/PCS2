@@ -135,6 +135,19 @@
 
 #undef max
 
+namespace {
+	vector3d LookupNormal(BSP_DefPoints& points, int offset) {
+		int progress = 0;
+		for (int i = 0; i < points.n_verts; i++) {
+			if (progress + points.norm_counts[i] > offset) {
+				return points.vertex_data[i].norms[offset - progress];
+			}
+			progress += points.norm_counts[i];
+		}
+		return{};
+	}
+}
+
 vector3d POFTranslate(vector3d v)
 {
 	v.x = -v.x;
@@ -193,7 +206,7 @@ pcs_polygon RebuildCleanPolygon(pcs_polygon &src)
 
 
 int PackTreeInBSP(bsp_tree_node* root, int offset, char *buffer, std::vector<pcs_polygon> &polygons,
-	std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags)
+	std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags)
 {
 	// ----------- error detection ---------------
 	// abort if error detected
@@ -259,14 +272,14 @@ int PackTreeInBSP(bsp_tree_node* root, int offset, char *buffer, std::vector<pcs
 			for(unsigned int i = 0; i<root->poly_num.size(); i++){
 				if (polygons[root->poly_num[i]].texture_id == -1)
 				{
-					MakeFlatPoly(fpoly, polygons[root->poly_num[i]], vlist, verts, dpnts);
+					MakeFlatPoly(fpoly, polygons[root->poly_num[i]], norms, verts, dpnts);
 
 					fpoly.Write(buffer+offset+size);
 					size += fpoly.MySize();
 				}
 				else 
 				{
-					MakeTmapPoly(tpoly, polygons[root->poly_num[i]], vlist, verts, dpnts);
+					MakeTmapPoly(tpoly, polygons[root->poly_num[i]], norms, verts, dpnts);
 
 					tpoly.Write(buffer+offset+size);
 					size += tpoly.MySize();
@@ -300,19 +313,19 @@ int PackTreeInBSP(bsp_tree_node* root, int offset, char *buffer, std::vector<pcs
 			}
 
 			snorm.prelist_offset = size;
-			size += PackTreeInBSP(NULL, offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(NULL, offset+size, buffer, polygons, norms, verts, dpnts, geo_center, buffsize, error_flags);
 				
 			snorm.postlist_offset = size;
-			size += PackTreeInBSP(NULL, offset + size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(NULL, offset + size, buffer, polygons, norms, verts, dpnts, geo_center, buffsize, error_flags);
 				
 			snorm.online_offset = size;
-			size += PackTreeInBSP(NULL, offset + size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(NULL, offset + size, buffer, polygons, norms, verts, dpnts, geo_center, buffsize, error_flags);
 			
 			snorm.front_offset = size;
-			size += PackTreeInBSP(root->front.get(), offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(root->front.get(), offset+size, buffer, polygons, norms, verts, dpnts, geo_center, buffsize, error_flags);
 
 			snorm.back_offset = size;
-			size += PackTreeInBSP(root->back.get(), offset+size, buffer, polygons, vlist, verts, dpnts, geo_center, buffsize, error_flags);
+			size += PackTreeInBSP(root->back.get(), offset+size, buffer, polygons, norms, verts, dpnts, geo_center, buffsize, error_flags);
 
 			snorm.Write(buffer+offset);
 
@@ -1013,7 +1026,7 @@ void MakeDefPoints(BSP_DefPoints& dpnts, std::vector<bsp_vert> &pntslist)
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts)
+void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts)
 {
 	dst.head.id = 2;
 	dst.normal = src.norm;
@@ -1025,22 +1038,11 @@ void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vl
 	std::vector<vector3d> vertices;
 	vertices.reserve(dst.nverts);
 
-	int vertex_offset;
-
 	for (unsigned int i = 0; i < (unsigned)dst.nverts; i++)
 	{
 		vertices.push_back(src.verts[i].point);
 		dst.verts[i].vertnum = verts[src.verts[i].point];
-		// what is being used i think is the correct method
-		// what is commented is what 1.x has been doing
-		//dst.verts[i].normnum = dpnts.norm_counts[dst.verts[i].vertnum]; 
-		vertex_offset = 0;
-
-		for (unsigned int j = 0; j < (unsigned int)dst.verts[i].vertnum; j++)
-		{
-				vertex_offset += dpnts.norm_counts[j];
-		}
-		dst.verts[i].normnum = vertex_offset + FindInList(vlist[dst.verts[i].vertnum].norms, src.verts[i].norm);
+		dst.verts[i].normnum = norms[src.verts[i].norm];
 	}
 	dst.center = src.centeroid;
 
@@ -1055,7 +1057,7 @@ void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vl
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts)
+void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts)
 {
 	dst.head.id = 3;
 	dst.normal = src.norm;
@@ -1065,23 +1067,11 @@ void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vl
 	vertices.reserve(dst.nverts);
 
 	dst.verts.resize(dst.nverts);
-	int vertex_offset;
-
 	for (int i = 0; i < dst.nverts; i++)
 	{
 		vertices.push_back(src.verts[i].point);
 		dst.verts[i].vertnum = verts[src.verts[i].point];
-		// what is being used i think is the correct method
-		// what is commented is what 1.x has been doing
-		//dst.verts[i].normnum = dpnts.norm_counts[dst.verts[i].vertnum];
-
-		vertex_offset = 0;
-
-		for (int j = 0; j < dst.verts[i].vertnum; j++)
-		{
-				vertex_offset += dpnts.norm_counts[j];
-		}
-		dst.verts[i].normnum = vertex_offset + FindInList(vlist[dst.verts[i].vertnum].norms, src.verts[i].norm);
+		dst.verts[i].normnum = norms[src.verts[i].norm];
 		dst.verts[i].u = src.verts[i].u;
 		dst.verts[i].v = src.verts[i].v;
 	}
@@ -1144,7 +1134,6 @@ void BSPTransPMF(unsigned int offset, unsigned char *data,
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-
 void TranslateFPoly(unsigned int offset, unsigned char *data, 
 				 BSP_DefPoints &points, std::vector<pcs_polygon> &polygons,
 				 unsigned int &upolys)
@@ -1154,8 +1143,6 @@ void TranslateFPoly(unsigned int offset, unsigned char *data,
 	blkhdr.Read((char *) curpos);
 
 	vector3d point, norm;
-	int vertex_offset = 0;
-
 	pcs_polygon temp_poly;
 
 	BSP_FlatPoly fpoly;
@@ -1170,15 +1157,7 @@ void TranslateFPoly(unsigned int offset, unsigned char *data,
 	for (int i = 0; i < fpoly.nverts; i++)
 	{
 		temp_poly.verts[i].point = POFTranslate(points.vertex_data[fpoly.verts[i].vertnum].vertex);
-
-		vertex_offset = 0;
-
-		for (int j = 0; j < fpoly.verts[i].vertnum; j++)
-		{
-				vertex_offset += points.norm_counts[j];
-		}
-
-		temp_poly.verts[i].norm = POFTranslate(points.vertex_data[fpoly.verts[i].vertnum].norms[fpoly.verts[i].normnum-vertex_offset]);
+		temp_poly.verts[i].norm = POFTranslate(LookupNormal(points, fpoly.verts[i].normnum));
 
 		temp_poly.verts[i].u = 0;
 		temp_poly.verts[i].v = 0;
@@ -1205,7 +1184,6 @@ void TranslateTPoly(unsigned int offset, unsigned char *data,
 	unsigned char *curpos = data + offset;
 	blkhdr.Read((char *) curpos);
 
-	int vertex_offset = 0;
 	vector3d point, norm;
 
 	BSP_TmapPoly tpoly;
@@ -1223,16 +1201,7 @@ void TranslateTPoly(unsigned int offset, unsigned char *data,
 	for (int i = 0; i < tpoly.nverts; i++)
 	{
 		temp_poly.verts[i].point = POFTranslate(points.vertex_data[tpoly.verts[i].vertnum].vertex);
-		//protecting ourselves from whacky norm numbers, *shrug* don't know where they're coming from
-		vertex_offset = 0;
-
-
-		for (int j = 0; j < tpoly.verts[i].vertnum; j++)
-		{
-				vertex_offset += points.norm_counts[j];
-		}
-		
-		temp_poly.verts[i].norm = POFTranslate(points.vertex_data[tpoly.verts[i].vertnum].norms[tpoly.verts[i].normnum-vertex_offset]);
+		temp_poly.verts[i].norm = POFTranslate(LookupNormal(points, tpoly.verts[i].normnum));
 
 		temp_poly.verts[i].u = tpoly.verts[i].u;
 		temp_poly.verts[i].v = tpoly.verts[i].v;

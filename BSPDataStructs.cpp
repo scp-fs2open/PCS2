@@ -140,7 +140,7 @@ int BSP_DefPoints::Write(char *buffer)
 		memcpy(tbuff, &vertex_data[i].vertex, sizeof(vector3d));
 		tbuff += sizeof(vector3d);
 
-		if (i < n_verts)
+		if (norm_counts[i])
 		{
 			memcpy(tbuff, &vertex_data[i].norms.front(), sizeof(vector3d) * ((int) (unsigned char)norm_counts[i]));
 			tbuff += (sizeof(vector3d) * norm_counts[i]);

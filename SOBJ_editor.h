@@ -306,12 +306,13 @@ private:
 	}
 
 	size_t count_normals() {
-		std::unordered_set<pcs_vertex> vertices;
+		std::unordered_set<vector3d> vertices;
 		for (size_t i = 0; i < data.polygons.size(); i++) {
 			for (size_t j = 0; j < data.polygons[i].verts.size(); j++) {
-				vertices.insert(data.polygons[i].verts[j]);
+				vertices.insert(data.polygons[i].verts[j].norm);
 			}
 		}
+
 		return vertices.size();
 	}
 

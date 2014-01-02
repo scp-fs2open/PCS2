@@ -1184,13 +1184,12 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 	if(!can_bsp_cache || bsp_cache[src_num].changed)
 	{
 
-		unsigned int i, j, k, l;
 		// convert them to POF axis
 		std::vector<pcs_polygon> clean_list = src.polygons;
-		for (i = 0; i < clean_list.size(); i++)
+		for (size_t i = 0; i < clean_list.size(); i++)
 		{
 			clean_list[i].norm = POFTranslate(clean_list[i].norm);
-			for (j = 0; j < clean_list[i].verts.size(); j++)
+			for (size_t j = 0; j < clean_list[i].verts.size(); j++)
 			{
 				clean_list[i].verts[j].point = POFTranslate(clean_list[i].verts[j].point);
 				clean_list[i].verts[j].norm = POFTranslate(clean_list[i].verts[j].norm);
@@ -1203,35 +1202,27 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 		std::vector<bsp_vert> points_list;
 		std::vector<vector3d> pnts;
 		std::unordered_map<vector3d, int> point_to_index;
+		std::unordered_map<vector3d, int> normal_to_index;
 		for (size_t i = 0; i < pnts.size(); i++) {
 			point_to_index.insert(std::make_pair(pnts[i], i));
 		}
 		bsp_vert temp;
 		points_list.reserve(clean_list.size());
-		for (i = 0; i < clean_list.size(); i++)
+		for (size_t i = 0; i < clean_list.size(); i++)
 		{
-			for (j = 0; j < clean_list[i].verts.size(); j++)
+			for (size_t j = 0; j < clean_list[i].verts.size(); j++)
 			{
 				auto point = point_to_index.find(clean_list[i].verts[j].point);
 				if (point == point_to_index.end()) {
-					l = points_list.size();
-					point_to_index.insert(std::make_pair(clean_list[i].verts[j].point, l));
-					points_list.resize(l+1);
-					pnts.resize(l+1);
-					points_list[l].point = clean_list[i].verts[j].point;
-					pnts[l] = points_list[l].point;
+					point_to_index.insert(std::make_pair(clean_list[i].verts[j].point, points_list.size()));
+					points_list.emplace_back();
+					points_list.back().point = clean_list[i].verts[j].point;
+					pnts.push_back(points_list.back().point);
 				}
-				else {
-					l = point->second;
-				}
-
-				k = FindInList(points_list[l].norms, clean_list[i].verts[j].norm);
-
-				if (k == (unsigned)-1)
-				{
-					k = points_list[l].norms.size();
-					points_list[l].norms.resize(k+1);
-					points_list[l].norms[k] = clean_list[i].verts[j].norm;
+				auto normal = normal_to_index.find(clean_list[i].verts[j].norm);
+				if (normal == normal_to_index.end()) {
+					points_list[normal_to_index.size() / 128].norms.push_back(clean_list[i].verts[j].norm);
+					normal_to_index.insert(std::make_pair(clean_list[i].verts[j].norm, normal_to_index.size()));
 				}
 			}
 		}
@@ -1257,7 +1248,7 @@ bool PCS_Model::PMFObj_to_POFObj2(int src_num, OBJ2 &dst, bool &bsp_compiled, fl
 
 		// pack the tree
 		int error_flags = 0;
-		PackTreeInBSP(root.get(), points.head.size, &dst.bsp_data.front(), clean_list, points_list, point_to_index, points, dst.geometric_center, dst.bsp_data.size(), error_flags);
+		PackTreeInBSP(root.get(), points.head.size, &dst.bsp_data.front(), clean_list, normal_to_index, point_to_index, points, dst.geometric_center, dst.bsp_data.size(), error_flags);
 		
 		// we got errors!
 		if (error_flags != BSP_NOERRORS)

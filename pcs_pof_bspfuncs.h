@@ -168,7 +168,7 @@ void DebugPrintTree(bsp_tree_node* root, std::ostream &out);
 
 int CalculateTreeSize(bsp_tree_node* root, std::vector<pcs_polygon> &polygons);
 int PackTreeInBSP(bsp_tree_node* root, int offset, char *buffer, std::vector<pcs_polygon> &polygons,
-				   std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags);
+	std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts, vector3d geo_center, int buffsize, int &error_flags);
 
 // closely related functions for SLDC meshes
 
@@ -199,8 +199,8 @@ void AddIfNotInList(std::vector<pcs_vertex> &list, pcs_vertex &point);
 // functions for writing a BSP from PMF -- old style
 //-----------------------------------------------
 
-void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts);
-void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::vector<bsp_vert> &vlist, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts);
+void MakeTmapPoly(BSP_TmapPoly &dst, pcs_polygon &src, std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts);
+void MakeFlatPoly(BSP_FlatPoly &dst, pcs_polygon &src, std::unordered_map<vector3d, int> &norms, std::unordered_map<vector3d, int> &verts, BSP_DefPoints &dpnts);
 void MakeDefPoints(BSP_DefPoints& dpnts, std::vector<bsp_vert> &pntslist);
 
 
