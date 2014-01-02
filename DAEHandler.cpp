@@ -123,12 +123,12 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 			up_axis = 0;			
 		} else if (boost::algorithm::equals(temp.child_value(), "Y_UP")) {
 			up_axis = 1;
-			front = vector3d(0,0,1);
-			up = vector3d(0,1,0);
+			front = {0,0,1};
+			up = {0,1,0};
 		} else {
 			up_axis = 2;
-			front = vector3d(0,1,0);
-			up = vector3d(0,0,1);
+			front = {0,1,0};
+			up = {0,0,1};
 		}
 	}
 	mirror_x = mirror_x_axis;
@@ -160,7 +160,7 @@ int DAEHandler::populate(void) {
 		} else if (boost::algorithm::istarts_with(name, "shield")) {
 			shield_handler(helper);
 		} else if (boost::algorithm::istarts_with(name, "thrusters")) {
-			process_thrusters(helper,string(),matrix(),vector3d(0,0,0));
+			process_thrusters(helper, {}, {}, {});
 		} else if (boost::algorithm::istarts_with(name, "insigLOD")) {
 			process_insignia(helper);
 		} else if (boost::algorithm::istarts_with(name, "debris")) {
@@ -168,7 +168,7 @@ int DAEHandler::populate(void) {
 		} else if (boost::algorithm::istarts_with(name, "dockpoint")) {
 			process_dockpoint(helper);
 		} else if (boost::algorithm::istarts_with(name, "bay")) {
-			process_path(helper, "", matrix(), vector3d());
+			process_path(helper, "", {}, {});
 		} else if (boost::algorithm::istarts_with(name, "detail")) {
 			detail[name] = helper;
 		} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
@@ -268,8 +268,8 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	model->AddSOBJ();
 	auto subobj = &model->SOBJ(model->GetSOBJCount() - 1);
-	subobj->bounding_box_min_point = vector3d(1e30f,1e30f,1e30f);
-	subobj->bounding_box_max_point = vector3d(-1e30f,-1e30f,-1e30f);
+	subobj->bounding_box_min_point = {1e30f,1e30f,1e30f};
+	subobj->bounding_box_max_point = {-1e30f,-1e30f,-1e30f};
 	subobj->name = get_name(element).c_str();
 	subobj->properties = "";
 	subobj->parent_sobj = parent;
@@ -279,7 +279,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 	if (subobj->parent_sobj != -1) {
 		subobj->geometric_center = relative_to_absolute(subobj->offset, &model->SOBJ(subobj->parent_sobj), model);
 	} else {
-		subobj->geometric_center = vector3d(0,0,0);
+		subobj->geometric_center = {};
 	}
 
 	rotation_matrix = get_rotation(element, rotation_matrix);
@@ -406,7 +406,7 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, m
 }
 
 void DAEHandler::process_sobj_helpers(pugi::xml_node& element, int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
-	vector3d offset = relative_to_absolute(vector3d(0,0,0), &model->SOBJ(current_sobj_id), model);
+	vector3d offset = relative_to_absolute({}, &model->SOBJ(current_sobj_id), model);
 	for (auto helper : element.children("node")) {
 		// better check for custom properties first
 		if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
@@ -481,8 +481,7 @@ void DAEHandler::process_dock_helpers(pugi::xml_node& element, pcs_dock_point* d
 	if (!helper_parent) {
 		return;
 	}
-	
-	vector3d offset = vector3d(0,0,0);//docks[idx]->dockpoints[0].point;
+	vector3d offset = {};
 	for (auto helper : helper_parent.children("node")) {
 		// better check for custom properties first
 		if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
@@ -491,7 +490,7 @@ void DAEHandler::process_dock_helpers(pugi::xml_node& element, pcs_dock_point* d
 	}
 	for (auto helper : helper_parent.children("node")) {
 		if (boost::algorithm::istarts_with(get_name(helper), "path")) {
-			process_path(helper, "", matrix(), offset, dockpoint);
+			process_path(helper, "", {}, offset, dockpoint);
 		}
 	}
 
@@ -537,9 +536,9 @@ void DAEHandler::process_sobj_rotate(pugi::xml_node& element, matrix rotation, p
 	rotation = get_rotation(element, rotation);
 	vector3d rotate = fix_axes(up, rotation);
 	float x, y, z, x_abs, y_abs, z_abs;
-	x = dot(rotate, vector3d(1,0,0));
-	y = dot(rotate, vector3d(0,1,0));
-	z = dot(rotate, vector3d(0,0,1));
+	x = dot(rotate, {1, 0, 0});
+	y = dot(rotate, {0, 1, 0});
+	z = dot(rotate, {0, 0, 1});
 	x_abs = fabs(x);
 	y_abs = fabs(y);
 	z_abs = fabs(z);
@@ -597,7 +596,7 @@ void DAEHandler::process_firepoints(pugi::xml_node& element,int parent, int arm,
 	pcs_turret turret;
 	turret.sobj_parent = parent;
 	turret.sobj_par_phys = arm;
-	turret.turret_normal = vector3d(0,0,0);
+	turret.turret_normal = {};
 
 	for (auto turret_node : element.children("node")) {
 		turret.turret_normal += fix_axes(up,get_rotation(turret_node,rotation_matrix));
@@ -652,7 +651,7 @@ void DAEHandler::process_glowpoints(pugi::xml_node& element,int parent,matrix ro
 			} else {
 				glow.pos = get_translation(glow_node, rotation_matrix);
 				glow.radius = get_rotation(glow_node, rotation_matrix).scale();
-				glow.norm = vector3d(0,0,0);
+				glow.norm = {};
 				glowbank.lights.push_back(glow);
 			}
 		} else if (boost::algorithm::equals(glow_node.name(), "extra")) {
@@ -938,12 +937,12 @@ vector3d DAEHandler::get_translation(const pugi::xml_node& element, matrix rotat
 	const pugi::xml_node& matrix = element.child("matrix"); 
 	if (position) {
 		vector<float> points = parse_float_array(position.child_value(), 3);
-		return fix_axes(vector3d(points[0], points[1], points[2]), rotation);
+		return fix_axes({points[0], points[1], points[2]}, rotation);
 	} else if (matrix) {
 		vector<float> points = parse_float_array(matrix.child_value(), 16);
-		return fix_axes(vector3d(points[3], points[7], points[11]), rotation);
+		return fix_axes({points[3], points[7], points[11]}, rotation);
 	}
-	return vector3d();
+	return {};
 }
 
 void DAEHandler::process_vector3d(vector3d vec, pcs_sobj* subobj) {
@@ -1074,9 +1073,9 @@ bool DAEVectorInput::is_valid() const {
 
 vector3d DAEVectorInput::operator[](size_t index) const {
 	size_t index_offset = strides * index;
-	return vector3d(values[index_offset + x],
+	return {values[index_offset + x],
 		values[index_offset + y],
-		values[index_offset + z]);
+		values[index_offset + z]};
 }
 DAEUvInput::DAEUvInput(DAEUvInput&& other) : u(other.u), v(other.v), strides(other.strides), values(std::move(other.values)), valid(other.valid) {}
 
@@ -1201,7 +1200,7 @@ vector3d DAEInputs::position(size_t index) const {
 }
 vector3d DAEInputs::normal(size_t index) const {
 	if (!norm.is_valid()) {
-		return vector3d();
+		return {};
 	}
 	size_t index_offset = max_offset * index;
 	return norm[refs[index_offset + norm_offset]];
@@ -1219,11 +1218,11 @@ vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 	broken = rotation * broken;
 
 	if (up_axis == 1) {
-		broken = vector3d(-broken.x,-broken.y,broken.z);
+		broken = {-broken.x,-broken.y,broken.z};
 	} else if (up_axis == 2){
-		broken = vector3d(-broken.x,broken.z,broken.y);
+		broken = {-broken.x,broken.z,broken.y};
 	} else {
-		broken = vector3d(broken.y,-broken.x,broken.z);
+		broken = {broken.y,-broken.x,broken.z};
 	}
 	if (mirror_x) broken.x *= -1;
 	if (mirror_y) broken.y *= -1;
@@ -1242,7 +1241,7 @@ matrix DAEHandler::get_rotation(const pugi::xml_node& element, matrix old) {
 			old = old % base.invert() % rot % base;
 		} else if (boost::algorithm::equals(child.name(), "scale")) {
 			auto temp = parse_float_array(child.child_value(), 3);
-			base = matrix();
+			base = {};
 			for (int j = 0; j < 3; j++) {
 				base.a2d[j][j] = temp[j];
 			}
@@ -1521,13 +1520,13 @@ void DAESaver::add_sobj_helpers(int idx) {
 		}
 		switch(sobj.movement_axis) {
 			case MV_X:
-				direction = vector3d(1,0,0);
+				direction = {1, 0, 0};
 				break;
 			case MV_Y:
-				direction = vector3d(0,1,0);
+				direction = {0, 1, 0};
 				break;
 			case MV_Z:
-				direction = vector3d(0,0,1);
+				direction = {0, 0, 1};
 				break;
 		}
 		pugi::xml_node rotation = helper.append_child("node");
@@ -1538,20 +1537,20 @@ void DAESaver::add_sobj_helpers(int idx) {
 			rotation.append_attribute("id") = "rotate-nospeed";
 			rotation.append_attribute("name") = "rotate-nospeed";
 		}
-		write_transform(rotation, vector3d(), direction, vector3d(0,1,0), length);
+		write_transform(rotation, {}, direction, {0, 1, 0}, length);
 	}
 	size_t uvec_offset, fvec_offset;
 	uvec_offset = sobj.properties.find("$uvec");
 	fvec_offset = sobj.properties.find("$fvec");
 	if (uvec_offset != string::npos && fvec_offset != string::npos) {
-		double x = 0;
-		double y = 0;
-		double z = 0;
+		float x = 0;
+		float y = 0;
+		float z = 0;
 		vector3d fvec, uvec;
-		sscanf(sobj.properties.c_str() + fvec_offset, "$fvec:%lf,%lf,%lf", &x, &y, &z);
-		fvec = vector3d(-x, y, z);
-		sscanf(sobj.properties.c_str() + uvec_offset, "$uvec:%lf,%lf,%lf", &x, &y, &z);
-		uvec = vector3d(-x, y, z);
+		sscanf(sobj.properties.c_str() + fvec_offset, "$fvec:%f,%f,%f", &x, &y, &z);
+		fvec = {-x, y, z};
+		sscanf(sobj.properties.c_str() + uvec_offset, "$uvec:%f,%f,%f", &x, &y, &z);
+		uvec = {-x, y, z};
 		if (!helper) {
 			helper = subobj.append_child("node");
 			helper.append_attribute("id") = "helper";
@@ -1560,7 +1559,7 @@ void DAESaver::add_sobj_helpers(int idx) {
 		pugi::xml_node vec = helper.append_child("node");
 		vec.append_attribute("id") = "vec";
 		vec.append_attribute("name") = "vec";
-		write_transform_binormal(vec, vector3d(), fvec, uvec, vector3d(0,0,1));
+		write_transform_binormal(vec, {}, fvec, uvec, {0, 0, 1});
 	}
 }
 
@@ -1731,7 +1730,7 @@ void DAESaver::add_turret_fps() {
 			element = helper.append_child("node");
 			element.append_attribute("id") = name.str().c_str();
 			element.append_attribute("name") = name.str().c_str();
-			write_transform(element, turret->fire_points[j], turret->turret_normal, vector3d(0,1,0));
+			write_transform(element, turret->fire_points[j], turret->turret_normal, {0, 1, 0});
 		}
 	}
 }
@@ -1756,7 +1755,7 @@ void DAESaver::add_docks() {
 			element = group.append_child("node");
 			element.append_attribute("id") = name.str().c_str();
 			element.append_attribute("name") = name.str().c_str();
-			write_transform(element,dockpoint->dockpoints[j].point,dockpoint->dockpoints[j].norm,vector3d(0,1,0));
+			write_transform(element,dockpoint->dockpoints[j].point,dockpoint->dockpoints[j].norm,{0, 1, 0});
 		}
 		add_helper(group,dockpoint->properties);
 	}
@@ -1779,7 +1778,7 @@ void DAESaver::add_thrusters() {
 		}
 		if (!helper) {
 			helper = scene;
-			scale_vec = vector3d(1,1,1);
+			scale_vec = {1, 1, 1};
 		}
 		helper = helper.append_child("node");
 		helper.append_attribute("id") = "thrusters";
@@ -1790,7 +1789,7 @@ void DAESaver::add_thrusters() {
 			element = helper.append_child("node");
 			element.append_attribute("id") = "thruster";
 			element.append_attribute("name") = "thruster";
-			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), vector3d(0,0,1), thruster->points[j].radius, scale_vec.x);
+			write_transform(element, thruster->points[j].pos - offset, MakeUnitVector(thruster->points[j].norm), {0, 0, 1}, thruster->points[j].radius, scale_vec.x);
 		}
 	}
 }
@@ -1830,7 +1829,7 @@ void DAESaver::add_guns() {
 			element = group.append_child("node");
 			element.append_attribute("id") = name.str().c_str();
 			element.append_attribute("name") = name.str().c_str();
-			write_transform(element,gunbank->muzzles[j].point,gunbank->muzzles[j].norm,vector3d(0,1,0));
+			write_transform(element,gunbank->muzzles[j].point,gunbank->muzzles[j].norm,{0, 1, 0});
 		}
 	}
 }
@@ -1848,7 +1847,7 @@ void DAESaver::add_eyes() {
 		}
 		element.append_attribute("id") = name.str().c_str();
 		element.append_attribute("name") = name.str().c_str();
-		write_transform(element,eye.sobj_offset,eye.normal,vector3d(0,1,0));
+		write_transform(element,eye.sobj_offset,eye.normal,{0, 1, 0});
 	}
 }
 
@@ -2253,11 +2252,11 @@ void DAESaver::add_property(pugi::xml_node& props, const char* prop) {
 
 pugi::xml_node DAESaver::find_subsystem(string name, vector3d &offset, vector3d &scale) {
 	pugi::xml_node answer;
-	offset = vector3d(0,0,0);
-	scale = vector3d(1,1,1);
+	offset = {0, 0, 0};
+	scale = {1, 1, 1};
 	for (unsigned int i = 0; i < subobjs.size(); i++) {
 		if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
-			offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),model_subobjs);
+			offset = relative_to_absolute({0, 0, 0},&model->SOBJ(i),model_subobjs);
 			answer = subobjs[i];
 			break;
 		}
@@ -2280,7 +2279,7 @@ pugi::xml_node DAESaver::find_subsystem(string name, vector3d &offset, vector3d 
 		}
 		for (unsigned int i = 0; i < subobjs.size(); i++) {
 			if (boost::algorithm::iequals(model->SOBJ(i).name, name)) {
-				offset = relative_to_absolute(vector3d(0,0,0),&model->SOBJ(i),model_subobjs);
+				offset = relative_to_absolute({0, 0, 0},&model->SOBJ(i),model_subobjs);
 				answer = subobjs[i];
 				break;
 			}
@@ -2312,7 +2311,7 @@ pugi::xml_node DAESaver::find_helper(pugi::xml_node& element) {
 }
 
 pugi::xml_node DAESaver::find_dockpoint(int idx,vector3d &offset) {
-	offset = vector3d(0,0,0);
+	offset = {0, 0, 0};
 	for (unsigned int i = 0; i < docks.size(); i++) {
 		for (unsigned int j = 0; j < model->Dock(i).paths.size(); j++) {
 			if (model->Dock(i).paths[j] == idx) {
@@ -2356,7 +2355,7 @@ string write_vector3d(vector3d vec,vector3d scale) {
 }
 
 void DAESaver::write_transform(pugi::xml_node& element, const vector3d& offset, const vector3d& norm, const vector3d& base, float scale, float external_scale) {
-	write_transform_binormal(element, offset, norm, vector3d(1, 0, 0), base, scale, external_scale);
+	write_transform_binormal(element, offset, norm, {1, 0, 0}, base, scale, external_scale);
 }
 
 void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d& offset, const vector3d& norm, const vector3d& binorm, const vector3d& base, float scale, float external_scale) {
@@ -2365,7 +2364,7 @@ void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d&
 	int order[3] = {0, 2, 1};
 	vector3d one(MakeUnitVector(norm)), two(MakeUnitVector(binorm)), three;
 	if (fabs(dot(one, two)) > 0.9) {
-		two = vector3d(0,1,0);
+		two = {0, 1, 0};
 	}
 	two = MakeUnitVector(two - dot(one, two) * one);
 	three = CrossProduct(one, two);
@@ -2408,7 +2407,7 @@ void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d&
 }
 
 vector3d radius_to_scale(float radius) {
-	return vector3d(radius,radius,radius);
+	return {radius, radius, radius};
 }
 
 void add_scale(pugi::xml_node element, vector3d scale, vector3d parent_scale) {
