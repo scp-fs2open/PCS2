@@ -96,6 +96,15 @@ namespace {
 		return vec;
 	}
 
+	pugi::xml_node find_helper(pugi::xml_node parent) {
+		pugi::xml_node helper_parent;
+		for (auto helper : parent.children("node")) {
+			if (boost::algorithm::istarts_with(get_name(helper), "helper")) {
+				return helper;
+			}
+		}
+		return pugi::xml_node();
+	}
 }
 
 DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) :
@@ -139,80 +148,77 @@ int DAEHandler::populate(void) {
 	string name;
 	map<string, pugi::xml_node> detail, debris;
 	model->SetMass(-1);
-	for (pugi::xml_node helper = scene.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			name = get_name(helper);
-			progress->incrementWithMessage("Processing " + name);
-			if (boost::algorithm::istarts_with(name, "subsystem")) {
-				subsystem_handler(helper, true);
-			} else if (boost::algorithm::istarts_with(name, "special")) {
-				subsystem_handler(helper, false);
-			} else if (boost::algorithm::istarts_with(name, "shield")) {
-				shield_handler(helper);
-			} else if (boost::algorithm::istarts_with(name, "thrusters")) {
-				process_thrusters(helper,string(),matrix(),vector3d(0,0,0));
-			} else if (boost::algorithm::istarts_with(name, "insigLOD")) {
-				process_insignia(helper);
-			} else if (boost::algorithm::istarts_with(name, "debris")) {
-				debris[name] = helper;
-			} else if (boost::algorithm::istarts_with(name, "dockpoint")) {
-				process_dockpoint(helper);
-			} else if (boost::algorithm::istarts_with(name, "bay")) {
-				process_path(helper, "", matrix(), vector3d());
-			} else if (boost::algorithm::istarts_with(name, "detail")) {
-				detail[name] = helper;
-			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
-				unsigned int eye;
-				if (name.length() > strlen("eyepoint")) {
-					eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
-					if (eyes.size() <= eye) {
-						eyes.resize(eye + 1);
-					}
-				} else {
-					continue;
+	for (auto helper : scene.children("node")) {
+		name = get_name(helper);
+		progress->incrementWithMessage("Processing " + name);
+		if (boost::algorithm::istarts_with(name, "subsystem")) {
+			subsystem_handler(helper, true);
+		} else if (boost::algorithm::istarts_with(name, "special")) {
+			subsystem_handler(helper, false);
+		} else if (boost::algorithm::istarts_with(name, "shield")) {
+			shield_handler(helper);
+		} else if (boost::algorithm::istarts_with(name, "thrusters")) {
+			process_thrusters(helper,string(),matrix(),vector3d(0,0,0));
+		} else if (boost::algorithm::istarts_with(name, "insigLOD")) {
+			process_insignia(helper);
+		} else if (boost::algorithm::istarts_with(name, "debris")) {
+			debris[name] = helper;
+		} else if (boost::algorithm::istarts_with(name, "dockpoint")) {
+			process_dockpoint(helper);
+		} else if (boost::algorithm::istarts_with(name, "bay")) {
+			process_path(helper, "", matrix(), vector3d());
+		} else if (boost::algorithm::istarts_with(name, "detail")) {
+			detail[name] = helper;
+		} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
+			unsigned int eye;
+			if (name.length() > strlen("eyepoint")) {
+				eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
+				if (eyes.size() <= eye) {
+					eyes.resize(eye + 1);
 				}
-				eyes[eye] = process_eyepoint(helper);
-			} else if (boost::algorithm::istarts_with(name, "gunbank")) {
-				unsigned int bank;
-				if (name.length() > strlen("gunbank")) {
-					bank = atoi(name.substr(strlen("gunbank"),2).c_str()) - 1;
-					if (guns.size() <= bank) {
-						guns.resize(bank + 1);
-					}
-				} else {
-					continue;
-				}
-				guns[bank] = process_gunbank(helper, 0);
-			} else if (boost::algorithm::istarts_with(name, "missilebank")) {
-				unsigned int bank;
-				if (name.length() > strlen("missilebank")) {
-					bank = atoi(name.substr(strlen("missilebank"),2).c_str()) - 1;
-					if (missiles.size() <= bank) {
-						missiles.resize(bank + 1);
-					}
-				} else {
-					continue;
-				}
-				missiles[bank] = process_gunbank(helper, 1);
-			} else if (boost::algorithm::istarts_with(name, "mass")) {
-				process_mass(helper);
-			} else if (boost::algorithm::istarts_with(name, "moi")) {
-				process_moment_of_inertia(helper);
-			} else if (boost::algorithm::istarts_with(name, "com")) {
-				model->SetCenterOfMass(get_translation(helper));
-			} else if (boost::algorithm::istarts_with(name, "acen")) {
-				model->SetAutoCenter(get_translation(helper));
+			} else {
+				continue;
 			}
+			eyes[eye] = process_eyepoint(helper);
+		} else if (boost::algorithm::istarts_with(name, "gunbank")) {
+			unsigned int bank;
+			if (name.length() > strlen("gunbank")) {
+				bank = atoi(name.substr(strlen("gunbank"),2).c_str()) - 1;
+				if (guns.size() <= bank) {
+					guns.resize(bank + 1);
+				}
+			} else {
+				continue;
+			}
+			guns[bank] = process_gunbank(helper, 0);
+		} else if (boost::algorithm::istarts_with(name, "missilebank")) {
+			unsigned int bank;
+			if (name.length() > strlen("missilebank")) {
+				bank = atoi(name.substr(strlen("missilebank"),2).c_str()) - 1;
+				if (missiles.size() <= bank) {
+					missiles.resize(bank + 1);
+				}
+			} else {
+				continue;
+			}
+			missiles[bank] = process_gunbank(helper, 1);
+		} else if (boost::algorithm::istarts_with(name, "mass")) {
+			process_mass(helper);
+		} else if (boost::algorithm::istarts_with(name, "moi")) {
+			process_moment_of_inertia(helper);
+		} else if (boost::algorithm::istarts_with(name, "com")) {
+			model->SetCenterOfMass(get_translation(helper));
+		} else if (boost::algorithm::istarts_with(name, "acen")) {
+			model->SetAutoCenter(get_translation(helper));
 		}
-
 	}
-	for (map<string, pugi::xml_node>::iterator it = detail.begin(); it != detail.end(); ++it) {
+	for (auto detail_pair : detail) {
 		model->AddLOD(model->GetSOBJCount());
-		process_subobj(it->second, -1);
+		process_subobj(detail_pair.second, -1);
 	}
-	for (map<string, pugi::xml_node>::iterator it = debris.begin(); it != debris.end(); ++it) {
+	for (auto debris_pair : debris) {
 		model->AddDebris(model->GetSOBJCount());
-		process_subobj(it->second, -1);
+		process_subobj(debris_pair.second, -1);
 	}
 	progress->setTarget(203 + missiles.size() + 3);
 	progress->SetProgress(203);
@@ -254,8 +260,8 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 
 	std::vector<pugi::xml_node> instance_materials = find_nodes(geom, "instance_material");
 	std::map<string, string> symbol_to_id;
-	for (std::vector<pugi::xml_node>::iterator i = instance_materials.begin(); i < instance_materials.end(); ++i) {
-		symbol_to_id.insert(make_pair(i->attribute("symbol").as_string(), i->attribute("target").as_string()));
+	for (auto material : instance_materials) {
+		symbol_to_id.insert(make_pair(material.attribute("symbol").as_string(), material.attribute("target").as_string()));
 	}
 	pugi::xml_node mesh = find_by_id("geometry", geom.attribute("url").value(), root).child("mesh");
 	model->AddSOBJ();
@@ -276,11 +282,12 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 
 	rotation_matrix = get_rotation(element, rotation_matrix);
 
-	for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
-		// Add the polies to the subobj.
-		if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
-			process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
-		}
+	// Add the polies to the subobj.
+	for (auto poly_group : mesh.children("triangles")) {
+		process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
+	}
+	for (auto poly_group : mesh.children("polylist")) {
+		process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
 	}
 	pugi::xml_node trans = find_by_id("node", (string(element.attribute("id").value()) + "-trans").c_str(), root);
 	if (trans) {
@@ -290,11 +297,11 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 			if (mesh) {
 				mesh = mesh.child("mesh");
 				if (mesh) {
-					for (pugi::xml_node poly_group = mesh.first_child(); poly_group; poly_group = poly_group.next_sibling()) {
-						// Add the polies to the subobj.
-						if (boost::algorithm::equals(poly_group.name(), "triangles") || boost::algorithm::equals(poly_group.name(), "polylist")) {
-							process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
-						}
+					for (auto poly_group : mesh.children("triangles")) {
+						process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
+					}
+					for (auto poly_group : mesh.children("polylist")) {
+						process_poly_group(poly_group, subobj, rotation_matrix, symbol_to_id);
 					}
 				}
 			}
@@ -305,7 +312,7 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 
 	pugi::xml_node sobj_helpers;
 	std::map<std::string, pugi::xml_node> subobj_map;
-	for (pugi::xml_node subobj_node = element.first_child(); subobj_node; subobj_node = subobj_node.next_sibling()) {
+	for (auto subobj_node : element.children()) {
 		if (boost::algorithm::equals(subobj_node.name(), "node")) {
 			if (!boost::algorithm::istarts_with(get_name(subobj_node), "helper")) {
 				if (!strstr(get_name(subobj_node).c_str(),"-trans")) {
@@ -321,8 +328,8 @@ void DAEHandler::process_subobj(const pugi::xml_node& element, int parent, matri
 			}
 		}
 	}
-	for (std::map<std::string, pugi::xml_node>::const_iterator it = subobj_map.begin(); it != subobj_map.end(); ++it) {
-		process_subobj(it->second, current_sobj_id, rotation_matrix);
+	for (const auto subobj_pair : subobj_map) {
+		process_subobj(subobj_pair.second, current_sobj_id, rotation_matrix);
 	}
 
 	if (sobj_helpers) {
@@ -335,9 +342,8 @@ void DAEHandler::process_dockpoint(pugi::xml_node& dockpoint_helper) {
 	model->AddDocking();
 	pcs_dock_point* dockpoint = &model->Dock(model->GetDockingCount() - 1);
 	pcs_hardpoint temp;
-	for (pugi::xml_node helper = dockpoint_helper.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node") &&
-			!boost::algorithm::istarts_with(get_name(helper), "helper")) {
+	for (auto helper : dockpoint_helper.children("node")) {
+		if (!boost::algorithm::istarts_with(get_name(helper), "helper")) {
 			temp.norm = fix_axes(up, get_rotation(helper));
 			temp.point = get_translation(helper);
 			dockpoint->dockpoints.push_back(temp);
@@ -415,44 +421,40 @@ void DAEHandler::process_poly_group(pugi::xml_node& element, pcs_sobj* subobj, m
 
 void DAEHandler::process_sobj_helpers(pugi::xml_node& element, int current_sobj_id, int parent_sobj_id, matrix rotation_matrix) {
 	vector3d offset = relative_to_absolute(vector3d(0,0,0), &model->SOBJ(current_sobj_id), model);
-	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper, &model->SOBJ(current_sobj_id).properties);
-			}
+	for (auto helper : element.children("node")) {
+		// better check for custom properties first
+		if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+			process_properties(helper, &model->SOBJ(current_sobj_id).properties);
 		}
 	}
-	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			std::string name = get_name(helper);
-			if (boost::algorithm::istarts_with(name, "thrusters")) {
-				process_thrusters(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
-			} else if (boost::algorithm::istarts_with(name, "multifirepoints")) {
-				process_firepoints(helper,parent_sobj_id,current_sobj_id,rotation_matrix);
-			} else if (boost::algorithm::istarts_with(name, "firepoints")) {
-				process_firepoints(helper,current_sobj_id,current_sobj_id,rotation_matrix);
-			} else if (boost::algorithm::istarts_with(name, "glowbank")) {
-				process_glowpoints(helper,current_sobj_id,rotation_matrix,offset);
-			} else if (boost::algorithm::istarts_with(name, "bay")) {
-				process_path(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
-			} else if (boost::algorithm::istarts_with(name, "path")) {
-				process_path(helper, model->SOBJ(current_sobj_id).name, rotation_matrix, offset);
-			} else if (boost::algorithm::istarts_with(name, "vec")) {
-				process_sobj_vec(helper,rotation_matrix, &model->SOBJ(current_sobj_id).properties);
-			} else if (boost::algorithm::istarts_with(name, "rotate-nospeed")) {
-				process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id), false);
-			} else if (boost::algorithm::istarts_with(name, "rotate")) {
-				process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id));
-			} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
-				unsigned int eye;
-				if (name.length() > strlen("eyepoint")) {
-					eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
-					if (eyes.size() <= eye) {
-						eyes.resize(eye + 1);
-					}
-					eyes[eye] = process_eyepoint(helper, rotation_matrix, current_sobj_id);
+	for (auto helper : element.children("node")) {
+		std::string name = get_name(helper);
+		if (boost::algorithm::istarts_with(name, "thrusters")) {
+			process_thrusters(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
+		} else if (boost::algorithm::istarts_with(name, "multifirepoints")) {
+			process_firepoints(helper,parent_sobj_id,current_sobj_id,rotation_matrix);
+		} else if (boost::algorithm::istarts_with(name, "firepoints")) {
+			process_firepoints(helper,current_sobj_id,current_sobj_id,rotation_matrix);
+		} else if (boost::algorithm::istarts_with(name, "glowbank")) {
+			process_glowpoints(helper,current_sobj_id,rotation_matrix,offset);
+		} else if (boost::algorithm::istarts_with(name, "bay")) {
+			process_path(helper,model->SOBJ(current_sobj_id).name,rotation_matrix,offset);
+		} else if (boost::algorithm::istarts_with(name, "path")) {
+			process_path(helper, model->SOBJ(current_sobj_id).name, rotation_matrix, offset);
+		} else if (boost::algorithm::istarts_with(name, "vec")) {
+			process_sobj_vec(helper,rotation_matrix, &model->SOBJ(current_sobj_id).properties);
+		} else if (boost::algorithm::istarts_with(name, "rotate-nospeed")) {
+			process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id), false);
+		} else if (boost::algorithm::istarts_with(name, "rotate")) {
+			process_sobj_rotate(helper,rotation_matrix, &model->SOBJ(current_sobj_id));
+		} else if (boost::algorithm::istarts_with(name, "eyepoint")) {
+			unsigned int eye;
+			if (name.length() > strlen("eyepoint")) {
+				eye = atoi(name.substr(strlen("eyepoint"),2).c_str()) - 1;
+				if (eyes.size() <= eye) {
+					eyes.resize(eye + 1);
 				}
+				eyes[eye] = process_eyepoint(helper, rotation_matrix, current_sobj_id);
 			}
 		}
 	}
@@ -460,68 +462,50 @@ void DAEHandler::process_sobj_helpers(pugi::xml_node& element, int current_sobj_
 }
 
 void DAEHandler::process_special_helpers(pugi::xml_node& element, pcs_special* special, matrix rotation) {
-	pugi::xml_node helper_parent;
-	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
-		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
-			break;
-		}
-	}
+	pugi::xml_node helper_parent = find_helper(element);
 	if (!helper_parent) {
 		return;
 	}
 	
 	vector3d offset = special->point;
-	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper, &special->properties);
-			}
+	for (auto helper : helper_parent.children("node")) {
+		// better check for custom properties first
+		if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+			process_properties(helper, &special->properties);
 		}
 	}
-	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			if (boost::algorithm::istarts_with(get_name(helper), "thrusters")) {
-				process_thrusters(helper, special->name, rotation, offset);
-			} else if (boost::algorithm::istarts_with(get_name(helper), "bay")) {
-				process_path(helper, special->name, rotation, offset);
-			} else if (boost::algorithm::istarts_with(get_name(helper), "path")) {
-				process_path(helper, special->name, rotation, offset);
-			}
+	for (auto helper : helper_parent.children("node")) {
+		if (boost::algorithm::istarts_with(get_name(helper), "thrusters")) {
+			process_thrusters(helper, special->name, rotation, offset);
+		} else if (boost::algorithm::istarts_with(get_name(helper), "bay")) {
+			process_path(helper, special->name, rotation, offset);
+		} else if (boost::algorithm::istarts_with(get_name(helper), "path")) {
+			process_path(helper, special->name, rotation, offset);
 		}
 	}
 }
 
 void DAEHandler::process_dock_helpers(pugi::xml_node& element, pcs_dock_point* dockpoint) {
-	pugi::xml_node helper_parent;
-	for (helper_parent = element.first_child(); helper_parent; helper_parent = helper_parent.next_sibling()) {
-		if (boost::algorithm::equals(helper_parent.name(), "node") && boost::algorithm::istarts_with(get_name(helper_parent), "helper")) {
-			break;
-		}
-	}
 	pugi::xml_node props = find_node(element, "user_properties");
 	if (props) {
 		dockpoint->properties = props.child_value();
 	}
 
+	pugi::xml_node helper_parent = find_helper(element);
 	if (!helper_parent) {
 		return;
 	}
 	
 	vector3d offset = vector3d(0,0,0);//docks[idx]->dockpoints[0].point;
-	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			// better check for custom properties first
-			if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
-				process_properties(helper, &dockpoint->properties);
-			}
+	for (auto helper : helper_parent.children("node")) {
+		// better check for custom properties first
+		if (boost::algorithm::istarts_with(get_name(helper), "properties")) {
+			process_properties(helper, &dockpoint->properties);
 		}
 	}
-	for (pugi::xml_node helper = helper_parent.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			if (boost::algorithm::istarts_with(get_name(helper), "path")) {
-				process_path(helper, "", matrix(), offset, dockpoint);
-			}
+	for (auto helper : helper_parent.children("node")) {
+		if (boost::algorithm::istarts_with(get_name(helper), "path")) {
+			process_path(helper, "", matrix(), offset, dockpoint);
 		}
 	}
 
@@ -538,11 +522,9 @@ void DAEHandler::process_properties(pugi::xml_node element, string *properties) 
 		return;
 	}
 	*properties = "";
-	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			*properties += get_name(helper);
-			*properties += "\n";
-		}
+	for (auto helper : element.children("node")) {
+		*properties += get_name(helper);
+		*properties += "\n";
 	}
 	trim_extra_spaces(*properties);
 }
@@ -616,13 +598,11 @@ void DAEHandler::process_thrusters(pugi::xml_node& element,string name,matrix ro
 			thruster.properties = string("$engine_subsystem=$") + name;
 		}
 	}
-	for (pugi::xml_node thruster_node = element.first_child(); thruster_node; thruster_node = thruster_node.next_sibling()) {
-		if (boost::algorithm::equals(thruster_node.name(), "node")) {
-			glow.pos = get_translation(thruster_node, rotation_matrix) + offset;
-			glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thruster_node,rotation_matrix)));
-			glow.radius = get_rotation(thruster_node, rotation_matrix).scale();
-			thruster.points.push_back(glow);
-		}
+	for (auto thruster_node : element.children("node")) {
+		glow.pos = get_translation(thruster_node, rotation_matrix) + offset;
+		glow.norm = MakeUnitVector(fix_axes(front,get_rotation(thruster_node,rotation_matrix)));
+		glow.radius = get_rotation(thruster_node, rotation_matrix).scale();
+		thruster.points.push_back(glow);
 	}
 	model->AddThruster(&thruster);
 }
@@ -633,11 +613,9 @@ void DAEHandler::process_firepoints(pugi::xml_node& element,int parent, int arm,
 	turret.sobj_par_phys = arm;
 	turret.turret_normal = vector3d(0,0,0);
 
-	for (pugi::xml_node turret_node = element.first_child(); turret_node; turret_node = turret_node.next_sibling()) {
-		if (boost::algorithm::equals(turret_node.name(), "node")) {
-			turret.turret_normal += fix_axes(up,get_rotation(turret_node,rotation_matrix));
-			turret.fire_points.push_back(get_translation(turret_node,rotation_matrix));
-		}
+	for (auto turret_node : element.children("node")) {
+		turret.turret_normal += fix_axes(up,get_rotation(turret_node,rotation_matrix));
+		turret.fire_points.push_back(get_translation(turret_node,rotation_matrix));
 	}
 	if (model->SOBJ(parent).properties.size() == 0) {
 		model->SOBJ(parent).properties = "$special=subsystem\n$fov=180\n$name=GunTurret\n";
@@ -661,15 +639,13 @@ void DAEHandler::process_path(pugi::xml_node& element, string parent, matrix rot
 	std::multimap<std::string, pcs_pvert> ordered_paths;
 	pcs_pvert vert;
 
-	for (pugi::xml_node path_node = element.first_child(); path_node; path_node = path_node.next_sibling()) {
-		if (boost::algorithm::equals(path_node.name(), "node")) {
-			vert.pos = get_translation(path_node, rotation_matrix) + offset;
-			vert.radius = get_rotation(path_node, rotation_matrix).scale();
-			ordered_paths.insert(make_pair(get_name(path_node), vert));
-		}
+	for (auto path_node : element.children("node")) {
+		vert.pos = get_translation(path_node, rotation_matrix) + offset;
+		vert.radius = get_rotation(path_node, rotation_matrix).scale();
+		ordered_paths.insert(make_pair(get_name(path_node), vert));
 	}
-	for (std::multimap<string, pcs_pvert>::iterator it = ordered_paths.begin(); it != ordered_paths.end(); ++it) {
-		path.verts.push_back(it->second);
+	for (auto converted_path : ordered_paths) {
+		path.verts.push_back(converted_path.second);
 	}
 
 	if (dockpoint) {
@@ -683,7 +659,7 @@ void DAEHandler::process_glowpoints(pugi::xml_node& element,int parent,matrix ro
 	pcs_glow_array glowbank;
 	glowbank.obj_parent = parent;
 	pcs_thrust_glow glow;
-	for (pugi::xml_node glow_node = element.first_child(); glow_node; glow_node = glow_node.next_sibling()) {
+	for (auto glow_node : element.children()) {
 		if (boost::algorithm::equals(glow_node.name(), "node")) {
 			if (boost::algorithm::istarts_with(get_name(glow_node), "helper")) {
 				process_properties(glow_node.child("node"),&glowbank.properties);
@@ -739,7 +715,7 @@ string strip_texture(string name) {
 }
 
 int DAEHandler::find_texture_id(string name, const std::map<std::string, std::string>& symbol_to_id) {
-	std::map<std::string, std::string>::const_iterator it = symbol_to_id.find(name);
+	auto it = symbol_to_id.find(name);
 	if (it != symbol_to_id.end()) {
 		name.assign(it->second);
 	}
@@ -1098,7 +1074,7 @@ DAEInput::DAEInput(pugi::xml_node element) {
 	int found = 0;
 	int uvs = 0;
 	int i = 0;
-	for (pugi::xml_node child = next.first_child(); child; child = child.next_sibling(), i++) {
+	for (auto child : next.children()) {
 		switch (get_name(child).c_str()[0]) {
 			case 'X':
 				x = i;
@@ -1127,6 +1103,7 @@ DAEInput::DAEInput(pugi::xml_node element) {
 				//wxMessageBox(error.c_str());
 				break;
 		}
+		i++;
 	}
 	if (found != 3 && uvs != 2) {
 		wxMessageBox(wxT("Incorrect number of coordinate axes found!"));
@@ -1188,12 +1165,12 @@ DAEInputs::DAEInputs(pugi::xml_node& element) {
 	max_offset = 0;
 	int uv_set_id = std::numeric_limits<int>::max();
 	pugi::xml_node mesh = element.parent();
-	for (pugi::xml_node poly_bit = element.first_child(); poly_bit; poly_bit = poly_bit.next_sibling()) {
+	for (auto poly_bit : element.children()) {
 		if (boost::algorithm::equals(poly_bit.attribute("semantic").value(), "VERTEX")) {
 			vert_offset = atoi(poly_bit.attribute("offset").value());
 			max_offset = max(max_offset,vert_offset);
 			pugi::xml_node vertices = mesh.child("vertices");
-			for (pugi::xml_node vertex = vertices.first_child(); vertex; vertex = vertex.next_sibling()) {
+			for (auto vertex : vertices.children()) {
 				if (boost::algorithm::equals(vertex.attribute("semantic").value(), "POSITION")) {
 					pos_offset = vert_offset;
 					pos = DAEInput(mesh.find_child_by_attribute("id", &vertex.attribute("source").value()[1]));
@@ -1245,7 +1222,7 @@ vector3d DAEHandler::fix_axes(vector3d broken, matrix rotation) {
 matrix DAEHandler::get_rotation(const pugi::xml_node& element, matrix old) {
 	matrix rot;
 	matrix base;
-	for (pugi::xml_node child = element.first_child(); child; child = child.next_sibling()) {
+	for (auto child : element.children()) {
 		if (boost::algorithm::equals(child.name(), "rotate")) {
 			auto temp = parse_float_array(child.child_value(), 4);
 			rot = matrix(temp[3]);
@@ -1275,15 +1252,13 @@ pcs_slot DAEHandler::process_gunbank(pugi::xml_node& element, int type) {
 	vector3d translation = get_translation(element);
 	std::multimap<std::string, pcs_hardpoint> ordered_gunpoints;
 
-	for (pugi::xml_node helper = element.first_child(); helper; helper = helper.next_sibling()) {
-		if (boost::algorithm::equals(helper.name(), "node")) {
-			temp.norm = fix_axes(up, get_rotation(helper, rot));
-			temp.point = get_translation(helper, rot) + translation;
-			ordered_gunpoints.insert(make_pair(get_name(helper), temp));
-		}
+	for (auto helper : element.children("node")) {
+		temp.norm = fix_axes(up, get_rotation(helper, rot));
+		temp.point = get_translation(helper, rot) + translation;
+		ordered_gunpoints.insert(make_pair(get_name(helper), temp));
 	}
-	for (std::multimap<string, pcs_hardpoint>::iterator it = ordered_gunpoints.begin(); it != ordered_gunpoints.end(); ++it) {
-		bank.muzzles.push_back(it->second);
+	for (auto converted_gunpoint : ordered_gunpoints) {
+		bank.muzzles.push_back(converted_gunpoint.second);
 	}
 	return bank;
 }
