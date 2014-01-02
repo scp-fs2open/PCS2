@@ -197,7 +197,7 @@ namespace std {
 			value_type const h3(std::hash<float>()(v.u));
 			value_type const h4(std::hash<float>()(v.v));
 			value_type const h5(std::hash<float>()(v.facet_angle));
-			return h1 ^ (h2 << 7) ^ (h3 << 13) ^ (h4 << 17) ^ (h4 << 5);
+			return h1 ^ (h2 << 7) ^ (h3 << 13) ^ (h4 << 17) ^ (h4 << 5) ^ (h5 << 19);
 		}
 	};
 }

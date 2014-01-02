@@ -235,7 +235,7 @@ public:
 		} else {
 			info += _("*NONE*");
 		}
-		sobj_info->set_value(info.mb_str());
+		sobj_info->set_value(std::string(info.mb_str()));
 	}
 
 	//applies the data in the control to the model

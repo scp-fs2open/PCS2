@@ -38,8 +38,10 @@ namespace {
 		size_t last = 0;
 		for (size_t i = 0; i < str.size(); i++) {
 			if (isspace(str[i])) {
-				result.push_back(str.substr(last, i - last));
-				last = i;
+				if (i != last) {
+					result.push_back(str.substr(last, i - last));
+				}
+				last = i + 1;
 			}
 		}
 		if (last != str.size()) {
