@@ -1023,20 +1023,13 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 
 	if (can_bsp_cache)
 		bsp_cache.resize(poffile.OBJ2_Count());
-	pcs_sobj *obj;
-	int type, bspsz;
-	unsigned int used_polygons;
-	char *bspdata = NULL;
-	BSP bspparser;
-
-	BSP_DefPoints points;
-
 	for (i = 0; i < poffile.OBJ2_Count(); i++)
 	{
 		// Update Progress
 		sprintf(cstringtemp, "Getting Object %d", i);
 		progress->incrementWithMessage(cstringtemp);
-		obj = &subobjects[i];
+
+		pcs_sobj* obj = &subobjects[i];
 		poffile.OBJ2_Get_Parent(i, obj->parent_sobj);
 		poffile.OBJ2_Get_Radius(i, obj->radius);
 		obj->radius_override = obj->radius;
@@ -1057,6 +1050,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 
 		poffile.OBJ2_Get_Name(i, obj->name);
 		poffile.OBJ2_Get_Props(i, obj->properties);
+		int type;
 		poffile.OBJ2_Get_MoveType(i, type); // -1 = none, 1 = rotate
 		switch (type)
 		{
@@ -1083,13 +1077,17 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		}
 
 		// fast method
+		int bspsz;
+		char *bspdata = NULL;
 		poffile.OBJ2_Get_BSPDataPtr(i, bspsz, bspdata);
 
 		//OBJ2_Get_BSPData
 
-		 obj->polygons.resize(100); // good starting size;
-		used_polygons = 0;
-		BSPTransPMF(0, (unsigned char *) bspdata, points, obj->polygons, used_polygons);
+		obj->polygons.resize(100); // good starting size;
+
+		unsigned int used_polygons = 0;
+		BSP_DefPoints points;
+		BSPTransPMF(0, (unsigned char *)bspdata, points, obj->polygons, used_polygons);
 		obj->polygons.resize(used_polygons); // resize to exact size
 
 		if (can_bsp_cache)
@@ -1099,8 +1097,6 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		//	delete[] bspdata;
 		//bspdata = NULL;
 	}
-
-	
 	Transform(matrix(), vector3d());
 	header.max_radius_overridden = fabs(header.max_radius - header.max_radius_override) > 0.0001f;
 	header.max_bounding_overridden = header.max_bounding != header.max_bounding_override;
