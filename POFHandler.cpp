@@ -96,6 +96,7 @@
 #endif
 
 #include <memory.h>
+#include <cstdint>
 #include <cstring>
 #include <string>
 #include <boost/scoped_array.hpp>
@@ -128,9 +129,28 @@
 //**********************************************************************************************************************
 
 template<typename T>
-void write_to_buffer(char* buffer, const T& value) {
-	memcpy(buffer, &value, sizeof(T));
+void write_to_file(std::ostream& out, const T& value) {
+	out.write(reinterpret_cast<const char*>(&value), sizeof(T));
 }
+
+template<>
+void write_to_file(std::ostream& out, const std::string& value) {
+	out.write(value.c_str(), value.size());
+}
+
+template<>
+void write_to_file(std::ostream& out, const std::vector<char>& value) {
+	out.write(value.data(), value.size());
+}
+
+void write_to_file(std::ostream& out, const char* value) {
+	out.write(value, strlen(value));
+}
+
+template<>
+void write_to_file(std::ostream& out, const uint64_t& value);
+template<>
+void write_to_file(std::ostream& out, const int64_t& value);
 
 //**********************************************************************************************************************
 
@@ -1088,22 +1108,19 @@ int POF::LoadPOF(std::ifstream &infile)
 
 bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 {
-	char temp_buf[4], vector_buf[12];
-	boost::scoped_array<char> large_buf;
 	unsigned int size, i, j, k, itemp;
 	OBJ2 *local_sobj;
 	
 	// write signature
-	outfile.write("PSPO", 4);
+	write_to_file(outfile, "PSPO");
 
 	// and version [should be 2117]
-	memcpy(temp_buf, &version, 4);
-	outfile.write(temp_buf, 4);
+	write_to_file(outfile, version);
 
 	//1  TXTR ----------------------------------------
 	if (textures.tex_filename.size() > 0)
 	{
-		outfile.write("TXTR", 4);
+		write_to_file(outfile, "TXTR");
 		
 		//calculate size
 		size = 4 + (textures.tex_filename.size() * 4);
@@ -1112,29 +1129,26 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += textures.tex_filename[i].length();
 		}
 
-		write_to_buffer(temp_buf, size);
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size);
 
 		// write num_textures
-		write_to_buffer(temp_buf, (int)textures.tex_filename.size());
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)textures.tex_filename.size());
 
 		for (i = 0; i < textures.tex_filename.size(); i++)
 		{
 			// write out the length of the string
 			itemp = textures.tex_filename[i].length();
-			write_to_buffer(temp_buf, itemp);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, itemp);
 
 			// write the string
-			outfile.write(textures.tex_filename[i].c_str(), textures.tex_filename[i].length());
+			write_to_file(outfile, textures.tex_filename[i]);
 		}
 
 	}
 
 	//2  HDR2 ----------------------------------------
 	// struct sig
-	outfile.write("HDR2", 4);
+	write_to_file(outfile, "HDR2");
 
 	//struct size
 	size = 104; // static size;
@@ -1143,94 +1157,70 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	size += (header.cross_sections.size() * sizeof(cross_section));
 	size += (header.lights.size() * sizeof(muzzle_light));
 	
-	memcpy(temp_buf, &size, 4);
-	outfile.write(temp_buf, 4);
+	write_to_file(outfile, size);
 
 	// output data
-	write_to_buffer(temp_buf, header.max_radius); 
-	outfile.write(temp_buf, sizeof(float));
+	write_to_file(outfile, header.max_radius); 
 
-	write_to_buffer(temp_buf, header.obj_flags); 
-	outfile.write(temp_buf, sizeof(int));
+	write_to_file(outfile, header.obj_flags); 
 
-	write_to_buffer(temp_buf, header.num_subobjects); 
-	outfile.write(temp_buf, sizeof(float));
+	write_to_file(outfile, header.num_subobjects); 
 
-	write_to_buffer(vector_buf, header.min_bounding); 
-	outfile.write(vector_buf, sizeof(vector3d));
+	write_to_file(outfile, header.min_bounding); 
 
-	write_to_buffer(vector_buf, header.max_bounding); 
-	outfile.write(vector_buf, sizeof(vector3d));
+	write_to_file(outfile, header.max_bounding); 
 
 	//+-+-+-+-+-+-+-+-
 
 
 
-	write_to_buffer(temp_buf, (int)header.sobj_detaillevels.size()); 
-	outfile.write(temp_buf, sizeof(int));
+	write_to_file(outfile, (int)header.sobj_detaillevels.size()); 
 
 	// crap the sobj_detaillevels array out
 	for (i = 0; i < header.sobj_detaillevels.size(); i++)
 	{
-		write_to_buffer(temp_buf, header.sobj_detaillevels[i]); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, header.sobj_detaillevels[i]); 
 	}
 
 	//+-+-+-+-+-+-+-+-
 
 	
-	write_to_buffer(temp_buf, (int)header.sobj_debris.size()); 
-	outfile.write(temp_buf, sizeof(int));
+	write_to_file(outfile, (int)header.sobj_debris.size()); 
 
 	// crap the sobj_debris array out
 	for (i = 0; i < header.sobj_debris.size(); i++)
 	{
-		write_to_buffer(temp_buf, header.sobj_debris[i]); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, header.sobj_debris[i]); 
 	}
 
 	//+-+-+-+-+-+-+-+-
 
 
-	write_to_buffer(temp_buf, header.mass); 
-	outfile.write(temp_buf, sizeof(int));
+	write_to_file(outfile, header.mass); 
 
-	write_to_buffer(vector_buf, header.mass_center); 
-	outfile.write(vector_buf, sizeof(vector3d));
+	write_to_file(outfile, header.mass_center); 
 
-	large_buf.reset(new char[36]); // size of float[3][3]
-
-
-	memcpy(large_buf.get(), &header.moment_inertia, 36); 
-	outfile.write(large_buf.get(), 36);
+	write_to_file(outfile, header.moment_inertia); 
 
 	//+-+-+-+-+-+-+-+-
 
-	write_to_buffer(temp_buf, (int)header.cross_sections.size()); 
-	outfile.write(temp_buf, sizeof(int));
-
-	large_buf.reset(new char[sizeof(cross_section)]);
+	write_to_file(outfile, (int)header.cross_sections.size()); 
 
 	// crap the sobj_debris array out
 	for (i = 0; i < header.cross_sections.size(); i++)
 	{
-		write_to_buffer(large_buf.get(), header.cross_sections[i]); 
-		outfile.write(large_buf.get(), sizeof(cross_section));
+		write_to_file(outfile, header.cross_sections[i]); 
 	}
 
 	//+-+-+-+-+-+-+-+-
 
 	
-	write_to_buffer(temp_buf, (int)header.lights.size()); 
-	outfile.write(temp_buf, sizeof(int));
-
-	large_buf.reset(new char[sizeof(muzzle_light)]);
+	write_to_file(outfile, (int)header.lights.size()); 
 
 	// crap the sobj_debris array out
 	for (i = 0; i < header.lights.size(); i++)
 	{
-		write_to_buffer(large_buf.get(), header.lights[i]); 
-		outfile.write(large_buf.get(), sizeof(muzzle_light));
+		write_to_file(outfile, header.lights[i]); 
 	}
 
 	//3  OBJ2 ----------------------------------------
@@ -1238,67 +1228,53 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	{
 		local_sobj = &objects[i];
 		// struct sig
-		outfile.write("OBJ2", 4);
+		write_to_file(outfile, "OBJ2");
 		
 		//struct size
 		size = 84 + local_sobj->submodel_name.length() + local_sobj->properties.length() + local_sobj->bsp_data.size();
 		
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 
-		write_to_buffer(temp_buf, local_sobj->submodel_number); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, local_sobj->submodel_number); 
 
-		write_to_buffer(temp_buf, local_sobj->radius); 
-		outfile.write(temp_buf, sizeof(float));
+		write_to_file(outfile, local_sobj->radius); 
 
-		write_to_buffer(temp_buf, local_sobj->submodel_parent); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, local_sobj->submodel_parent); 
 
-		write_to_buffer(vector_buf, local_sobj->offset); 
-		outfile.write(vector_buf, sizeof(vector3d));
+		write_to_file(outfile, local_sobj->offset); 
 
-		write_to_buffer(vector_buf, local_sobj->geometric_center); 
-		outfile.write(vector_buf, sizeof(vector3d));
+		write_to_file(outfile, local_sobj->geometric_center); 
 
-		write_to_buffer(vector_buf, local_sobj->bounding_box_min_point); 
-		outfile.write(vector_buf, sizeof(vector3d));
+		write_to_file(outfile, local_sobj->bounding_box_min_point); 
 
-		write_to_buffer(vector_buf, local_sobj->bounding_box_max_point); 
-		outfile.write(vector_buf, sizeof(vector3d));
+		write_to_file(outfile, local_sobj->bounding_box_max_point); 
 
 		itemp = local_sobj->submodel_name.length();
-		write_to_buffer(temp_buf, itemp); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, itemp); 
 
-		outfile.write(local_sobj->submodel_name.c_str(), local_sobj->submodel_name.length());
+		write_to_file(outfile, local_sobj->submodel_name);
 
 		itemp = local_sobj->properties.length();
-		write_to_buffer(temp_buf, itemp); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, itemp); 
 
-		outfile.write(local_sobj->properties.c_str(), local_sobj->properties.length());
+		write_to_file(outfile, local_sobj->properties);
 
-		write_to_buffer(temp_buf, local_sobj->movement_type); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, local_sobj->movement_type); 
 
-		write_to_buffer(temp_buf, local_sobj->movement_axis); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, local_sobj->movement_axis); 
 
-		write_to_buffer(temp_buf, local_sobj->reserved); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, static_cast<int>(local_sobj->reserved)); 
 
-		write_to_buffer(temp_buf, local_sobj->bsp_data.size());
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, static_cast<int>(local_sobj->bsp_data.size()));
 
-		outfile.write(&local_sobj->bsp_data.front(), local_sobj->bsp_data.size());
+		write_to_file(outfile, local_sobj->bsp_data);
 	}
 
 	//4  SPCL ----------------------------------------
 	if (SPCL_Count() > 0)
 	{
 		// struct sig
-		outfile.write("SPCL", 4);
+		write_to_file(outfile, "SPCL");
 		
 		//struct size
 		size = 4;
@@ -1307,29 +1283,23 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += 24 + specials.special_points[i].name.length() + specials.special_points[i].properties.length();
 		}
 		
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 		
-		write_to_buffer(temp_buf, (int)specials.special_points.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)specials.special_points.size()); 
 	
 		for (i = 0; i < SPCL_Count(); i++)
 		{
 			itemp = specials.special_points[i].name.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));	
-			outfile.write(specials.special_points[i].name.c_str(), specials.special_points[i].name.length());	
+			write_to_file(outfile, itemp); 
+			write_to_file(outfile, specials.special_points[i].name);	
 
 			itemp = specials.special_points[i].properties.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));	
-			outfile.write(specials.special_points[i].properties.c_str(), specials.special_points[i].properties.length());	
+			write_to_file(outfile, itemp); 
+			write_to_file(outfile, specials.special_points[i].properties);	
 
-			write_to_buffer(vector_buf, specials.special_points[i].point); 
-			outfile.write(vector_buf, sizeof(vector3d));
+			write_to_file(outfile, specials.special_points[i].point); 
 			
-			write_to_buffer(temp_buf, specials.special_points[i].radius); 
-			outfile.write(temp_buf, sizeof(float));
+			write_to_file(outfile, specials.special_points[i].radius); 
 
 		}
 
@@ -1341,7 +1311,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 
 
 		// struct sig
-		outfile.write("GPNT", 4);
+		write_to_file(outfile, "GPNT");
 		
 		//struct size
 		size = 4 + (4 * GPNT_SlotCount());
@@ -1352,24 +1322,19 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += PNT_Alias(0)->slots[i].guns.size() * sizeof(gun);
 		}
 
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 
-		write_to_buffer(temp_buf, (int)PNT_Alias(0)->slots.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)PNT_Alias(0)->slots.size()); 
 
 		for (i = 0; i < GPNT_SlotCount(); i++)
 		{
-			write_to_buffer(temp_buf, (int)PNT_Alias(0)->slots[i].guns.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)PNT_Alias(0)->slots[i].guns.size()); 
 
 			for (j = 0; j < PNT_Alias(0)->slots[i].guns.size(); j++)
 			{
-				write_to_buffer(vector_buf, PNT_Alias(0)->slots[i].guns[j].point); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, PNT_Alias(0)->slots[i].guns[j].point); 
 
-				write_to_buffer(vector_buf, PNT_Alias(0)->slots[i].guns[j].norm); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, PNT_Alias(0)->slots[i].guns[j].norm); 
 
 			}
 
@@ -1382,7 +1347,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 
 
 		// struct sig
-		outfile.write("MPNT", 4);
+		write_to_file(outfile, "MPNT");
 		
 		//struct size
 		size = 4 + (4 * MPNT_SlotCount());
@@ -1393,24 +1358,19 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += PNT_Alias(1)->slots[i].guns.size() * sizeof(gun);
 		}
 		
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 
-		write_to_buffer(temp_buf, (int)PNT_Alias(1)->slots.size()); 
-		outfile.write(temp_buf, sizeof(int));		
+		write_to_file(outfile, (int)PNT_Alias(1)->slots.size()); 
 
 		for (i = 0; i < MPNT_SlotCount(); i++)
 		{
-			write_to_buffer(temp_buf, (int)PNT_Alias(1)->slots[i].guns.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)PNT_Alias(1)->slots[i].guns.size()); 
 
 			for (j = 0; j < PNT_Alias(1)->slots[i].guns.size(); j++)
 			{
-				write_to_buffer(vector_buf, PNT_Alias(1)->slots[i].guns[j].point); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, PNT_Alias(1)->slots[i].guns[j].point); 
 
-				write_to_buffer(vector_buf, PNT_Alias(1)->slots[i].guns[j].norm); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, PNT_Alias(1)->slots[i].guns[j].norm); 
 
 			}
 
@@ -1421,7 +1381,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	if (T_Alias(0)->banks.size() > 0)
 	{
 		// struct sig
-		outfile.write("TGUN", 4);
+		write_to_file(outfile, "TGUN");
 		
 		//struct size
 		size = 4 + (24 * T_Alias(0)->banks.size());
@@ -1432,31 +1392,24 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += (T_Alias(0)->banks[i].position.size() * 12);
 		}
 		
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 
-		write_to_buffer(temp_buf, (int)T_Alias(0)->banks.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)T_Alias(0)->banks.size()); 
 
 		for (i = 0; i < T_Alias(0)->banks.size(); i++)
 		{
 
-			write_to_buffer(temp_buf, T_Alias(0)->banks[i].sobj_parent); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, T_Alias(0)->banks[i].sobj_parent); 
 
-			write_to_buffer(temp_buf, T_Alias(0)->banks[i].sobj_par_phys); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, T_Alias(0)->banks[i].sobj_par_phys); 
 
-			write_to_buffer(vector_buf, T_Alias(0)->banks[i].turret_normal); 
-			outfile.write(vector_buf, sizeof(vector3d));
+			write_to_file(outfile, T_Alias(0)->banks[i].turret_normal); 
 
-			write_to_buffer(temp_buf, (int)T_Alias(0)->banks[i].position.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)T_Alias(0)->banks[i].position.size()); 
 
 			for (j = 0; j < T_Alias(0)->banks[i].position.size(); j++)
 			{
-					write_to_buffer(vector_buf, T_Alias(0)->banks[i].position[j]); 
-					outfile.write(vector_buf, sizeof(vector3d));
+					write_to_file(outfile, T_Alias(0)->banks[i].position[j]); 
 			}
 		}
 
@@ -1466,7 +1419,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	if (T_Alias(1)->banks.size() > 0)
 	{
 		// struct sig
-		outfile.write("TMIS", 4);
+		write_to_file(outfile, "TMIS");
 		
 		//struct size
 		size = 4 + (24 * T_Alias(1)->banks.size());
@@ -1477,31 +1430,24 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += (T_Alias(1)->banks[i].position.size() * 12);
 		}
 		
-		memcpy(temp_buf, &size, 4);
-		outfile.write(temp_buf, 4);
+		write_to_file(outfile, size);
 
-		write_to_buffer(temp_buf, (int)T_Alias(1)->banks.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)T_Alias(1)->banks.size()); 
 
 		for (i = 0; i < T_Alias(1)->banks.size(); i++)
 		{
 
-			write_to_buffer(temp_buf, T_Alias(1)->banks[i].sobj_parent); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, T_Alias(1)->banks[i].sobj_parent); 
 
-			write_to_buffer(temp_buf, T_Alias(1)->banks[i].sobj_par_phys); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, T_Alias(1)->banks[i].sobj_par_phys); 
 
-			write_to_buffer(vector_buf, T_Alias(1)->banks[i].turret_normal); 
-			outfile.write(vector_buf, sizeof(vector3d));
+			write_to_file(outfile, T_Alias(1)->banks[i].turret_normal); 
 
-			write_to_buffer(temp_buf, (int)T_Alias(1)->banks[i].position.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)T_Alias(1)->banks[i].position.size()); 
 
 			for (j = 0; j < T_Alias(1)->banks[i].position.size(); j++)
 			{
-					write_to_buffer(vector_buf, T_Alias(1)->banks[i].position[j]); 
-					outfile.write(vector_buf, sizeof(vector3d));
+					write_to_file(outfile, T_Alias(1)->banks[i].position[j]); 
 			}
 		}
 
@@ -1510,7 +1456,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//9  DOCK ----------------------------------------
 	if (docking.points.size() > 0)
 	{
-		outfile.write("DOCK", 4);
+		write_to_file(outfile, "DOCK");
 
 		size = 4;
 
@@ -1525,38 +1471,30 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		}
 
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 
-		write_to_buffer(temp_buf, (int)docking.points.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)docking.points.size()); 
 
 		for (i = 0; i < docking.points.size(); i++)
 		{
 			itemp = docking.points[i].properties.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));
-			outfile.write(docking.points[i].properties.c_str(), docking.points[i].properties.length());
+			write_to_file(outfile, itemp); 
+			write_to_file(outfile, docking.points[i].properties);
 
-			write_to_buffer(temp_buf, (int)docking.points[i].path_number.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)docking.points[i].path_number.size()); 
 
 			for (j = 0; j < docking.points[i].path_number.size(); j++)
 			{
-				write_to_buffer(temp_buf, docking.points[i].path_number[j]); 
-				outfile.write(temp_buf, sizeof(int));
+				write_to_file(outfile, docking.points[i].path_number[j]); 
 			}
 
-			write_to_buffer(temp_buf, (int)docking.points[i].points.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)docking.points[i].points.size()); 
 
 			for (k = 0; k < docking.points[i].points.size(); k++)
 			{
-				write_to_buffer(vector_buf, docking.points[i].points[k].point); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, docking.points[i].points[k].point); 
 
-				write_to_buffer(vector_buf, docking.points[i].points[k].norm); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, docking.points[i].points[k].norm); 
 			}
 
 
@@ -1566,9 +1504,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//10 FUEL ----------------------------------------
 	if (FUEL_Count_Thrusters() > 0)
 	{
-		large_buf.reset(new char[sizeof(glow_point)]);
-
-		outfile.write("FUEL", 4);
+		write_to_file(outfile, "FUEL");
 
 		size = 4 + (8 * FUEL_Count_Thrusters());
 
@@ -1577,26 +1513,21 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += (thrusters.thrusters[i].properties.length() + (sizeof(glow_point) * thrusters.thrusters[i].points.size()));
 		}
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 
-		write_to_buffer(temp_buf, (int)thrusters.thrusters.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)thrusters.thrusters.size()); 
 
 		for (i = 0; i < FUEL_Count_Thrusters(); i++)
 		{
-			write_to_buffer(temp_buf, (int)thrusters.thrusters[i].points.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)thrusters.thrusters[i].points.size()); 
 
 			itemp = thrusters.thrusters[i].properties.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));
-			outfile.write(thrusters.thrusters[i].properties.c_str(), thrusters.thrusters[i].properties.length());
+			write_to_file(outfile, itemp); 
+			write_to_file(outfile, thrusters.thrusters[i].properties);
 
 			for (j = 0; j < FUEL_Count_Glows(i); j++)
 			{
-				write_to_buffer(large_buf.get(), thrusters.thrusters[i].points[j]); 
-				outfile.write(large_buf.get(), sizeof(glow_point));
+				write_to_file(outfile, thrusters.thrusters[i].points[j]); 
 
 			}
 
@@ -1608,66 +1539,53 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//11 SHLD ----------------------------------------
 	if (shields.shield_faces.size() > 0 || shields.vertecies.size() > 0)
 	{
-		large_buf.reset(new char[sizeof(shield_face)]);
-
-		outfile.write("SHLD", 4);
+		write_to_file(outfile, "SHLD");
 
 		size = 8 + (sizeof(vector3d) * shields.vertecies.size()) + (sizeof(shield_face) * shields.shield_faces.size());
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 
-		write_to_buffer(temp_buf, (int)shields.vertecies.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)shields.vertecies.size()); 
 
 		for (i = 0; i < shields.vertecies.size(); i++)
 		{
-			write_to_buffer(vector_buf, shields.vertecies[i]); 
-			outfile.write(vector_buf, sizeof(vector3d));
+			write_to_file(outfile, shields.vertecies[i]); 
 		}
 
-		write_to_buffer(temp_buf, (int)shields.shield_faces.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)shields.shield_faces.size()); 
 
 
 		for (i = 0; i < shields.shield_faces.size(); i++)
 		{
-			write_to_buffer(large_buf.get(), shields.shield_faces[i]); 
-			outfile.write(large_buf.get(), sizeof(shield_face));
+			write_to_file(outfile, shields.shield_faces[i]); 
 		}
 	}
 
 	//12  EYE ----------------------------------------
 	if (eyes.eye_positions.size() > 0)
 	{
-		large_buf.reset(new char[sizeof(eye_pos)]);
 		outfile.write("EYE ", 4);
 
 		size = 4 + (sizeof(eye_pos) * eyes.eye_positions.size());
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 
-		write_to_buffer(temp_buf, (int)eyes.eye_positions.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)eyes.eye_positions.size()); 
 
 		for (i = 0; i < eyes.eye_positions.size(); i++)
 		{
-			write_to_buffer(large_buf.get(), eyes.eye_positions[i]); 
-			outfile.write(large_buf.get(), sizeof(eye_pos));
+			write_to_file(outfile, eyes.eye_positions[i]); 
 		}
 	}
 	//13 ACEN ----------------------------------------
 	if (ACEN_IsSet())
 	{
-		outfile.write("ACEN", 4);
+		write_to_file(outfile, "ACEN");
 		k = 12;
 		
-		write_to_buffer(temp_buf, k); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, k); 
 
-		write_to_buffer(vector_buf, autocentering.point); 
-		outfile.write(vector_buf, sizeof(vector3d));
+		write_to_file(outfile, autocentering.point); 
 
 	}
 
@@ -1675,9 +1593,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	if (insignia.insignias.size() > 0)
 	{
 
-		large_buf.reset(new char[sizeof(insg_face)]);
-
-		outfile.write("INSG", 4);
+		write_to_file(outfile, "INSG");
 
 		size = 4; // num_insignias
 
@@ -1688,36 +1604,28 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 			size += (sizeof(insg_face) * insignia.insignias[i].faces.size());
 		}
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 
-		write_to_buffer(temp_buf, (int)insignia.insignias.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)insignia.insignias.size()); 
 
 		for (i = 0; i < insignia.insignias.size(); i++)
 		{
-			write_to_buffer(temp_buf, insignia.insignias[i].detail_level); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, insignia.insignias[i].detail_level); 
 
-			write_to_buffer(temp_buf, (int)insignia.insignias[i].faces.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)insignia.insignias[i].faces.size()); 
 	
-			write_to_buffer(temp_buf, (int)insignia.insignias[i].vertex_pos.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)insignia.insignias[i].vertex_pos.size()); 
 			
 			for (j = 0; j < insignia.insignias[i].vertex_pos.size(); j++)
 			{
-				write_to_buffer(vector_buf, insignia.insignias[i].vertex_pos[j]); 
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, insignia.insignias[i].vertex_pos[j]); 
 			}
 
-			write_to_buffer(vector_buf, insignia.insignias[i].offset); 
-			outfile.write(vector_buf, sizeof(vector3d));
+			write_to_file(outfile, insignia.insignias[i].offset); 
 
 			for (j = 0; j < insignia.insignias[i].faces.size(); j++)
 			{
-				write_to_buffer(large_buf.get(), insignia.insignias[i].faces[j]);
-				outfile.write(large_buf.get(), sizeof(insg_face));
+				write_to_file(outfile, insignia.insignias[i].faces[j]);
 			}
 		}
 	}
@@ -1726,7 +1634,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	if (paths.paths.size() > 0)
 	{
 
-		outfile.write("PATH", 4);
+		write_to_file(outfile, "PATH");
 
 		size = 4;
 
@@ -1752,50 +1660,41 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		}
 
 
-		write_to_buffer(temp_buf, size); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, size); 
 		outfile.flush();
 
-		write_to_buffer(temp_buf, (int)paths.paths.size()); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)paths.paths.size()); 
 		outfile.flush();
 
 		for (i = 0; i < paths.paths.size(); i++)
 		{
 			itemp = paths.paths[i].name.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, itemp); 
 			outfile.flush();
 
-			outfile.write(paths.paths[i].name.c_str(), paths.paths[i].name.length());
+			write_to_file(outfile, paths.paths[i].name);
 			outfile.flush();
 
 			itemp = paths.paths[i].parent.length();
-			write_to_buffer(temp_buf, itemp); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, itemp); 
 			outfile.flush();
 
-			outfile.write(paths.paths[i].parent.c_str(), paths.paths[i].parent.length());
+			write_to_file(outfile, paths.paths[i].parent);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, (int)paths.paths[i].verts.size()); 
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)paths.paths[i].verts.size()); 
 
 			for (j = 0; j < paths.paths[i].verts.size(); j++)
 			{
-				write_to_buffer(vector_buf, paths.paths[i].verts[j].pos); 
-				outfile.write(vector_buf, sizeof(vector3d));		
+				write_to_file(outfile, paths.paths[i].verts[j].pos); 
 
-				write_to_buffer(temp_buf, paths.paths[i].verts[j].radius); 
-				outfile.write(temp_buf, sizeof(float));		
+				write_to_file(outfile, paths.paths[i].verts[j].radius); 
 			
-				write_to_buffer(temp_buf, (int)paths.paths[i].verts[j].sobj_number.size()); 
-				outfile.write(temp_buf, sizeof(int));		
+				write_to_file(outfile, (int)paths.paths[i].verts[j].sobj_number.size()); 
 
 				for (k = 0; k < paths.paths[i].verts[j].sobj_number.size(); k++)
 				{
-					write_to_buffer(temp_buf, paths.paths[i].verts[j].sobj_number[k]); 
-					outfile.write(temp_buf, sizeof(int));	
+					write_to_file(outfile, paths.paths[i].verts[j].sobj_number[k]); 
 				}
 			
 			}
@@ -1809,7 +1708,7 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	{
 
 		//write signature
-		outfile.write("GLOW", 4);
+		write_to_file(outfile, "GLOW");
 		k = 4 + (8 * sizeof(int)) * hull_lights.lights.size(); // each group in binary format is 7 ints + strlen + size of their point array
 																 // almost forgot to add 1 int for num_glow_arrays
 		for ( i  = 0; i < hull_lights.lights.size(); i++)
@@ -1819,68 +1718,55 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		}
 
 		// write size
-		write_to_buffer(temp_buf, k); 
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, k); 
 
 		// write data
 		
-		write_to_buffer(temp_buf, (int)hull_lights.lights.size());
-		outfile.write(temp_buf, sizeof(int));
+		write_to_file(outfile, (int)hull_lights.lights.size());
 		outfile.flush();
 
 
 		for (unsigned int i = 0; i < hull_lights.lights.size(); i++)
 		{
-			write_to_buffer(temp_buf, hull_lights.lights[i].disp_time);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].disp_time);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, hull_lights.lights[i].on_time);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].on_time);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, hull_lights.lights[i].off_time);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].off_time);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, hull_lights.lights[i].obj_parent);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].obj_parent);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, hull_lights.lights[i].LOD);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].LOD);
 			outfile.flush();
 
-			write_to_buffer(temp_buf, hull_lights.lights[i].type);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, hull_lights.lights[i].type);
 			outfile.flush();
 			
-			write_to_buffer(temp_buf, (int)hull_lights.lights[i].lights.size());
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, (int)hull_lights.lights[i].lights.size());
 			outfile.flush();
 
 			itemp = hull_lights.lights[i].properties.length();
-			write_to_buffer(temp_buf, itemp);
-			outfile.write(temp_buf, sizeof(int));
+			write_to_file(outfile, itemp);
 			outfile.flush();
 
 
-			outfile.write(hull_lights.lights[i].properties.c_str(), hull_lights.lights[i].properties.length());
+			write_to_file(outfile, hull_lights.lights[i].properties);
 			outfile.flush();
 
 
 			for (unsigned int j = 0; j < hull_lights.lights[i].lights.size(); j++)
 			{
-				write_to_buffer(vector_buf, hull_lights.lights[i].lights[j].point);
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, hull_lights.lights[i].lights[j].point);
 				outfile.flush();
 
-				write_to_buffer(vector_buf, hull_lights.lights[i].lights[j].norm);
-				outfile.write(vector_buf, sizeof(vector3d));
+				write_to_file(outfile, hull_lights.lights[i].lights[j].norm);
 				outfile.flush();
 
-				write_to_buffer(temp_buf, hull_lights.lights[i].lights[j].radius);
-				outfile.write(temp_buf, sizeof(float));
+				write_to_file(outfile, hull_lights.lights[i].lights[j].radius);
 				outfile.flush();
 			
 			}
@@ -1890,26 +1776,23 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	//17 SLDC ----------------------------------------
 	if (!shield_collision.tree_data.empty())
 	{
-		outfile.write("SLDC", 4);
+		write_to_file(outfile, "SLDC");
 		int size = shield_collision.tree_data.size();
 		k = sizeof(int) + size;
 
-		write_to_buffer(temp_buf, k); 
-		outfile.write(temp_buf, sizeof(int));
-		outfile.write((char*)&size, sizeof(int));
-		outfile.write(&shield_collision.tree_data.front(), size);
+		write_to_file(outfile, k); 
+		write_to_file(outfile, size);
+		write_to_file(outfile, shield_collision.tree_data);
 	}
 
 	//18 PINF ----------------------------------------
 	if (!pofinfo.strings.empty())
 	{
 		//always terminated with a double null
-		outfile.write("PINF", 4);
+		write_to_file(outfile, "PINF");
 
-		write_to_buffer(temp_buf, (int)pofinfo.strings.size()); 
-		outfile.write(temp_buf, sizeof(int));
-
-		outfile.write(&pofinfo.strings.front(), pofinfo.strings.size());
+		write_to_file(outfile, (int)pofinfo.strings.size()); 
+		write_to_file(outfile, pofinfo.strings);
 	}
 	
 	return true;
