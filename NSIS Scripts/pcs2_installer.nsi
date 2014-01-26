@@ -2,7 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "POF Constructor Suite"
-!define PRODUCT_VERSION "2.0"
+!define PRODUCT_VERSION "2.1"
 !define PRODUCT_PUBLISHER "Kazan & Bobboau"
 !define PRODUCT_WEB_SITE "http://alliance.sourceforge.net"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\pcs2.exe"
@@ -10,11 +10,11 @@
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 !define PRODUCT_STARTMENU_REGVAL "NSIS:StartMenuDir"
 
-SetCompressor bzip2
+SetCompressor lzma
 
 ; MUI 1.67 compatible ------
 !include "MUI.nsh"
-!include "registerExtension.nsh"
+!include "FileAssociation.nsh"
 !include "InstallOptions.nsh"
 !include "LogicLib.nsh"
 
@@ -34,7 +34,7 @@ Page Custom MODDirs_Screen_Enter MODDirs_Screen_Leave
 ; Start menu page
 var ICONS_GROUP
 !define MUI_STARTMENUPAGE_NODISABLE
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "POF Constructor Suite 2.0"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "POF Constructor Suite 2"
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "${PRODUCT_UNINST_ROOT_KEY}"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "${PRODUCT_UNINST_KEY}"
 !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "${PRODUCT_STARTMENU_REGVAL}"
@@ -63,6 +63,8 @@ var freespace2_dir
 var moddirs
 var numdirs
 var skipini
+
+
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 OutFile "PCS2 Setup.exe"
@@ -222,14 +224,9 @@ FunctionEnd
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite ifnewer
-  File "..\zlib1.dll"
-  File "..\libpng13.dll"
-  File "..\ILUT.dll"
-  File "..\ILU.dll"
-  File "..\DevIL.dll"
-  File "..\wxbase28d_vc_custom.dll"
-  File "..\wxmsw28d_core_vc_custom.dll"
-  File "..\wxmsw28d_gl_vc_custom.dll"
+  File "..\Release\ILUT.dll"
+  File "..\Release\ILU.dll"
+  File "..\Release\DevIL.dll"
   File "pcs2_readme.txt"
   File "..\Release\pcs2.exe"
   File "..\pcs2.ico"
@@ -246,32 +243,33 @@ Section "MainSection" SEC01
   
 ; File Type Associations
   ${registerExtension} "$INSTDIR\pcs2.exe" ".pof" "FreeSpace 2 Parallax Object File"
-  ${registerExtension} "$INSTDIR\pcs2.exe" ".pmf" "POF Constructor Suite 2.0 Model File"
+  ${registerExtension} "$INSTDIR\pcs2.exe" ".pmf" "POF Constructor Suite 2 Model File"
   
 ; Write INI
     IntCmp $skipini 0 writeini inidone inidone
     writeini:
    ${Explode} $numdirs "|" $moddirs
-   !insertmacro ReplaceSubStr $INSTDIR "\" "\\"
-   StrCpy $9 $MODIFIED_STR
    !insertmacro ReplaceSubStr $freespace2_dir "\" "\\"
    StrCpy $8 $MODIFIED_STR
    
-   FileOpen $3 "$9\pcs2.ini" w
+   FileOpen $3 "$APPDATA\pcs2.ini" w
    FileWrite $3 "[tpaths]$\r$\n"
    FileWrite $3 "path0=.\\$\r$\n"
-   FileWrite $3 "path1=$9\\textures\\$\r$\n"
+   FileWrite $3 "path1=<appdir>\\textures\\$\r$\n"
    FileWrite $3 "path2=$8\\$\r$\n"
    ${For} $1 1 $numdirs
        Pop $2
        IntOp $4 $1 + 2
        FileWrite $3 "path$4=$8\\$2\\$\r$\n"
     ${Next}
-    FileWrite $3 "temp_path=$9\\temp\\$\r$\n"
     IntOp $4 $numdirs + 3
     FileWrite $3 "numpaths=$4$\r$\n"
     FileWrite $3 "[convoptions]$\r$\n"
     FileWrite $3 "cobscale=20.00$\r$\n"
+    FileWrite $3 "[gr_options]$\r$\n"
+    FileWrite $3 "use_vertex_buffer_objects=1$\r$\n"
+    FileWrite $3 "[collada_options]$\r$\n"
+    FileWrite $3 "export_helpers=1$\r$\n"
     FileClose $3
     inidone:
 SectionEnd
@@ -283,6 +281,11 @@ Function .onInit
 FunctionEnd
 
 Function FS2Dir_Screen_Enter
+  ${If} ${FileExists} `$APPDATA\pcs2.ini`
+    StrCpy $skipini 1
+    Abort
+  ${EndIf}
+
   # If you need to skip the page depending on a condition, call Abort.
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "fs2dir_screen.ini"
 FunctionEnd
@@ -392,15 +395,13 @@ Section Uninstall
   Delete "$INSTDIR\DevIL.dll"
   Delete "$INSTDIR\ILU.dll"
   Delete "$INSTDIR\ILUT.dll"
-  Delete "$INSTDIR\libpng13.dll"
-  Delete "$INSTDIR\zlib1.dll"
   Delete "$INSTDIR\textures\invisible.tga"
   Delete "$INSTDIR\pcs2.exe"
   Delete "$INSTDIR\pcs2.ini"
 
   ; File Type Associations
   ${unregisterExtension} ".pof" "FreeSpace 2 Parallax Object File"
-  ${unregisterExtension} ".pmf" "POF Constructor Suite 2.0 Model File"
+  ${unregisterExtension} ".pmf" "POF Constructor Suite 2 Model File"
 
   Delete "$SMPROGRAMS\$ICONS_GROUP\Uninstall.lnk"
   Delete "$DESKTOP\POF Constructor Suite.lnk"
