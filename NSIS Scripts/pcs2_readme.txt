@@ -1,4 +1,4 @@
-POF Constructor Suite 2.0 - Official Release
+POF Constructor Suite 2.1 - Official Release
 ==================================================
 
 Contents:
@@ -22,7 +22,7 @@ G) Renderer Support for Vertex Buffer Objects
 ---------------------------------------------------
 2. What is PMF?
 ---------------------------------------------------
-PMF is PCS Model File, it's POF Constructor Suite 2.0's internal model format.
+PMF is PCS Model File, it's POF Constructor Suite 2's internal model format.
 
 It is a flexible model format that is easy to convert others into, and stores all the data needed for a .pof.
 
@@ -32,6 +32,13 @@ All supported formats go through PMF as an intermediary and as the active model 
 ---------------------------------------------------
 3. Changelog
 ---------------------------------------------------
+2.1:
+	* Collada import and export
+	* Affine transformations
+	* Insignia editor and generator
+	* Bounding box and radius editor
+	* Many performance improvements and bug fixes
+
 2.0.3: 
 	* Resolved OpenGL VBO related crash on model unload
 	* Fixed issue with Geometry filter on/off flag being ignored (oops)
@@ -57,6 +64,7 @@ bug is not already reported - if it is add a note to the existing bug report, ot
 ---------------------------------------------------
 5. Document History
 ---------------------------------------------------
+Jan 26. 2014 - Updated for 2.1
 May 15. 2008 - Updated for 2.0.2 added Reporting bugs
 Feb 11, 2008 - Updated for 2.0.1
 Feb 9, 2008 - Initial revision for PCS2.0 Final release
