@@ -518,16 +518,18 @@ void pcs_glow_array::Write(std::ostream& out)
 #include <cstdio>
 void pmf_bsp_cache::Read(std::istream& in, int ver)
 {
-	if (ver >= 102)
+	if (ver >= 103) {
+		BFReadVector(bsp_data)
+		BFRead(changed, bool)
+	}
+	else if (ver >= 102)
 	{
 		int bsp_size;
 		BFRead(bsp_size, int)
 		if (bsp_size != 0) 
 		{
 			bsp_data.resize(bsp_size);
-			// XXX FIXME: Reads sizeof(bsp_size): 4 bytes.
-			// XXX: Fixing this would require a PMF version bump as older
-			// readers would expect a broken PMF.
+			// Note: This reads sizeof(bsp_size): 4 bytes.
 			BFRead(bsp_data.front(), bsp_size)
 		}
 		BFRead(changed, bool)
@@ -543,8 +545,8 @@ void pmf_bsp_cache::Write(std::ostream& out)
 	// As above, but this might help older versions crash less.
 	int dummy_bsp_size = 0;
 	bool dummy_changed = true;
-	BFWrite(dummy_bsp_size, int)
-	BFWrite(dummy_changed, bool)
+	BFWriteVector(bsp_data)
+	BFWrite(changed, bool)
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-

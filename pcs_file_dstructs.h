@@ -115,9 +115,7 @@ template <class L2TYPE> void BF_WriteVector(std::ostream &out, std::vector<L2TYP
 {
 	int cnt = arr.size();
 	BFWrite(cnt, int)
-
-	for (int i = 0; i < cnt; i++)
-		BFWrite(arr[i], L2TYPE)
+	out.write(reinterpret_cast<char*>(&arr.front()), sizeof(L2TYPE)* cnt);
 }
 
 template <class L3TYPE> void BF_ReadVector(std::istream &in, std::vector<L3TYPE> &arr)
@@ -125,9 +123,7 @@ template <class L3TYPE> void BF_ReadVector(std::istream &in, std::vector<L3TYPE>
 	int cnt;
 	BFRead(cnt, int)
 	arr.resize(cnt);
-
-	for (int i = 0; i < cnt; i++)
-		BFRead(arr[i], L3TYPE)
+	in.read(reinterpret_cast<char*>(&arr.front()), sizeof(L3TYPE)* cnt);
 }
 
 template <class L4TYPE> void BF_WriteAdvVector(std::ostream &out, std::vector<L4TYPE> &arr)

@@ -610,6 +610,7 @@ void PCS_Model::filter_geometry(std::vector<pcs_polygon>&polys){
 File Version History
 100: Initial
 101: Added "facet_angle" to polygon
+103: Save correct BSP cache
 */
 int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 //PMF = PCS Model File
@@ -702,8 +703,10 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 	{
 		BFReadAdvVector(bsp_cache)
 		BFRead(can_bsp_cache, bool)
-		// XXX: bsp_data will always be junk so never use cached data.
-		can_bsp_cache = false;
+		if (ver == 102) {
+			// XXX: bsp_data will always be junk so never use cached data.
+			can_bsp_cache = false;
+		}
 
 		// new in ver 102.. but not associated with above
 		BFRead(has_fullsmoothing_data, bool)

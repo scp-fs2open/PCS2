@@ -231,7 +231,7 @@ class TextureControl;
 class model_editor_ctrl_base;
 struct omnipoints;
 
-#define PMF_VERSION 102
+#define PMF_VERSION 103
 #define PMF_MIN_VERSION 100
 #define PMF_MAX_VERSION PMF_VERSION
 
