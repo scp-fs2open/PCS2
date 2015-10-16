@@ -144,8 +144,11 @@
 #endif // win32 check
 
 #include "FileList.h"
+
 #include <cstring>
 #include <fstream>
+#include <locale>
+
 
 
 
@@ -225,18 +228,19 @@ void FileList::GetList(const std::string &dir, const std::string &filter)
 	HANDLE DirHandle;
 
 	std::string SearchPattern = dir + "\\" + filter ;
-	DirHandle = FindFirstFile(SearchPattern.c_str(), &FoundFile);
+	std::wstring_convert< std::codecvt<wchar_t, char, mbstate_t> > cv;	// z64 does not like this requirement.
+	DirHandle = FindFirstFile(cv.from_bytes(SearchPattern).c_str(), &FoundFile);
 
 	if(DirHandle != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			if (!(FoundFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && std::string(FoundFile.cFileName) != "")
+			if (!(FoundFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && FoundFile.cFileName != L"")
 			{
 				if (numFiles >= files.size())
 					files.resize(files.size()*2);
 
-				files[numFiles] = FoundFile.cFileName;
+				files[numFiles] = cv.to_bytes(FoundFile.cFileName);
 				numFiles++;
 
 			}
