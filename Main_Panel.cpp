@@ -117,40 +117,38 @@
  *
  */
 
-#include"main_panel.h"
-#include"chunk_editors.h"
-#include"pcs2_filethread.h"
-#include"VPReader.h"
-#include<wx/mimetype.h>
-#include<wx/process.h>
+#include "main_panel.h"
+
 #include "AsyncProgress.h"
-#include"selected.xpm"
-#include"unselected.xpm"
-
-#include"top_level_selected.xpm"
-#include"top_level_unselected.xpm"
-
-#include"selected_open.xpm"
-#include"unselected_open.xpm"
-
-#include"top_level_selected_open.xpm"
-#include"top_level_unselected_open.xpm"
-
-#include"dragable_selected.xpm"
-#include"dragable_unselected.xpm"
-
-#include"dragable_selected_open.xpm"
-#include"dragable_unselected_open.xpm"
-
+#include "chunk_editors.h"
 #include "matrix3d.h"
+#include "pcs2_filethread.h"
+#include "VPReader.h"
 
-#include<wx/filename.h>
-#include <wx/progdlg.h>
+#include <wx/filename.h>
+#include <wx/filedlg.h>
 #include <wx/imaglist.h>
+#include <wx/mimetype.h>
 #include <wx/notebook.h>
+#include <wx/process.h>
+#include <wx/progdlg.h>
 
-#include <map>
 #include <algorithm>
+#include <map>
+
+// Resource graphics
+#include "dragable_selected.xpm"
+#include "dragable_selected_open.xpm"
+#include "dragable_unselected.xpm"
+#include "dragable_unselected_open.xpm"
+#include "selected.xpm"
+#include "selected_open.xpm"
+#include "top_level_selected.xpm"
+#include "top_level_selected_open.xpm"
+#include "top_level_unselected.xpm"
+#include "top_level_unselected_open.xpm"
+#include "unselected.xpm"
+#include "unselected_open.xpm"
 
 #define TREE_SEL 0
 #define TREE_UNSEL 1
@@ -187,7 +185,7 @@ main_panel::main_panel(wxFrame* parent)
 	pgauge = new wxGauge(pstatus, -1, 100,
 								wxPoint(widths[0]+5, 3), 
 								wxSize(widths[1], 17),
-								wxGA_PROGRESSBAR | wxGA_SMOOTH);
+								wxGA_HORIZONTAL | wxGA_SMOOTH);
 
 	//+++++++++end status bar stuff
 
@@ -682,7 +680,7 @@ void main_panel::on_transform_chunk(wxCommandEvent &event){
 
 void main_panel::on_load_chunk(wxCommandEvent &event){
 
-	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (fdlg.ShowModal() != wxID_OK)
 		return;
 

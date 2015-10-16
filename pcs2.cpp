@@ -651,7 +651,7 @@ void PCS2_MainWindow::File_Menu_New(wxCommandEvent &event)
 void PCS2_MainWindow::File_Menu_Open(wxCommandEvent &event)
 {
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
@@ -755,7 +755,7 @@ void PCS2_MainWindow::save_progbar_end(wxAsyncProgressEndEvt &event)
 void PCS2_MainWindow::File_Menu_Save(wxCommandEvent &event)
 {
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, _("Save File"), _(""), wxString(loaded_file.c_str(), wxConvUTF8), PCS2_SUPPORTED_FORMATS, wxSAVE | wxOVERWRITE_PROMPT);
+	fdlg = new wxFileDialog(this, _("Save File"), _(""), wxString(loaded_file.c_str(), wxConvUTF8), PCS2_SUPPORTED_FORMATS, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
@@ -1440,7 +1440,7 @@ void PCS2_MainWindow::menu_data_decrement_item(wxCommandEvent &event){
 
 void PCS2_MainWindow::on_global_import(wxCommandEvent &event){
 	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), _("All Supported Formats|*.cob;*.pmf;*.pof;*.scn;*.dae|Parallax Object Files (.pof)|*.pof|PCS2 Model File (.pmf)|*.pmf|Caligari Object Binary (.cob)|*.cob|Caligari Scene (.scn)|*.scn|Collada (.dae)|*.dae"), 
-							wxOPEN | wxFILE_MUST_EXIST);
+							wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (fdlg.ShowModal() != wxID_OK)
 		return;
 
@@ -1459,7 +1459,7 @@ void PCS2_MainWindow::on_redo(wxCommandEvent &event){
 
 void PCS2_MainWindow::on_import(wxCommandEvent &event){
 	wxFileDialog *fdlg;
-	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	fdlg = new wxFileDialog(this, _("Select File(s)"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (fdlg->ShowModal() != wxID_OK)
 		return;
 
