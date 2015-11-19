@@ -1,3 +1,5 @@
+#ifndef _tex_ctrl_h_
+#define _tex_ctrl_h_
 //****************************************************************************
 //	tex_ctrl.h
 //****************************************************************************
@@ -76,100 +78,126 @@
  *
  */
 
-#if !defined(_tex_ctrl_h_)
-#define _tex_ctrl_h_
-#include <string>
-#include "pcs_file.h"
-#include "FileList.h"
-#include <ostream>
-#include "AsyncProgress.h"
 
+
+#include "AsyncProgress.h"
+#include "FileList.h"
+#include "pcs_file.h"
+
+#include "GLee.h"
+
+#include <boost/scoped_array.hpp>
+
+#include <wx/dir.h>
+
+#include <ostream>
+#include <string>
 
 #if defined(_WIN32) // win32
 #include <windows.h>
+
 #include <wx/msw/winundef.h>
 #endif
 
-#include "GLee.h"
-#include <boost/scoped_array.hpp>
-//#include <GL/gl.h>
-
-// forward dec
-class PCS_Model;
-
-enum Texture_Type { TC_TEXTURE, TC_SHINEMAP, TC_GLOW };
-
-struct tc_multitex
-{
-	GLuint texture;
-	GLuint shine;
-	GLuint glow;
-	std::string texname;
-	std::string shine_name;
-	std::string glow_name;
-
-	tc_multitex() : texture(0xFFFFFFFF), shine(0xFFFFFFFF), glow(0xFFFFFFFF) {}
+/**
+ * @enum Texture_Type
+ * @brief The texture render type
+ */
+enum Texture_Type {
+	TC_TEXTURE = 0,     // standard diffuse texture
+	TC_SHINEMAP,        // shine map
+	TC_GLOW             // glow map
 };
 
+/**
+ * @class tc_multitex
+ * @brief Multitexture material
+ */
+class tc_multitex
+{
+public:
+	GLuint texture;     //!< GL index of diffuse texture
+	GLuint shine;       //!< GL index of shine map
+	GLuint glow;        //!< GL index of glow map
+
+	std::string texname;    //!< diffuse name
+	std::string shine_name; //!< shine map name
+	std::string glow_name;  //!< glow map name
+
+	/// @todo Use macros instead of hardcoded hex
+	tc_multitex()
+		: texture(0xFFFFFFFF), shine(0xFFFFFFFF), glow(0xFFFFFFFF) {}
+};
+
+// Uncomment this define to enable texturepath debugging?
 //#define _ENABLE_TEXTUREPATH_DEBUG_
+
+/**
+ * @class TextureControl
+ * @brief Texture management Daemon
+ *
+ * @details Is in charge of loading and unloading from file, binding and unbinding in OpenGL
+ */
 class TextureControl
 {
-	private:
-		std::vector<tc_multitex> textures;
-		std::vector<std::string> texturenames;
+public:
+	TextureControl();
 
+	~TextureControl();
 
-		size_t SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t &curvp, size_t searchpos=0);
-		int SearchAVP(std::string &vp, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t searchpos=0);
+	void Reset();
+
+	void LoadTextures(PCS_Model &pf, std::vector<std::string> &paths, AsyncProgress* prog_msgngr);
+
+	GLuint TextureTranslate(int texnum, Texture_Type type);
+
+	/**
+	 * @brief Returns the filename of the texture indexed by idx
+	 * @param[in] type If specified, gets the filename of the type specified. ex: Given TC_GLOW, return the filename of the glow map
+	 */
+	std::string get_texture_filename(int idx, Texture_Type type = TC_TEXTURE);
+
+	/**
+	 * @brief Returns true if this texture should be drawn in the solid render
+	 */
+	bool solid_render(int idx);
+
+protected:
 
 #if defined(_DEBUG) && defined(_ENABLE_TEXTUREPATH_DEBUG_)
-		GLuint LoadTexture(std::string texname,
-										   std::string &rfname, //real file name
-										   const std::vector<std::string> &paths, 
-										   const std::vector<FileList> &vplists, 
-										   const std::vector<FileList> &normal_lists,
-										   std::ostream &texture_log);
-#else
-		GLuint LoadTexture(std::string texname, 
-										   std::string &rfname, //real file name
-										   const std::vector<std::string> &paths, 
-										   const std::vector<FileList> &vplists, 
-										   std::vector<FileList> &normal_lists);
+	/**
+	 * @brief Debug version of LoadTexture(). Writes debug messages to texture_log
+	 */
+	GLuint LoadTexture(std::string texname,
+		std::string &rfname, //real file name
+		const std::vector<std::string> &paths,
+		const std::vector<FileList> &vplists,
+		const std::vector<FileList> &normal_lists,
+		std::ostream &texture_log);
 #endif
 
-	public:
-		
-		~TextureControl()
-			{ Reset(); }
+	/**
+	 * @brief Loads a (single) texture from file, checking both the file system and any available VP's
+	 *
+	 * @param[in]  texname      Name of the texture to load
+	 * @param[out] rfname       (Real) Filename of the texture
+	 * @param[in]  paths        Directories to check
+	 * @param[in]  vplists      VP File lists to check
+	 * @param[in]  normal_lists ?
+	 *
+	 * @returns The GL index of the loaded (single) texture
+	 */
+	GLuint LoadTexture(std::string texname,
+		std::string &rfname, //real file name
+		const std::vector<std::string> &paths,
+		const std::vector<FileList> &vplists,
+		std::vector<FileList> &normal_lists);
 
-		void Reset();
-		
+	int SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t &curvp, size_t searchpos = 0);
 
-		void LoadTextures(PCS_Model &pf, std::vector<std::string> &paths, AsyncProgress* prog_msgngr);
-
-
-		GLuint TextureTranslate(int texnum, Texture_Type type);	
-
-		std::string get_texture_filename(int idx, Texture_Type type = TC_TEXTURE){
-			if(idx<0||idx>(int)textures.size())
-				return "";
-
-			switch(type){
-			case TC_TEXTURE:
-				return textures[idx].texname;
-			case TC_GLOW:
-				return textures[idx].glow_name;
-			case TC_SHINEMAP:
-				return textures[idx].shine_name;
-			default:
-				return textures[idx].texname;
-			}
-		}
-
-		//should this texture be drawn in the solid render?
-		bool solid_render(int idx){
-			return idx < 0 || idx >= (int)textures.size() || texturenames[idx] != "invisible";//NO!!
-		}
+private:
+	std::vector<tc_multitex> textures;
+	std::vector<std::string> texturenames;
 };
 
 GLuint LoadFile(std::string Filename);

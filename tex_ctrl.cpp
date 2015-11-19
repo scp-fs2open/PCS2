@@ -140,16 +140,14 @@
  *
  */
 
-#include "tex_ctrl.h"
 #include "FileList.h"
-#include "VPReader.h"
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
-#include <fstream>
-#include "pcs2.h"
-#include "main_panel.h"
 #include "insignia.png.h"
+#include "main_panel.h"
+#include "pcs2.h"
+#include "tex_ctrl.h"
+#include "VPReader.h"
+
+#include <fstream>
 
 using namespace std;
 
@@ -196,6 +194,30 @@ try{
 // Texture Control code members
 // ****************************************************************************************************************
 
+
+TextureControl::~TextureControl() {
+	Reset();
+}
+
+bool TextureControl::solid_render(int idx) {
+	return (idx < 0) || (idx >= (int)textures.size()) || (texturenames[idx] != "invisible");//NO!!
+}
+
+string TextureControl::get_texture_filename(int idx, Texture_Type type = TC_TEXTURE) {
+	if (idx<0 || idx>(int)textures.size())
+		return "";
+
+	switch (type) {
+	case TC_TEXTURE:
+		return textures[idx].texname;
+	case TC_GLOW:
+		return textures[idx].glow_name;
+	case TC_SHINEMAP:
+		return textures[idx].shine_name;
+	default:
+		return textures[idx].texname;
+	}
+}
 
 void TextureControl::Reset()
 {
@@ -574,13 +596,14 @@ GLuint TextureControl::LoadTexture(std::string texname,
 }
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 
-size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t &curvp, size_t searchpos)
+int TextureControl::SearchVPs(const FileList &vp_list, string directory, string &filename, size_t &size, boost::scoped_array<char> &buffer, string &rfname, size_t &curvp, size_t searchpos)
 {	
 	//FileList vp_list(directory, "*.vp");
 	std::string File;
 
+	
 #if defined(_WIN32)
-	if (directory[directory.length()-1] != '\\')
+	if (directory[directory.length() - 1] != '\\')
 		directory += "\\";
 #else
 	if (directory[directory.length()-1] != '/')
@@ -591,36 +614,24 @@ size_t TextureControl::SearchVPs(const FileList &vp_list, std::string directory,
 	for (size_t i = curvp; i < vp_list.Size(); i++)
 	{
 		File = directory + vp_list[i];
-		filenum = SearchAVP(File, filename, size, buffer, rfname, searchpos);
-		if (filenum != -1)
-		{
+
+		VolitionPackfileReader VPR(File);
+		filenum = VPR.FindFileWild(filename + ".*", (int)searchpos);
+		if (filenum != -1) {
+			rfname = File + ":" + VPR.GetInfo((int)fileno).filename;
+			filename = VPR.FileName((int)fileno);
+			size = VPR.LoadFile((int)fileno, buffer);
+
 			curvp = i;
 			return filenum;
-		}
-		else
+
+		} else {
 			searchpos = 0; // reset search offset
+		}
 	}
 	
 	return -1;
 }
-
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
-int TextureControl::SearchAVP(std::string &vp, std::string &filename, size_t &size, boost::scoped_array<char> &buffer, std::string &rfname, size_t searchpos)
-{
-	VolitionPackfileReader VPR(vp);
-	int fileno = VPR.FindFileWild(filename + ".*", (int)searchpos);
-	if (fileno != -1)
-	{
-		rfname = vp + ":" + VPR.GetInfo((int)fileno).filename;
-		filename = VPR.FileName((int)fileno);
-		size = VPR.LoadFile((int)fileno, buffer);
-		return fileno;
-	}
-	return -1;
-}
-
-
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
 

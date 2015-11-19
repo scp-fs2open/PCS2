@@ -315,24 +315,24 @@
  *
  */
 
-#include "pcs2.h"
-#include "pcs2_CIDs.h"
-#include <wx/image.h>
-#include <GL/glu.h>
-#include <fstream>
-#include <algorithm>
-#include <wx/wfstream.h>
-#include "pcs2_filethread.h"
-#include <wx/progdlg.h>
-#include <wx/splash.h>
-#include <wx/filename.h>
-#include <wx/stdpaths.h>
-
 #include "main_panel.h"
 
-#include <IL/il.h>
-#include <IL/ilu.h>
-#include <IL/ilut.h>
+#include "pcs2.h"
+#include "pcs2_CIDs.h"
+#include "pcs2_filethread.h"
+
+#include <GL/glu.h>
+
+#include <wx/filename.h>
+#include <wx/image.h>
+#include <wx/progdlg.h>
+#include <wx/splash.h>
+#include <wx/stdpaths.h>
+#include <wx/wfstream.h>
+
+#include <algorithm>
+#include <fstream>
+
 // globals are lazy, but just about the only tenable manner
 std::vector<file_context> model_files;
 int current_model_file;
@@ -446,14 +446,6 @@ bool PCS2_App::OnInit()
 
 	myframe = NULL;
 
-	// Iinitialize OpenIL
-	ilInit();
-	iluInit();
-
-	//this causes DevIL to load TGAs and some others as expected
-	ilEnable(IL_ORIGIN_SET); 
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT); 
-
 	//wxConfigBase::Set();
 	// get all image handlers we need
 	wxInitAllImageHandlers();
@@ -563,7 +555,6 @@ bool PCS2_App::OnInit()
 
 int PCS2_App::OnExit()
 {
-	ilShutDown();
 	delete wxConfigBase::Set((wxConfigBase *) NULL);
 	//delete config;
 
