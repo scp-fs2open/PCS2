@@ -695,7 +695,7 @@ void DAEHandler::process_glowpoints_properties(pcs_glow_array &glowbank) {
 
 string strip_texture(string name) {
 	std::tr1::regex re("([^/\\\\]+?)(?:\\.[^./\\\\]+)?$");
-	return std::tr1::regex_replace(name, re, "$1", boost::format_no_copy | boost::format_first_only);
+	return std::tr1::regex_replace(name, re, "$1", regex_constants::format_no_copy | regex_constants::format_first_only);
 
 }
 

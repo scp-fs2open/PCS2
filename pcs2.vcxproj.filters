@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="vector3d.cpp" />
+    <ClCompile Include="VPReader.cpp" />
+    <ClCompile Include="versions.cpp" />
+    <ClCompile Include="wxPCSPref.cpp" />
+    <ClCompile Include="wxGL_PMFCanvas.cpp" />
+    <ClCompile Include="AsyncProgress.cpp" />
+    <ClCompile Include="BSPDataStructs.cpp" />
+    <ClCompile Include="BSPHandler.cpp" />
+    <ClCompile Include="COBHandler.cpp" />
+    <ClCompile Include="color_options_dlg.cpp" />
+    <ClCompile Include="combo.cpp" />
+    <ClCompile Include="DAEHandler.cpp" />
+    <ClCompile Include="editor.cpp" />
+    <ClCompile Include="compat\filelength.cpp" />
+    <ClCompile Include="FileList.cpp" />
+    <ClCompile Include="geo_sphere.cpp" />
+    <ClCompile Include="GLee.c" />
+    <ClCompile Include="Main_Panel.cpp" />
+    <ClCompile Include="matrix.cpp" />
+    <ClCompile Include="matrix3d.cpp" />
+    <ClCompile Include="ogl_vertex_buffers.cpp" />
+    <ClCompile Include="op_stack.cpp" />
+    <ClCompile Include="pcs_file.cpp" />
+    <ClCompile Include="pcs_file_dstructs.cpp" />
+    <ClCompile Include="pcs_pmf_cob.cpp" />
+    <ClCompile Include="pcs_pmf_dae.cpp" />
+    <ClCompile Include="pcs_pmf_pof.cpp" />
+    <ClCompile Include="pcs_pof_bspfuncs.cpp" />
+    <ClCompile Include="pcs2.cpp" />
+    <ClCompile Include="pcs2_filethread.cpp" />
+    <ClCompile Include="POFHandler.cpp" />
+    <ClCompile Include="compat\strncmp.cpp" />
+    <ClCompile Include="tex_ctrl.cpp" />
+    <ClCompile Include="text_ctrl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="vector3d.h" />
+    <ClInclude Include="VPReader.h" />
+    <ClInclude Include="TURRET_editor.h" />
+    <ClInclude Include="TXTR_editor.h" />
+    <ClInclude Include="WPNT_editor.h" />
+    <ClInclude Include="wxPCSPref.h" />
+    <ClInclude Include="wxGL_PMFCanvas.h" />
+    <ClInclude Include="ACEN_editor.h" />
+    <ClInclude Include="array_ctrl.h" />
+    <ClInclude Include="AsyncProgress.h" />
+    <ClInclude Include="BSPDataStructs.h" />
+    <ClInclude Include="BSPHandler.h" />
+    <ClInclude Include="chunk_editors.h" />
+    <ClInclude Include="COBDataStructs.h" />
+    <ClInclude Include="COBHandler.h" />
+    <ClInclude Include="color.h" />
+    <ClInclude Include="color_options_dlg.h" />
+    <ClInclude Include="combo.h" />
+    <ClInclude Include="DAEDataStructs.h" />
+    <ClInclude Include="DAEHandler.h" />
+    <ClInclude Include="debug_window.h" />
+    <ClInclude Include="DOCK_editor.h" />
+    <ClInclude Include="editor.h" />
+    <ClInclude Include="EYE_editor.h" />
+    <ClInclude Include="compat\filelength.h" />
+    <ClInclude Include="FUEL_editor.h" />
+    <ClInclude Include="geo_sphere.h" />
+    <ClInclude Include="GLee.h" />
+    <ClInclude Include="GLOW_editor.h" />
+    <ClInclude Include="glow_points.h" />
+    <ClInclude Include="hardpoint_editor.h" />
+    <ClInclude Include="header_editor.h" />
+    <ClInclude Include="INSG_editor.h" />
+    <ClInclude Include="main_panel.h" />
+    <ClInclude Include="matrix.h" />
+    <ClInclude Include="matrix3d.h" />
+    <ClInclude Include="model_editor_ctrl.h" />
+    <ClInclude Include="ogl_vertex_buffers.h" />
+    <ClInclude Include="omnipoints.h" />
+    <ClInclude Include="op_stack.h" />
+    <ClInclude Include="PATH_editor.h" />
+    <ClInclude Include="pcs_file.h" />
+    <ClInclude Include="pcs_file_dstructs.h" />
+    <ClInclude Include="pcs_pof_bspfuncs.h" />
+    <ClInclude Include="pcs2.h" />
+    <ClInclude Include="pcs2_CIDs.h" />
+    <ClInclude Include="pcs2_filethread.h" />
+    <ClInclude Include="PINF_editor.h" />
+    <ClInclude Include="POFDataStructs.h" />
+    <ClInclude Include="POFHandler.h" />
+    <ClInclude Include="primitive_ctrl.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="SHLD_editor.h" />
+    <ClInclude Include="compat\sleep.h" />
+    <ClInclude Include="SOBJ_editor.h" />
+    <ClInclude Include="SPCL_editor.h" />
+    <ClInclude Include="compat\strncmp.h" />
+    <ClInclude Include="tex_ctrl.h" />
+    <ClInclude Include="text_ctrl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="colours.bmp">
+      <Filter>res</Filter>
+    </Image>
+    <Image Include="pcs2.ico">
+      <Filter>res</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="apply.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="bullet.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="copy_btn.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="delete_btn.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="dock.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="down.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="dragable_selected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="dragable_selected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="dragable_unselected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="dragable_unselected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="fuel.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="glow.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="grid_btn.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="header.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="left.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="lock_X.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="lock_Y.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="lock_Z.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="new.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="new_btn.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="open_texture.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="paths.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="pcsico.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="placeholder.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="proj_ortho.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="redo.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="proj_persp.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="revert.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="selected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="right.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="save.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="selected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="solid.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="spcl.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="splash.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="subobjects.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="suggest.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="textured.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="textures.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="top_level_selected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="top_level_selected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="top_level_unselected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="top_level_unselected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="turrets.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="undo.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="unselectable.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="unselectable_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="unselected.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="unselected_open.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="up.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="weap.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="wireframe.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="xleft.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="xright.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="XY_plane.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="XZ_plane.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="yleft.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="yright.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="YZ_plane.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="zin.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="zleft.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="zout.xpm">
+      <Filter>res</Filter>
+    </None>
+    <None Include="zright.xpm">
+      <Filter>res</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="res">
+      <UniqueIdentifier>{de046ee6-04a7-4fe9-9c86-f55172c06b9b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="pcs2.rc">
+      <Filter>res</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
