@@ -660,13 +660,13 @@ void wxGL_PMFCanvas::draw_omnipoints(){
 			vector3d v(omni.point[i][j].pos+model.get_model_offset(omni.point[i][j].model));
 			glVertex3fv((GLfloat *)&(v));
 			if(omni.flags & OMNIPOINT_COMMON_NORMAL) {
-				vector3d v(omni.point[i][0].norm * omni.point[i][0].rad);
-				v = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + v * 2.5f;
-				glVertex3fv((GLfloat *)&(v));
+				vector3d vec(omni.point[i][0].norm * omni.point[i][0].rad);
+				vec = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + vec * 2.5f;
+				glVertex3fv((GLfloat *)&(vec));
 			} else {
-				vector3d v(omni.point[i][j].norm * omni.point[i][0].rad);
-				v = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + v * 2.5f;
-				glVertex3fv((GLfloat *)&(v));
+				vector3d vec(omni.point[i][j].norm * omni.point[i][0].rad);
+				vec = omni.point[i][j].pos + model.get_model_offset(omni.point[i][j].model) + vec * 2.5f;
+				glVertex3fv((GLfloat *)&(vec));
 			}
 		}
 	}

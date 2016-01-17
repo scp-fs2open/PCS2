@@ -297,10 +297,10 @@ public:
 		DisableButton();
 	}
 
-	virtual void set_value_with_default(const vector3d& v, const vector3d& default_value){
-		this->default_value = default_value;
+	virtual void set_value_with_default(const vector3d& v, const vector3d& default_val){
+		this->default_value = default_val;
 		set_value(v);
-		if (Distance(v, default_value) > 1e-5f) {
+		if (Distance(v, default_val) > 1e-5f) {
 			EnableButton();
 		} else {
 			DisableButton();
@@ -370,10 +370,10 @@ public:
 		DisableButton();
 	}
 
-	virtual void set_value_with_default(float v, float default_value){
-		this->default_value = default_value;
+	virtual void set_value_with_default(float v, float default_val){
+		this->default_value = default_val;
 		set_value(v);
-		if (fabs(v - default_value) > 1e-5f) {
+		if (fabs(v - default_val) > 1e-5f) {
 			EnableButton();
 		} else {
 			DisableButton();

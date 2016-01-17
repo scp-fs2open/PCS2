@@ -209,8 +209,8 @@ class resizeable_array_ctrl :
 public:
 	//constructor, DOES _NOT_ take an array, they must be set after the 
 	//control is is constructed or you get virtual function problems
-		resizeable_array_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL, int ID = -1, bool user_resizeable=true)
-		:array_ctrl<type>(parent, Title, orient,ID,true), user_resizeable(user_resizeable)
+		resizeable_array_ctrl(wxWindow*parent, wxString Title, int orient = wxVERTICAL, int ID = -1, bool user_resizeable_in=true)
+		:array_ctrl<type>(parent, Title, orient,ID,true), user_resizeable(user_resizeable_in)
 	{
 		//the sizer for the array control, not the data of the array, that is handeled by derived classes
 		this->box = new wxStaticBoxSizer(wxVERTICAL, this,_("Select"));
@@ -221,7 +221,7 @@ public:
 		wxBoxSizer*b=new wxBoxSizer(wxHORIZONTAL);
 		this->array_size_box = new wxTextCtrl(this,-1,_("0"),wxDefaultPosition,wxSize(32, -1),wxTE_READONLY|wxTE_CENTRE);
 		b->Add(this->array_size_box, 0, wxALIGN_CENTER_VERTICAL);
-		if (user_resizeable) {
+		if (user_resizeable_in) {
 			new_btn = new wxBitmapButton(this, ARRAY_BUTTON_NEW, wxBitmap(_new_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
 			cpy_btn = new wxBitmapButton(this, ARRAY_BUTTON_COPY, wxBitmap(copy_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
 			del_btn = new wxBitmapButton(this, ARRAY_BUTTON_DELETE, wxBitmap(delete_btn),wxDefaultPosition,wxDefaultSize, wxBORDER_NONE);
@@ -363,8 +363,8 @@ class type_array_ctrl
 protected:
 	type_control*ctrl;
 public:
-	type_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable=true)
-		:resizeable_array_ctrl<type>(parent, Title,orient, ID, user_resizeable)
+	type_array_ctrl(wxWindow*parent, wxString Title, wxString subTitle, int orient = wxVERTICAL, int flags=0, int ID = -1, bool user_resizeable_in =true)
+		:resizeable_array_ctrl<type>(parent, Title, orient, ID, user_resizeable_in)
 	{
 		this->add_control(ctrl=new type_control(this,subTitle),1,flags);
 	}

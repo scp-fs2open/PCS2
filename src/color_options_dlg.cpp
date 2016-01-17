@@ -192,7 +192,7 @@ color_options_dlg::color_options_dlg(wxWindow* parent)
 
 	wxConfigBase *con = wxConfigBase::Get();
 		
-	for(int i = 0; i<n_editor_colors; i++){
+	for(i = 0; i<n_editor_colors; i++){
 		color_options ops;
 
 		con->SetPath(_T("/gr_options/editor_colors/"));

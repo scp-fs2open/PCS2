@@ -273,8 +273,8 @@ public:
 			lod->set_value(insignia.lod);
 			generator->Disable();
 			project_btn->Disable();
-			wxCommandEvent event(EDIT_DONE);
-			GetEventHandler()->ProcessEvent(event);
+			wxCommandEvent commandEvent(EDIT_DONE);
+			GetEventHandler()->ProcessEvent(commandEvent);
 		}
 		insignia.generator.pos += model.SOBJ(sobj).offset;
 	}

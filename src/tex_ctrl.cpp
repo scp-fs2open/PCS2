@@ -153,10 +153,6 @@
 
 using namespace std;
 
-//used to load the texture and catch divide by zero errors in WIN32
-#ifndef WIN32
-#pragma message("*****DevIL exeption handeling not implemented for thsi platform! see the top of tex_ctrl for details*****")
-#endif
 bool load(ILenum type, const void*buf, int zero){
 #ifdef WIN32
 __try{

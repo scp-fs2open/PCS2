@@ -369,7 +369,7 @@ public:
 	DECLARE_EVENT_TABLE();
 	void on_auto_gen(wxCommandEvent& event){
 		PCS_Model& model = get_main_window()->get_model();
-		std::vector<pcs_path> paths = get_value();
+		std::vector<pcs_path> pcs_paths = get_value();
 		std::map<std::string, int> sobj_to_turret;
 		std::map<std::string, int> special_map;
 		std::map<std::string, int> subobject_map;
@@ -393,8 +393,8 @@ public:
 		}
 		int max_path = 0;
 		int current_path;
-		for (size_t i = 0; i < paths.size(); i++) {
-			const std::string& parent = paths[i].parent;
+		for (size_t i = 0; i < pcs_paths.size(); i++) {
+			const std::string& parent = pcs_paths[i].parent;
 			if (!parent.empty()) {
 				std::map<std::string, int>::iterator it = sobj_to_turret.find(parent);
 				if (it != sobj_to_turret.end()) {
@@ -409,8 +409,8 @@ public:
 					subobjects[it->second] = true;
 				}
 			}
-			if (sscanf(paths[i].name.c_str(), "$path%d", &current_path) == 1 ||
-					sscanf(paths[i].name.c_str(), "$Path%d", &current_path) == 1) {
+			if (sscanf(pcs_paths[i].name.c_str(), "$path%d", &current_path) == 1 ||
+				sscanf(pcs_paths[i].name.c_str(), "$Path%d", &current_path) == 1) {
 				if (current_path > max_path) {
 					max_path = current_path;
 				}
@@ -418,32 +418,32 @@ public:
 		}
 		for(int i = 0; i<model.GetTurretCount(); i++){
 			if (!turrets[i]) {
-				paths.push_back(auto_gen_turret(i));
-				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				pcs_paths.push_back(auto_gen_turret(i));
+				pcs_paths[pcs_paths.size() - 1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
 				subobjects[model.Turret(i).sobj_parent] = true;
 			}
 		}
 		for(int i = 0; i<model.GetSOBJCount(); i++){
 			if (!subobjects[i]) {
-				paths.push_back(auto_gen_sobj(i));
-				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				pcs_paths.push_back(auto_gen_sobj(i));
+				pcs_paths[pcs_paths.size() - 1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
 			}
 		}
 		for(int i = 0; i<model.GetSpecialCount(); i++){
 			if (!specials[i]) {
-				paths.push_back(auto_gen_spcl(i));
-				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				pcs_paths.push_back(auto_gen_spcl(i));
+				pcs_paths[pcs_paths.size() - 1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
 			}
 		}
 		for(int i = 0; i<model.GetDockingCount(); i++){
 			if (model.Dock(i).paths.empty()) {
-				paths.push_back(auto_gen_dock(i));
-				paths[paths.size()-1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
+				pcs_paths.push_back(auto_gen_dock(i));
+				pcs_paths[pcs_paths.size() - 1].name = wxString::Format(_("$path%0.2d"), ++max_path).mb_str();
 				model.Dock(i).paths.resize(1);
-				model.Dock(i).paths[0] = (int)paths.size()-1;
+				model.Dock(i).paths[0] = (int) pcs_paths.size() - 1;
 			}
 		}
-		set_value(paths);
+		set_value(pcs_paths);
 		wxCommandEvent edit_event(EDIT_DONE);
 		GetEventHandler()->ProcessEvent(edit_event);
 		reset_undo();

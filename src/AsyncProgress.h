@@ -272,12 +272,12 @@ class wxAsyncProgress : public AsyncProgress
 		bool finished;
 		bool doYieldOnNotify;
 
-		virtual void real_setTarget(unsigned int target) { this->target = target; }
+		virtual void real_setTarget(unsigned int target_in) { this->target = target_in; }
 		virtual unsigned int real_getTarget() { return this->target; }
 
 		virtual float real_getTargetPercent() { return 100.00f * (float(this->progress) / float(this->target)); }
 
-		virtual void real_SetProgress(unsigned int progress) { this->progress = progress; }
+		virtual void real_SetProgress(unsigned int progress_in) { this->progress = progress_in; }
 		virtual unsigned int real_getProgress() { return this->progress; }
 		virtual void real_incrementProgress() { this->progress++; }
 
@@ -293,7 +293,7 @@ class wxAsyncProgress : public AsyncProgress
 		virtual void real_setMessage(std::string &msg) { this->message = msg; }
 		virtual std::string real_getMessage() { return this->message; }
 		
-		virtual void real_setError(int errorcode) { this->errorcode = errorcode; }
+		virtual void real_setError(int errorcode_in) { this->errorcode = errorcode_in; }
 		virtual int real_getError() { return this->errorcode; }
 
 		virtual void real_Notify()

@@ -1437,11 +1437,6 @@ void main_panel::rebuild_tree(){
 	std::vector<wxTreeItemId> model_nodes;
 	model_nodes.resize(model.GetSOBJCount());
 
-	for (i = 0; i < model.GetSOBJCount(); i++)
-	{
-		model_nodes[i] = NULL;
-	}
-
 	path.resize(1);
 
 	for(i=0; i<model.GetSOBJCount(); i++){

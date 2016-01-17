@@ -104,9 +104,9 @@ int BSP_DefPoints::Read(char *buffer, BSP_BlockHeader hdr)
 		{
 			vertex_data[i].norms.resize(norm_counts[i]);
 			memcpy(&vertex_data[i].norms.front(), buffer, sizeof(vector3d) * int(norm_counts[i]));
-			size_t offset = normals.size();
+			size_t normal_offset = normals.size();
 			normals.resize(normals.size() + norm_counts[i]);
-			memcpy(&normals.front() + offset, buffer, sizeof(vector3d)* int(norm_counts[i]));
+			memcpy(&normals.front() + normal_offset, buffer, sizeof(vector3d)* int(norm_counts[i]));
 			buffer += (sizeof(vector3d) * norm_counts[i]);
 		}
 		else
@@ -273,7 +273,7 @@ vector3d BSP_FlatPoly::MyCenter(std::vector<vector3d> Verts)
 
 }
 
-float BSP_FlatPoly::MyRadius(vector3d center, std::vector<vector3d> Verts)
+float BSP_FlatPoly::MyRadius(vector3d c, std::vector<vector3d> Verts)
 {
 	float RetVal=0;
 
@@ -295,9 +295,9 @@ float BSP_FlatPoly::MyRadius(vector3d center, std::vector<vector3d> Verts)
 			max.z = Abs(Verts[i].z);
 	}
 
-	RetVal =	((max.x-Abs(center.x)) * (max.x-Abs(center.x))) +
-				((max.y-Abs(center.y)) * (max.y-Abs(center.y))) +
-				((max.z-Abs(center.z)) * (max.z-Abs(center.z)));
+	RetVal =	((max.x-Abs(c.x)) * (max.x-Abs(c.x))) +
+				((max.y-Abs(c.y)) * (max.y-Abs(c.y))) +
+				((max.z-Abs(c.z)) * (max.z-Abs(c.z)));
 	RetVal = float(sqrt(RetVal));
 
 	return RetVal;
@@ -441,7 +441,7 @@ vector3d BSP_TmapPoly::MyCenter(std::vector<vector3d> Verts)
 	return Centroid;
 }
 
-float BSP_TmapPoly::MyRadius(vector3d center, std::vector<vector3d> Verts)
+float BSP_TmapPoly::MyRadius(vector3d c, std::vector<vector3d> Verts)
 {
 	float RetVal=0;
 
@@ -463,9 +463,9 @@ float BSP_TmapPoly::MyRadius(vector3d center, std::vector<vector3d> Verts)
 			max.z = Abs(Verts[i].z);
 	}
 
-	RetVal =	((max.x-Abs(center.x)) * (max.x-Abs(center.x))) +
-				((max.y-Abs(center.y)) * (max.y-Abs(center.y))) +
-				((max.z-Abs(center.z)) * (max.z-Abs(center.z)));
+	RetVal =	((max.x-Abs(c.x)) * (max.x-Abs(c.x))) +
+				((max.y-Abs(c.y)) * (max.y-Abs(c.y))) +
+				((max.z-Abs(c.z)) * (max.z-Abs(c.z)));
 	RetVal = float(sqrt(RetVal));
 
 	return RetVal;
