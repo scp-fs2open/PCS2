@@ -4,7 +4,7 @@
 #include "pcs2.h"
 #include "matrix.h"
 #include "debug_window.h"
-#include <wx/wx.h>
+#include <wx/glcanvas.h>
 #include <wx/clipbrd.h>
 
 enum movement_plane{XZ_PLANE, XY_PLANE, YZ_PLANE};

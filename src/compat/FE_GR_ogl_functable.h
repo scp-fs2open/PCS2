@@ -63,7 +63,7 @@
 
 #define USE_SDL
 #if defined(USE_SDL)
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 #if defined(GetGLFunc)
 #undef GetGLFunc

@@ -1,0 +1,3 @@
+[submodule "cmake/external/cmake-modules"]
+	path = cmake/external/cmake-modules
+	url = https://github.com/rpavlik/cmake-modules.git

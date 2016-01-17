@@ -122,6 +122,12 @@ target_link_libraries(pcs2 PRIVATE ${OPENGL_LIBRARIES})
 target_include_directories(pcs2 PRIVATE ${OPENGL_INCLUDE_DIR})
 
 
+if(WIN32)
+	set(Boost_USE_STATIC_LIBS       ON)
+	set(Boost_USE_MULTITHREADED     ON)
+
+	set(Boost_USE_STATIC_RUNTIME    OFF)
+endif()
 find_package(Boost REQUIRED COMPONENTS system filesystem regex)
 
 target_link_libraries(pcs2 PRIVATE ${Boost_LIBRARIES})
