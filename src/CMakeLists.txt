@@ -108,7 +108,17 @@ set(COMPAT_FILES
 	compat/strncmp.h
 )
 
-add_executable(pcs2 ${EXE_GUI_TYPE} ${PCS2_SOURCES} ${PCS2_HEADERS} ${COMPAT_FILES})
+set(RESOURCES
+)
+
+IF(WIN32)
+	set(RESOURCES ${RESOURCES}
+		pcs2.ico
+		pcs2.rc
+	)
+endif()
+
+add_executable(pcs2 ${EXE_GUI_TYPE} ${PCS2_SOURCES} ${PCS2_HEADERS} ${COMPAT_FILES} ${RESOURCES})
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pugixml")
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../res")
 target_compile_features(pcs2 PRIVATE cxx_auto_type)
@@ -154,6 +164,8 @@ target_compile_options(pcs2 PRIVATE ${wxWidgets_CXX_FLAGS})
 target_compile_definitions(pcs2 PRIVATE $<$<CONFIG:Debug>:${wxWidgets_DEFINITIONS_DEBUG}> ${wxWidgets_DEFINITIONS})
 
 
-find_package(SDL REQUIRED)
-target_link_libraries(pcs2 PRIVATE ${SDL_LIBRARY})
-target_include_directories(pcs2 PRIVATE ${SDL_INCLUDE_DIR})
+IF(UNIX)
+	find_package(SDL REQUIRED)
+	target_link_libraries(pcs2 PRIVATE ${SDL_LIBRARY})
+	target_include_directories(pcs2 PRIVATE ${SDL_INCLUDE_DIR})
+endif()

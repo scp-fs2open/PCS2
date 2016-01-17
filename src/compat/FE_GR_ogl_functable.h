@@ -61,7 +61,6 @@
 #define xglGetProcAddress
 #endif
 
-#define USE_SDL
 #if defined(USE_SDL)
 #include <SDL.h>
 
