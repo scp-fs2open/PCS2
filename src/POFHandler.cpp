@@ -1726,47 +1726,47 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 		outfile.flush();
 
 
-		for (unsigned int i = 0; i < hull_lights.lights.size(); i++)
+		for (auto& light : hull_lights.lights)
 		{
-			write_to_file(outfile, hull_lights.lights[i].disp_time);
+			write_to_file(outfile, light.disp_time);
 			outfile.flush();
 
-			write_to_file(outfile, hull_lights.lights[i].on_time);
+			write_to_file(outfile, light.on_time);
 			outfile.flush();
 
-			write_to_file(outfile, hull_lights.lights[i].off_time);
+			write_to_file(outfile, light.off_time);
 			outfile.flush();
 
-			write_to_file(outfile, hull_lights.lights[i].obj_parent);
+			write_to_file(outfile, light.obj_parent);
 			outfile.flush();
 
-			write_to_file(outfile, hull_lights.lights[i].LOD);
+			write_to_file(outfile, light.LOD);
 			outfile.flush();
 
-			write_to_file(outfile, hull_lights.lights[i].type);
+			write_to_file(outfile, light.type);
 			outfile.flush();
 			
-			write_to_file(outfile, (int)hull_lights.lights[i].lights.size());
+			write_to_file(outfile, (int)light.lights.size());
 			outfile.flush();
 
-			itemp = hull_lights.lights[i].properties.length();
+			itemp = light.properties.length();
 			write_to_file(outfile, itemp);
 			outfile.flush();
 
 
-			write_to_file(outfile, hull_lights.lights[i].properties);
+			write_to_file(outfile, light.properties);
 			outfile.flush();
 
 
-			for (unsigned int j = 0; j < hull_lights.lights[i].lights.size(); j++)
+			for (auto& l : light.lights)
 			{
-				write_to_file(outfile, hull_lights.lights[i].lights[j].point);
+				write_to_file(outfile, l.point);
 				outfile.flush();
 
-				write_to_file(outfile, hull_lights.lights[i].lights[j].norm);
+				write_to_file(outfile, l.norm);
 				outfile.flush();
 
-				write_to_file(outfile, hull_lights.lights[i].lights[j].radius);
+				write_to_file(outfile, l.radius);
 				outfile.flush();
 			
 			}
@@ -1777,11 +1777,11 @@ bool POF::SavePOF(std::ofstream &outfile) // must be binary mode
 	if (!shield_collision.tree_data.empty())
 	{
 		write_to_file(outfile, "SLDC");
-		int size = shield_collision.tree_data.size();
-		k = sizeof(int) + size;
+		int tree_size = shield_collision.tree_data.size();
+		k = sizeof(int) + tree_size;
 
 		write_to_file(outfile, k); 
-		write_to_file(outfile, size);
+		write_to_file(outfile, tree_size);
 		write_to_file(outfile, shield_collision.tree_data);
 	}
 

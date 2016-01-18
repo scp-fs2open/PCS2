@@ -1257,9 +1257,9 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 			for (j = 0; j < 3; j++)
 			{
 				bool found = false;
-				for (unsigned int k = 0; k < points.size(); k++)
+				for (auto& p : points)
 				{
-					if (points[k] == this->shield_mesh[i].corners[j])
+					if (p == this->shield_mesh[i].corners[j])
 					{
 						found = true;
 						break;
@@ -1337,9 +1337,9 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 			for (k = 0; k < 3; k++)
 			{
 				bool found = false;
-				for (unsigned int l = 0; l < points.size(); l++)
+				for (auto& p : points)
 				{
-					if (points[l] == this->insignia[i].faces[j].verts[k])
+					if (p == this->insignia[i].faces[j].verts[k])
 					{
 						found = true;
 						break;
@@ -1440,9 +1440,9 @@ int PCS_Model::SaveToCOB(std::string filename, AsyncProgress* progress, float sc
 			for (k = 0; k < this->subobjects[i].polygons[j].verts.size(); k++)
 			{
 				bool found = false;
-				for (unsigned int l = 0; l < points.size(); l++)
+				for (auto& p : points)
 				{
-					if (points[l] == this->subobjects[i].polygons[j].verts[k].point)
+					if (p == this->subobjects[i].polygons[j].verts[k].point)
 					{
 						found = true;
 						break;

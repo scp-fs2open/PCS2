@@ -64,12 +64,12 @@ matrix::matrix(float angle) {
 }
 
 
-matrix::matrix(std::vector<float> *matrix) {
-	assert(matrix->size() >= 16);
+matrix::matrix(std::vector<float> *values) {
+	assert(values->size() >= 16);
 	int k = 0;
 	for (int i = 0; i < MATRIX_SIZE; i++) {
 		for (int j = 0; j < MATRIX_SIZE; j++, k++) {
-			a2d[i][j] = (*matrix)[k];
+			a2d[i][j] = (*values)[k];
 		}
 		k++;
 	}

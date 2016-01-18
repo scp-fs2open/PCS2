@@ -20,7 +20,7 @@ struct matrix {
 	// Construct a rotation matrix from a given rotation angle
 	matrix(float angle);
 
-	matrix(std::vector<float> *matrix);
+	matrix(std::vector<float> *values);
 
 	matrix inverse();
 

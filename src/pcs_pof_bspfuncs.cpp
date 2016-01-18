@@ -528,8 +528,8 @@ std::unique_ptr<bsp_tree_node> MakeTree(std::vector<pcs_polygon> &polygons, vect
 
 class polylist_comparator {
 public:
-	polylist_comparator(const std::vector<pcs_polygon> *polygons, int axis)
-		: polygons(polygons), axis(axis) {}
+	polylist_comparator(const std::vector<pcs_polygon> *polygons_in, int axis_in)
+		: polygons(polygons_in), axis(axis_in) {}
 	bool operator()(int a, int b) {
 		return (*polygons)[a].centeroid[axis] < (*polygons)[b].centeroid[axis];
 	}

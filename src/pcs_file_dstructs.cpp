@@ -385,7 +385,7 @@ namespace {
 	class edge {
 		float a, b, c;
 		public:
-		edge(float a, float b, float c) : a(a), b(b), c(c) {}
+		edge(float a_in, float b_in, float c_in) : a(a_in), b(b_in), c(c_in) {}
 
 		bool inside(const vector3d& v) const {
 			return a * v.x + b*v.y + c >= 0;
@@ -543,8 +543,6 @@ void pmf_bsp_cache::Read(std::istream& in, int ver)
 void pmf_bsp_cache::Write(std::ostream& out)
 {
 	// As above, but this might help older versions crash less.
-	int dummy_bsp_size = 0;
-	bool dummy_changed = true;
 	BFWriteVector(bsp_data)
 	BFWrite(changed, bool)
 }

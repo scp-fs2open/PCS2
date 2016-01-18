@@ -109,10 +109,10 @@ namespace {
 	}
 }
 
-DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) :
-	filename(filename),
-	model(model) {
-	root.load_file(filename.c_str());
+DAEHandler::DAEHandler(string filename_in, PCS_Model *model_in, AsyncProgress *progress_in, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis) :
+	filename(filename_in),
+	model(model_in) {
+	root.load_file(filename_in.c_str());
 
 	radius = 0;
 	scaling_factor = 1.0f;
@@ -135,7 +135,7 @@ DAEHandler::DAEHandler(string filename, PCS_Model *model, AsyncProgress *progres
 	mirror_y = mirror_y_axis;
 	mirror_z = mirror_z_axis;
 
-	this->progress = progress;
+	this->progress = progress_in;
 }
 
 int DAEHandler::populate(void) {
@@ -1282,17 +1282,17 @@ pcs_eye_pos DAEHandler::process_eyepoint(pugi::xml_node& helper, matrix transfor
 	return result;
 }
 
-DAESaver::DAESaver(string name, PCS_Model *model, int helpers, int props_as_helpers, AsyncProgress* progress) {
-	this->model = model;
+DAESaver::DAESaver(string name, PCS_Model *model_in, int helpers_in, int props_as_helpers_in, AsyncProgress*progress_in) {
+	this->model = model_in;
 	this->filename = name;
 	root = doc.append_child("COLLADA");
-	for (int i = 0; i < model->GetSOBJCount(); i++) {
+	for (int i = 0; i < model_in->GetSOBJCount(); i++) {
 		subobjs.push_back(pugi::xml_node());
-		model_subobjs.push_back(&model->SOBJ(i));
+		model_subobjs.push_back(&model_in->SOBJ(i));
 	}
-	this->export_helpers = helpers;
-	this->props_as_helpers = props_as_helpers;
-	this->progress = progress;
+	this->export_helpers = helpers_in;
+	this->props_as_helpers = props_as_helpers_in;
+	this->progress = progress_in;
 	
 }
 
@@ -1349,8 +1349,8 @@ int DAESaver::save(void) {
 		}
 	}
 
-	pugi::xml_node scene = root.append_child("scene").append_child("instance_visual_scene");
-	scene.append_attribute("url") = "#Scene";
+	pugi::xml_node scene_xml = root.append_child("scene").append_child("instance_visual_scene");
+	scene_xml.append_attribute("url") = "#Scene";
 
 	progress->incrementWithMessage( "Saving DAE");
 	doc.save_file(filename.c_str());
@@ -2046,8 +2046,8 @@ void DAESaver::add_insignia() {
 		vector<int> ref,size;
 		vert_map.clear();
 		uv_map.clear();
-		for (unsigned int i = 0; i < insignia.faces.size(); i++) {
-			face = insignia.faces[i];
+		for (unsigned int face_idx = 0; face_idx < insignia.faces.size(); face_idx++) {
+			face = insignia.faces[face_idx];
 			for (int j = 2; j >= 0; j--) {
 				if (vert_map.find(face.verts[j]) == vert_map.end()) {
 					vert_map.insert(make_pair(face.verts[j], vert_map.size()));

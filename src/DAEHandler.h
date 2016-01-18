@@ -63,7 +63,7 @@ class DAEHandler
 		matrix get_rotation(const pugi::xml_node& element, matrix old = matrix());
 
 	public:
-		DAEHandler(std::string filename, PCS_Model *model, AsyncProgress* progress, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis);
+		DAEHandler(std::string filename_in, PCS_Model *model_in, AsyncProgress*progress_in, bool mirror_x_axis, bool mirror_y_axis, bool mirror_z_axis);
 		void process_subobj(const pugi::xml_node& element, int parent = -1, matrix rotation = matrix());
 		void process_dock_helpers(pugi::xml_node& element, pcs_dock_point* dockpoint);
 
@@ -128,7 +128,7 @@ private:
 
 public:
 
-	DAESaver(std::string name, PCS_Model *model, int helpers, int props_as_helpers, AsyncProgress* progress);
+	DAESaver(std::string name, PCS_Model *model_in, int helpers_in, int props_as_helpers_in, AsyncProgress*progress_in);
 	int save(void);
 
 	~DAESaver() {

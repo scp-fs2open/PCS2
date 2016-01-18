@@ -485,16 +485,16 @@ int PCS_Model::SaveToPOF(std::string filename, AsyncProgress* progress)
 	{
 		for (j = 0; j < 3; j++)
 		{
-			bool found = false;
-			for (unsigned int k = 0; k < points.size(); k++)
+			bool found_corner = false;
+			for (auto& p : points)
 			{
-				if (points[k] == POFTranslate(shield_mesh[i].corners[j]))
+				if (p == POFTranslate(shield_mesh[i].corners[j]))
 				{
-					found = true;
+					found_corner = true;
 					break;
 				}
 			}
-			if (!found)
+			if (!found_corner)
 			{
 				if (l >= points.size())
 					points.resize(points.size()*2);
@@ -1101,8 +1101,7 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 	header.max_radius_overridden = fabs(header.max_radius - header.max_radius_override) > 0.0001f;
 	header.max_bounding_overridden = header.max_bounding != header.max_bounding_override;
 	header.min_bounding_overridden = header.min_bounding != header.min_bounding_override;
-	for (size_t i = 0; i < subobjects.size(); ++i) {
-		pcs_sobj& sobj = subobjects[i];
+	for (auto& sobj : subobjects) {
 		sobj.radius_overridden = fabs(sobj.radius - sobj.radius_override) > 0.0001f;
 		sobj.bounding_box_min_point_overridden = sobj.bounding_box_min_point != sobj.bounding_box_min_point_override;
 		sobj.bounding_box_max_point_overridden = sobj.bounding_box_max_point != sobj.bounding_box_max_point_override;
