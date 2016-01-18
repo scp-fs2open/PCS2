@@ -239,10 +239,6 @@
 #define CONFIG_FILE _("\\pcs2.ini")
 #endif
 
-/*#include "compat/FE_GR_ogl_functable.h"
-
-extern op_gl_funcs GLFunctions;*/
-
 // only uncomment the following for actual releases
 //#define PUBLIC_RELEASE
 

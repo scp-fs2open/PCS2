@@ -99,8 +99,6 @@ set (PCS2_HEADERS
 )
 
 set(COMPAT_FILES
-	compat/FE_GR_ogl_functable.cpp
-	compat/FE_GR_ogl_functable.h
 	compat/filelength.cpp
 	compat/filelength.h
 	compat/sleep.h
