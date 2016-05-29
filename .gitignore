@@ -1,6 +1,6 @@
-*.o
-tags
-cscope.out
-release/
-debug/
-.sconsign.dblite
+
+# Standard build directory
+build/
+
+# CLion configuration directory
+.idea
