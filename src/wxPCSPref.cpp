@@ -66,6 +66,13 @@
 #include <wx/stdpaths.h>
 #include "color_options_dlg.h"
 
+namespace {
+wxString validatePath(const wxString& path) {
+	auto filename = wxFileName::DirName(path);
+	return filename.GetFullPath();
+}
+}
+
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 PCS_Preferences::PCS_Preferences(wxWindow *parent)
@@ -270,7 +277,7 @@ void PCS_Preferences::OnOK(wxCommandEvent &event)
 	pConfig->Write(_("numpaths"), (int)texture_paths->GetCount());
 	for (i = 0; i < (int)texture_paths->GetCount(); i++)
 	{
-		pConfig->Write(wxString::Format(_("path%d"), i), texture_paths->GetString(i));
+		pConfig->Write(wxString::Format(_("path%d"), i), validatePath(texture_paths->GetString(i)));
 	}
 	pConfig->Flush();
 
