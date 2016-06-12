@@ -165,6 +165,12 @@
 #define TREE_DR_SEL_OP 10
 #define TREE_DR_UNSEL_OP 11
 
+#if (wxMAJOR_VERSION >= 3)
+#define wxOPEN wxFD_OPEN
+#define wxFILE_MUST_EXIST wxFD_FILE_MUST_EXIST
+#define wxGA_PROGRESSBAR 0
+#endif
+
 //ShellExecute(NULL, _T("open"), <filename that you want to open>, NULL, NULL, SW_SHOWNORMAL);
 main_panel::main_panel(wxFrame* parent)
 :wxPanel(parent,-1,wxPoint(0,0)),dragged_id(NULL),control_panel(NULL),pstatus(parent->GetStatusBar()),myParent(parent),pgauge(NULL),rebuilding_tree(false),internal_selection(false), threaded_prog_bar_readers(0), should_delete_threaded_prog_bar(false)
