@@ -394,6 +394,9 @@ void wxGL_PMFCanvas::Render()
 	if (FreezeRender)
 		return;
 
+	if(!IsShownOnScreen())
+		return;
+
 	IsRendering = true;
 	this->SetCurrent();
 
