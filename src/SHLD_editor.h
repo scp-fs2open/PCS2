@@ -26,7 +26,7 @@ public:
 	//set's the control's value
 	void set_value(const std::vector<pcs_shield_triangle>&t){
 		data=t;
-		info->set_value(std::string(wxString::Format(_("Editing of shield data is currently unavailable\nshield has %d faces"), data.size()).mb_str()));
+		info->set_value(std::string(wxString::Format(_("Editing of shield data is currently unavailable\nshield has %ld faces"), data.size()).mb_str()));
 	}
 
 	//return's the control's value

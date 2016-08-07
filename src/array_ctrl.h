@@ -106,7 +106,7 @@ protected:
 				array_list->Append(wxString().Format(_("%d"),i+1));
 		}
 		//update the size box
-		array_size_box->ChangeValue(wxString().Format(_("%d"),(this->array.size())));
+		array_size_box->ChangeValue(wxString().Format(_("%ld"),(this->array.size())));
 		//make sure the cuurent item is selected in the combo box
 		array_list->Select(index);
 	}

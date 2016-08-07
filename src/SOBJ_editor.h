@@ -222,12 +222,12 @@ public:
 		vector3d& min_box = data.bounding_box_min_point_overridden ? data.bounding_box_min_point_override : data.bounding_box_min_point;
 		vector3d& max_box = data.bounding_box_max_point_overridden ? data.bounding_box_max_point_override : data.bounding_box_max_point;
 		vector3d size = max_box - min_box;
-		wxString info(wxString::Format(_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\n"),
+		wxString info(wxString::Format(_("Poly Count:       %li\nChild Poly Count: %li\nTotal:            %li\n"),
 			data.polygons.size(),
 			model.get_child_subobj_poly_count(sobj_num),
 			data.polygons.size() + model.get_child_subobj_poly_count(sobj_num)));
-		info += wxString::Format(_("Vertices: %i\n"), count_vertices());
-		info += wxString::Format(_("Normals: %i\n"), count_normals());
+		info += wxString::Format(_("Vertices: %li\n"), count_vertices());
+		info += wxString::Format(_("Normals: %li\n"), count_normals());
 		info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  "),
 			fabs(size.y), fabs(size.x), fabs(size.z));
 		if (data.parent_sobj > -1) {

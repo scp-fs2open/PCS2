@@ -164,7 +164,7 @@ public:
 		vector3d size = max_box - min_box;
 		hinfo->set_value(std::string(wxString::Format(
 						_("H: %0.2f, W: %0.2f, D: %0.2f"),
-						abs(size.y), abs(size.x), abs(size.z) ).mb_str()));
+						fabs(size.y), fabs(size.x), fabs(size.z) ).mb_str()));
 
 	}
 
