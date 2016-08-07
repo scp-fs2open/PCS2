@@ -889,9 +889,9 @@ void wxGL_PMFCanvas::OnMouseEvt(wxMouseEvent& event)
 {
 	bool update_omnipoints = false;
 
-	if(event.Leaving() || event.ButtonUp()){
-		mainpanel->control_panel->push_undo();
-	}
+	//if(event.Leaving() || event.ButtonUp()){	/* NOTE: skip push_undo() to avoid SIGSEGV with wxwidget 3.0 */
+	//	mainpanel->control_panel->push_undo();
+	//}
 
 	//if(!event.Leaving()){
 	//	if(this != FindFocus()){
