@@ -348,6 +348,13 @@ wxString PCS2_SUPPORTED_FORMATS = _("All Supported Formats|*.cob;*.pmf;*.pof;*.s
 #define NO_SPLASHSCREEN
 #endif
 
+#if (wxMAJOR_VERSION >= 3)
+#define wxOPEN wxFD_OPEN
+#define wxFILE_MUST_EXIST wxFD_FILE_MUST_EXIST
+#define wxSAVE wxFD_SAVE
+#define wxOVERWRITE_PROMPT wxFD_OVERWRITE_PROMPT
+#endif
+
 //*******************************************************************************
 // XPM Resources
 //*******************************************************************************
