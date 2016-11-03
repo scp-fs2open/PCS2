@@ -86,6 +86,8 @@ class wxGL_PMFCanvas : public wxGLCanvas
 
 		void draw_grid(vector3d min, vector3d max, vector3d point);
 
+		wxGLContext* m_context;
+
 	public:
 		//omnipoint stuff
 		void set_omnipoints(const omnipoints&Omni){

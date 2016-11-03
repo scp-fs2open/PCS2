@@ -201,7 +201,7 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 //*******************************************************************************
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
- : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), 
+ : wxGLCanvas(parent, id, attriblist, pos, sz, 0, _("GLCanvas")),
    	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
 {
 	free_axis[0]=true;
@@ -214,7 +214,7 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 
 void wxGL_PMFCanvas::Init() {
 	FreezeRender = false;
-	this->SetCurrent();
+	m_context = new wxGLContext(this);
 	// === === === Init GL === === === 
 	// Initialize OpenGL function table
 	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
@@ -272,9 +272,6 @@ void wxGL_PMFCanvas::OnSize(wxSizeEvent& event)
 	if (FreezeRender) // this is a no-no if we're froze
 		return;
 
-	
-	this->SetCurrent();
-
 	// Tell openGL
 	glViewport(0, 0, (GLsizei)event.GetSize().GetWidth(), (GLsizei)event.GetSize().GetHeight());
   
@@ -301,8 +298,6 @@ void wxGL_PMFCanvas::OnSize(wxSizeEvent& event)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	*/
-
-	Render();
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -315,6 +310,7 @@ bool wxGL_PMFCanvas::Destroy()
 	FreezeRender = true;
 	while (IsRendering);
 	tex_ctrl.Reset();
+	delete m_context;
 	return true;
 }
 
@@ -395,7 +391,7 @@ void wxGL_PMFCanvas::Render()
 		return;
 
 	IsRendering = true;
-	this->SetCurrent();
+	this->SetCurrent(*m_context);
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);

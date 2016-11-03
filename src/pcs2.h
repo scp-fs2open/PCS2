@@ -248,10 +248,10 @@ extern wxString _BUILD_TIME_;
 extern wxString PCS2_SUPPORTED_FORMATS;
 // some shortcuts
 #define ADD_TOOL(id, bmp, tooltip, help) \
-    toolBar->AddTool(id, bmp, wxNullBitmap, FALSE, -1, -1, (wxObject *)0, tooltip, help)
+    toolBar->AddTool(id, tooltip, bmp, wxNullBitmap, wxITEM_NORMAL, tooltip, help, NULL)
 
 #define ADD_TOGGLE_TOOL(id, bmp, tooltip, help) \
-    toolBar->AddTool(id, bmp, wxNullBitmap, wxITEM_CHECK, -1, -1, (wxObject *)0, tooltip, help)
+    toolBar->AddCheckTool(id, tooltip, bmp, wxNullBitmap, tooltip, help, NULL)
 
 #define ADD_RADIO_TOOL(id, label, bmp, tooltip, help) \
     toolBar->AddRadioTool(id, label, bmp, wxNullBitmap, tooltip, help, NULL) 
