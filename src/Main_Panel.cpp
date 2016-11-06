@@ -1192,7 +1192,11 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 void main_panel::SignalModelChange(std::string filename, bool skipProgdlg) 
 {
 	UseThreadedProgBar = !skipProgdlg;
-	wxSetWorkingDirectory(wxString(filename.c_str(), wxConvUTF8).BeforeLast('\\'));
+	wxString tdir;
+	wxFileName::SplitPath(wxString(filename.c_str(), wxConvUTF8), &tdir, nullptr, nullptr);
+	if (wxFileName::DirExists(tdir)) {
+		wxSetWorkingDirectory(tdir);
+	}
 	glcanvas->FreezeRender = true;
 	//while (glcanvas->IsRendering);
 

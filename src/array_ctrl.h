@@ -103,10 +103,10 @@ protected:
 			if(get_index_name)
 				array_list->Append(wxString((*get_index_name)(i).c_str(), wxConvUTF8));
 			else
-				array_list->Append(wxString().Format(_("%d"),i+1));
+				array_list->Append(wxString() << i+1);
 		}
 		//update the size box
-		array_size_box->ChangeValue(wxString().Format(_("%d"),(this->array.size())));
+		array_size_box->ChangeValue(wxString() << this->array.size());
 		//make sure the cuurent item is selected in the combo box
 		array_list->Select(index);
 	}
