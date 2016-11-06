@@ -27,7 +27,7 @@
 
 #include "vector3d.h"
 #include <memory.h>
-#include <math.h>
+#include <cmath>
 #include <stack>
 
 // as pointer to this _CAN_ be cast to _D3DMATRIX*

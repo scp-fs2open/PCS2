@@ -212,7 +212,7 @@
 #include <string>
 #include <vector>
 #include "tex_ctrl.h"
-#include <math.h>
+#include <cmath>
 #include "AsyncProgress.h"
 
 //ogl error probe
