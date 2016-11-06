@@ -227,6 +227,8 @@
 #include <wx/filename.h>
 #include <wx/docview.h>
 
+#include "fmt/format.h"
+
 #include "wxPCSPref.h"
 #include "pcs_file.h"
 #include "tex_ctrl.h"

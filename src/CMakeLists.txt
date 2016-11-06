@@ -116,12 +116,14 @@ IF(WIN32)
 	)
 endif()
 
+add_subdirectory(fmt)
+
 add_executable(pcs2 ${EXE_GUI_TYPE} ${PCS2_SOURCES} ${PCS2_HEADERS} ${COMPAT_FILES} ${RESOURCES})
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pugixml")
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../res")
 target_compile_features(pcs2 PRIVATE cxx_auto_type)
 
-target_link_libraries(pcs2 PRIVATE compiler platform)
+target_link_libraries(pcs2 PRIVATE compiler platform fmt)
 
 
 find_package(OpenGL REQUIRED)
