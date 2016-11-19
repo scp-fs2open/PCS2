@@ -133,6 +133,7 @@
 #if defined(_WIN32) // win32
 #include <windows.h>
 #include <wx/msw/winundef.h>
+#include <tchar.h>
 #pragma warning(disable:4786)
 
 #else // !win32
@@ -144,8 +145,10 @@
 #endif // win32 check
 
 #include "FileList.h"
+#include <cassert>
 #include <cstring>
 #include <fstream>
+#include <limits>
 
 
 
@@ -219,19 +222,20 @@ void FileList::GetList(const std::string &dir, const std::string &filter)
 	// ------------------------------
 	// Windows Implementation
 	// ------------------------------
-
-	WIN32_FIND_DATA FoundFile;
-	memset((char*)&FoundFile, 0, sizeof(WIN32_FIND_DATA));
+	// sorry, can't be bothered getting the unicode version working...
+	WIN32_FIND_DATAA FoundFile;
+	memset((char*)&FoundFile, 0, sizeof(WIN32_FIND_DATAA));
 	HANDLE DirHandle;
 
 	std::string SearchPattern = dir + "\\" + filter ;
-	DirHandle = FindFirstFile(SearchPattern.c_str(), &FoundFile);
+
+	DirHandle = FindFirstFileA(SearchPattern.c_str(), &FoundFile);
 
 	if(DirHandle != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			if (!(FoundFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && std::string(FoundFile.cFileName) != "")
+			if (!(FoundFile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (FoundFile.cFileName[0] != '\0') )
 			{
 				if (numFiles >= files.size())
 					files.resize(files.size()*2);
@@ -242,7 +246,7 @@ void FileList::GetList(const std::string &dir, const std::string &filter)
 			}
 
 		}
-		while (FindNextFile(DirHandle, &FoundFile));
+		while (FindNextFileA(DirHandle, &FoundFile));
 		FindClose(DirHandle);
 	}
 
@@ -357,14 +361,14 @@ bool PlatformNormalize(std::string &normpath, const std::string &path, const std
 
 //****************************************************************************
 
-size_t getFilesize(std::string filename)
+std::streamoff getFilesize(std::string filename)
 {
   std::ifstream is;
   is.open (filename.c_str(), std::ios::binary );
 
   // get length of file:
   is.seekg (0, std::ios::end);
-  size_t length = is.tellg();
+  std::streamoff length = is.tellg();
   is.close();
 
   return length;

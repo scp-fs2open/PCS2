@@ -43,7 +43,7 @@
 #if !defined(_BSP_DATA_STRUCTS_H_)
 #define _BSP_DATA_STRUCTS_H_
 
-#define byte unsigned char
+typedef unsigned char byte;
 
 
 struct BSP_BlockHeader

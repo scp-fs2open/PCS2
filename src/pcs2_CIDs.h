@@ -139,8 +139,8 @@
 
 #if !defined(_pcs2_cids_h_)
 #define _pcs2_cids_h_
-#include <wx/setup.h>
 #include <wx/wx.h>
+#include <wx/setup.h>
 enum
 {
 	// ---------------------------- MainPanel/MainWindow/Renderer ---------------------------- 

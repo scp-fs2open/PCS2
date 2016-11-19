@@ -141,7 +141,7 @@ bool PlatformNormalize(std::string &normpath, const std::string &path, const std
 size_t wildcmp(const char *wild, const char *string);
 
 // could be useful
-size_t getFilesize(std::string filename);
+std::streamoff getFilesize(std::string filename);
 size_t Expand(std::string str, char c,  std::vector<std::string> &StrArray);
 
 // *Grubmle* apparently stricmp isn't standard

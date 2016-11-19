@@ -102,8 +102,8 @@ class AsyncProgress
 
 #if defined(ASYNCPROG_HAVE_WX_WIDGETS)
 
-#include <wx/setup.h>
 #include <wx/wx.h>
+#include <wx/setup.h>
 #include <wx/event.h>
 #include <wx/app.h>
 

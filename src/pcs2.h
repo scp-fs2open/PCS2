@@ -214,8 +214,8 @@
 
 #include "GLee.h"
 
-#include <wx/setup.h>
 #include <wx/wx.h>
+#include <wx/setup.h>
 #include <wx/listctrl.h>
 #include <wx/thread.h>
 

@@ -75,6 +75,7 @@
 #include <memory.h>
 #include <fstream>
 #include <boost/scoped_array.hpp>
+#include <limits>
 
 template<typename T>
 void write_to_stream(std::ofstream& out, const T& value) {
@@ -322,7 +323,7 @@ int COB::SaveCOB(std::ofstream &OutFile, bool isScene) //Binary Mode
 int COB::LoadCOB(std::string filename)
 {
 
-	int FileSize;
+	std::streamoff FileSize;
 	boost::scoped_array<char> Membuffer;
 	char *MemWalker;
 
@@ -344,7 +345,10 @@ int COB::LoadCOB(std::string filename)
 	FileSize = InFile.tellg();
 	InFile.seekg(0, std::ios::beg);
 
-	Membuffer.reset(new char[FileSize]);
+	if (FileSize >= std::numeric_limits<unsigned int>::max())
+		return -7;
+
+	Membuffer.reset(new char[static_cast<unsigned int>(FileSize)]);
 	MemWalker = Membuffer.get();
 	InFile.read(Membuffer.get(), FileSize);
 	InFile.close();
