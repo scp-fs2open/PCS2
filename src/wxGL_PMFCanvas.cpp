@@ -215,6 +215,7 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 void wxGL_PMFCanvas::Init() {
 	FreezeRender = false;
 	m_context = new wxGLContext(this);
+	this->SetCurrent(*m_context);
 	// === === === Init GL === === === 
 	// Initialize OpenGL function table
 	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
@@ -391,7 +392,6 @@ void wxGL_PMFCanvas::Render()
 		return;
 
 	IsRendering = true;
-	this->SetCurrent(*m_context);
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
