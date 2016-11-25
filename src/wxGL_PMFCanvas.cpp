@@ -215,33 +215,6 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 void wxGL_PMFCanvas::Init() {
 	FreezeRender = false;
 	m_context = new wxGLContext(this);
-	this->SetCurrent(*m_context);
-	// === === === Init GL === === === 
-	// Initialize OpenGL function table
-	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
-	renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
-	version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
-	/*std::string extensions = (char*)glGetString(GL_EXTENSIONS);
-	GLFunctions.LoadFunctionTable();*/
-
-	glClearDepth(1.0f);									// Depth Buffer Setup
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
-	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	glShadeModel(GL_SMOOTH);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-	glEnable(GL_NORMALIZE);
-	
-	glClearColor(0, 0, 0, 1.0f);				// Black Background
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-//	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-	glEnable(GL_COLOR_SUM);
 
 	Reinit(true);
 //	gr_debug = new debug_window(wxGetTopLevelParent(parent), GR_DEBUG_WINDOW, "Graphics Debug Output", wxPoint(1024-200,768-150), wxSize(200,150));
@@ -392,6 +365,29 @@ void wxGL_PMFCanvas::Render()
 		return;
 
 	IsRendering = true;
+	this->SetCurrent(*m_context);
+	// === === === Init GL === === ===
+	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
+	renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
+	version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
+
+	glClearDepth(1.0f);									// Depth Buffer Setup
+	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
+	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+	glShadeModel(GL_SMOOTH);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+	glEnable(GL_NORMALIZE);
+
+	glClearColor(0, 0, 0, 1.0f);				// Black Background
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+	glEnable(GL_COLOR_SUM);
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
