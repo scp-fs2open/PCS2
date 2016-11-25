@@ -116,12 +116,14 @@ IF(WIN32)
 	)
 endif()
 
+add_subdirectory(fmt)
+
 add_executable(pcs2 ${EXE_GUI_TYPE} ${PCS2_SOURCES} ${PCS2_HEADERS} ${COMPAT_FILES} ${RESOURCES})
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/pugixml")
 target_include_directories(pcs2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../res")
 target_compile_features(pcs2 PRIVATE cxx_auto_type)
 
-target_link_libraries(pcs2 PRIVATE compiler platform)
+target_link_libraries(pcs2 PRIVATE compiler platform fmt)
 
 
 find_package(OpenGL REQUIRED)
@@ -152,9 +154,8 @@ if(WIN32)
 else()
 	set(wxWidgets_USE_DEBUG TRUE)
 	set(wxWidgets_USE_UNICODE TRUE)
-	set(wxWidgets_CONFIG_OPTIONS --version=2.8)
 endif()
-find_package(wxWidgets 2.8 EXACT REQUIRED COMPONENTS core base gl adv)
+find_package(wxWidgets 3.0.2 REQUIRED COMPONENTS core base gl adv)
 
 target_include_directories(pcs2 PRIVATE ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(pcs2 PRIVATE ${wxWidgets_LIBRARIES})

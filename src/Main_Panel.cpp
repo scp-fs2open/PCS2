@@ -187,7 +187,7 @@ main_panel::main_panel(wxFrame* parent)
 	pgauge = new wxGauge(pstatus, -1, 100,
 								wxPoint(widths[0]+5, 3), 
 								wxSize(widths[1], 17),
-								wxGA_PROGRESSBAR | wxGA_SMOOTH);
+								wxGA_SMOOTH);
 
 	//+++++++++end status bar stuff
 
@@ -195,8 +195,7 @@ main_panel::main_panel(wxFrame* parent)
 	wxGridSizer*sizer = new wxGridSizer(1,1,0,0);
 
 	//the main spliter, holding the tree on the left and the second spliter on the right
-	split1 = new wxSplitterWindow(this,-1,wxPoint(0,0),wxDefaultSize,wxSP_LIVE_UPDATE);	
-	split1->SetSashSize(3);
+	split1 = new wxSplitterWindow(this,-1,wxPoint(0,0),wxDefaultSize,wxSP_LIVE_UPDATE | wxSP_THIN_SASH);
 
 	//the tree
 	navigation_panel = new wxTreeCtrl(split1,-1,wxDefaultPosition,wxDefaultSize,wxTR_HIDE_ROOT|wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT);
@@ -256,8 +255,7 @@ main_panel::main_panel(wxFrame* parent)
 
 
 		//the second spliter, the gl canvas on the left the control panel on the right
-		split2 = new wxSplitterWindow(split1,-1,wxPoint(0,0),wxDefaultSize,wxSP_LIVE_UPDATE);
-		split2->SetSashSize(3);
+		split2 = new wxSplitterWindow(split1,-1,wxPoint(0,0),wxDefaultSize,wxSP_LIVE_UPDATE | wxSP_THIN_SASH);
 		split2->SetMinimumPaneSize(30);
 
 		//the glcanvas
@@ -682,7 +680,7 @@ void main_panel::on_transform_chunk(wxCommandEvent &event){
 
 void main_panel::on_load_chunk(wxCommandEvent &event){
 
-	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxOPEN | wxFILE_MUST_EXIST);
+	wxFileDialog fdlg(NULL, _("Select Import File"), _(""), _(""), PCS2_SUPPORTED_FORMATS, wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (fdlg.ShowModal() != wxID_OK)
 		return;
 
@@ -1194,7 +1192,11 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 void main_panel::SignalModelChange(std::string filename, bool skipProgdlg) 
 {
 	UseThreadedProgBar = !skipProgdlg;
-	wxSetWorkingDirectory(wxString(filename.c_str(), wxConvUTF8).BeforeLast('\\'));
+	wxString tdir;
+	wxFileName::SplitPath(wxString(filename.c_str(), wxConvUTF8), &tdir, nullptr, nullptr);
+	if (wxFileName::DirExists(tdir)) {
+		wxSetWorkingDirectory(tdir);
+	}
 	glcanvas->FreezeRender = true;
 	//while (glcanvas->IsRendering);
 
@@ -1285,7 +1287,7 @@ void main_panel::on_moi_recalc(wxCommandEvent& event){
 			return;
 		vector3d min = model.GetMinBounding();
 		vector3d max = model.GetMaxBounding();
-		model.SetMOI(model.moi_recalculate(log(abs(max.x-min.x)+10)+10, log(abs(max.z-min.z)+10)+10).a2d);
+		model.SetMOI(model.moi_recalculate(log(fabs(max.x-min.x)+10)+10, log(fabs(max.z-min.z)+10)+10).a2d);
 
 		control_panel->set_data(model);
 }

@@ -2,14 +2,12 @@
 #include "pcs_file.h"
 #include <wx/colour.h>
 
-#ifndef byte
-#define byte unsigned char
-#endif
+typedef unsigned char byte;
 
 struct color{
 	color(){c=0;};
 
-	color(byte R, byte G, byte B, byte A=255)
+	color(byte R, byte G, byte B, byte A = 255)
 	:r(R), g(G), b(B), a(A){};
 
 	color(wxColour C)
@@ -19,7 +17,7 @@ struct color{
 		byte	col[4];
 		int		c;
 		struct{
-		byte	r,g,b,a;
+			byte	r, g, b, a;
 		};
 	};
 };

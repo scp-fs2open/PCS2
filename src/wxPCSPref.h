@@ -43,8 +43,8 @@
 #if !defined(_wxPCSPref_h_)
 #define _wxPCSPref_h_
 
-#include <wx/setup.h>
 #include <wx/wx.h>
+#include <wx/setup.h>
 #include <wx/dialog.h>
 #include <wx/listbox.h>
 #include <wx/stattext.h>

@@ -166,7 +166,7 @@ MOI calc_under_tri(vector3d tri[3], int res){
 		vol_cent.y = plane_line_intersect(pcenter, norm, vol_cent, vector3d(0,1,0), &s).y/2.0f;
 
 		if(s){
-			ret += calc_cuboid_MOI(vol_cent, R-L, abs(vol_cent.y*2), pz);
+			ret += calc_cuboid_MOI(vol_cent, R-L, fabs(vol_cent.y*2), pz);
 		}
 	}
 	if(norm.y<0)

@@ -222,20 +222,20 @@ public:
 		vector3d& min_box = data.bounding_box_min_point_overridden ? data.bounding_box_min_point_override : data.bounding_box_min_point;
 		vector3d& max_box = data.bounding_box_max_point_overridden ? data.bounding_box_max_point_override : data.bounding_box_max_point;
 		vector3d size = max_box - min_box;
-		wxString info(wxString::Format(_("Poly Count:       %i\nChild Poly Count: %i\nTotal:            %i\n"),
+		std::string info(fmt::sprintf("Poly Count:       %zu\nChild Poly Count: %zu\nTotal:            %zu\n",
 			data.polygons.size(),
 			model.get_child_subobj_poly_count(sobj_num),
 			data.polygons.size() + model.get_child_subobj_poly_count(sobj_num)));
-		info += wxString::Format(_("Vertices: %i\n"), count_vertices());
-		info += wxString::Format(_("Normals: %i\n"), count_normals());
-		info += wxString::Format(_("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  "),
+		info += fmt::sprintf("Vertices: %zu\n", count_vertices());
+		info += fmt::sprintf("Normals: %zu\n", count_normals());
+		info += fmt::sprintf("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  ",
 			fabs(size.y), fabs(size.x), fabs(size.z));
 		if (data.parent_sobj > -1) {
-			info += wxString(model.SOBJ(data.parent_sobj).name.c_str(), wxConvUTF8);
+			info += model.SOBJ(data.parent_sobj).name.c_str();
 		} else {
-			info += _("*NONE*");
+			info += "*NONE*";
 		}
-		sobj_info->set_value(std::string(info.mb_str()));
+		sobj_info->set_value(info);
 	}
 
 	//applies the data in the control to the model

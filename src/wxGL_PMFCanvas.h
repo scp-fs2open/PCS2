@@ -64,6 +64,11 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		projection_mode proj_mode;
 		bool draw_the_grid;
 
+		wxGLContext* m_context;
+		bool m_opengl_init;
+
+		void opengl_init();
+
 		vector3d get_movement_plane_norm(){
 			switch(UI_plane){
 			case XZ_PLANE:
@@ -143,12 +148,12 @@ class wxGL_PMFCanvas : public wxGLCanvas
 
 		void projection_matrix(float fovy, float aspect, float zNear, float zFar);
 
-		void set_ambient_light(byte r, byte g, byte b){
+		void set_ambient_light(unsigned char r, unsigned char g, unsigned char b){
 			ambient_light[0] = float(r)/255.0f;
 			ambient_light[1] = float(g)/255.0f;
 			ambient_light[2] = float(b)/255.0f;
 		}
-		void set_diffuse_light(byte r, byte g, byte b){
+		void set_diffuse_light(unsigned char r, unsigned char g, unsigned char b){
 			diffuse_light[0] = float(r)/255.0f;
 			diffuse_light[1] = float(g)/255.0f;
 			diffuse_light[2] = float(b)/255.0f;

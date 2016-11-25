@@ -201,8 +201,8 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 //*******************************************************************************
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
- : wxGLCanvas(parent, id, pos, sz, 0, _("GLCanvas"), attriblist), 
-   	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
+ : wxGLCanvas(parent, id, attriblist, pos, sz, 0, _("GLCanvas")),
+	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), m_context(nullptr), m_opengl_init(false), position(0,0,0), rotation(0,0,0)
 {
 	free_axis[0]=true;
 	free_axis[1]=true;
@@ -214,33 +214,7 @@ wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoi
 
 void wxGL_PMFCanvas::Init() {
 	FreezeRender = false;
-	this->SetCurrent();
-	// === === === Init GL === === === 
-	// Initialize OpenGL function table
-	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
-	renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
-	version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
-	/*std::string extensions = (char*)glGetString(GL_EXTENSIONS);
-	GLFunctions.LoadFunctionTable();*/
-
-	glClearDepth(1.0f);									// Depth Buffer Setup
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
-	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	glShadeModel(GL_SMOOTH);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-	glEnable(GL_NORMALIZE);
-	
-	glClearColor(0, 0, 0, 1.0f);				// Black Background
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-//	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-	glEnable(GL_COLOR_SUM);
+	m_context = new wxGLContext(this);
 
 	Reinit(true);
 //	gr_debug = new debug_window(wxGetTopLevelParent(parent), GR_DEBUG_WINDOW, "Graphics Debug Output", wxPoint(1024-200,768-150), wxSize(200,150));
@@ -272,9 +246,6 @@ void wxGL_PMFCanvas::OnSize(wxSizeEvent& event)
 	if (FreezeRender) // this is a no-no if we're froze
 		return;
 
-	
-	this->SetCurrent();
-
 	// Tell openGL
 	glViewport(0, 0, (GLsizei)event.GetSize().GetWidth(), (GLsizei)event.GetSize().GetHeight());
   
@@ -301,8 +272,6 @@ void wxGL_PMFCanvas::OnSize(wxSizeEvent& event)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	*/
-
-	Render();
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -315,6 +284,7 @@ bool wxGL_PMFCanvas::Destroy()
 	FreezeRender = true;
 	while (IsRendering);
 	tex_ctrl.Reset();
+	delete m_context;
 	return true;
 }
 
@@ -388,6 +358,33 @@ void wxGL_PMFCanvas::reset_view(){
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+void wxGL_PMFCanvas::opengl_init(){
+		// === === === Init GL === === ===
+		vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
+		renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
+		version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
+
+		glClearDepth(1.0f);									// Depth Buffer Setup
+		glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
+		glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+		glShadeModel(GL_SMOOTH);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+		glEnable(GL_NORMALIZE);
+
+		glClearColor(0, 0, 0, 1.0f);				// Black Background
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+
+		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+		glEnable(GL_COLOR_SUM);
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 
 void wxGL_PMFCanvas::Render()
 {	
@@ -395,7 +392,10 @@ void wxGL_PMFCanvas::Render()
 		return;
 
 	IsRendering = true;
-	this->SetCurrent();
+	this->SetCurrent(*m_context);
+	if (!m_opengl_init) {
+		opengl_init();
+	}
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
@@ -410,7 +410,7 @@ void wxGL_PMFCanvas::Render()
 		float asp = (float)GetSize().GetWidth()/(float)GetSize().GetHeight();
 
 		if(proj_mode == PROJ_ORTHO){
-			float z = (position.z+log(abs(position.z)+1.0f))/1.25f;
+			float z = (position.z+log(fabs(position.z)+1.0f))/1.25f;
 			glOrtho((asp+position.x/1000.0f)*z, (-asp+position.x/1000.0f)*z, (1.0f+position.y/1000.0f)*z, (-1.0f+position.y/1000.0f)*z, -500.0, 50000.0);
 		}else{
 			gluPerspective( 75.0f, asp, 1.0f, 250000.0f );
@@ -722,12 +722,12 @@ ERROR_CHECK;
 	glBegin(GL_LINES);
 	float i;
 
-	float scale = pow(10.0f, int(log(abs(rad)))/int(log(10.0f))-2);
+	float scale = pow(10.0f, int(log(fabs(rad)))/int(log(10.0f))-2);
 	//how far the types of grid lines will be apart
 
 	//make finest lines around the thing your editing
-	float u_dir = point[u]/abs(point[u]) * 0.5;
-	float v_dir = point[v]/abs(point[v]) * 0.5;
+	float u_dir = point[u]/fabs(point[u]) * 0.5;
+	float v_dir = point[v]/fabs(point[v]) * 0.5;
 	float pu = int((point[u])/scale+u_dir)*scale;
 	float pv = int((point[v])/scale+v_dir)*scale;
 	for(i = -10; i<11; i++){

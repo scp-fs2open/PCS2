@@ -371,6 +371,9 @@ void *wxPCS2OpenThread::Entry()
 				case -6:
 					progress->setMessage("No Detail Geometry Present (Detail Geometry name cannot match \"insig*\", \"shield*\" or \"debris*\").");
 
+				case -7:
+					progress->setMessage("File too large (> 4GB, _probably_)");
+
 				default:
 					progress->setMessage("No error message exists for this error, bitch at kazan!");
 					break;
