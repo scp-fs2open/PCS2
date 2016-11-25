@@ -202,7 +202,7 @@ DEFINE_EVENT_TYPE(OMNIPOINT_RAY_PICKED)
 
 wxGL_PMFCanvas::wxGL_PMFCanvas(wxWindow* parent, main_panel* main, int id, wxPoint pos, wxSize sz, PCS_Model &ship, int *attriblist)
  : wxGLCanvas(parent, id, attriblist, pos, sz, 0, _("GLCanvas")),
-   	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), position(0,0,0), rotation(0,0,0)
+	omni_selected_list(-1), omni_selected_item(-1),model(ship),previus_focus(NULL),kShiftdown(false),FreezeRender(true), IsRendering(false), mainpanel(main), gr_debug(NULL),UI_plane(XZ_PLANE),proj_mode(PROJ_PERSP), draw_the_grid(false), m_context(nullptr), m_opengl_init(false), position(0,0,0), rotation(0,0,0)
 {
 	free_axis[0]=true;
 	free_axis[1]=true;
@@ -358,6 +358,33 @@ void wxGL_PMFCanvas::reset_view(){
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
+void wxGL_PMFCanvas::opengl_init(){
+		// === === === Init GL === === ===
+		vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
+		renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
+		version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
+
+		glClearDepth(1.0f);									// Depth Buffer Setup
+		glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
+		glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
+		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+		glShadeModel(GL_SMOOTH);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+		glEnable(GL_NORMALIZE);
+
+		glClearColor(0, 0, 0, 1.0f);				// Black Background
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+
+		glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+		glEnable(GL_COLOR_SUM);
+}
+
+//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 
 void wxGL_PMFCanvas::Render()
 {	
@@ -366,28 +393,9 @@ void wxGL_PMFCanvas::Render()
 
 	IsRendering = true;
 	this->SetCurrent(*m_context);
-	// === === === Init GL === === ===
-	vendor = wxString((char*)glGetString(GL_VENDOR), wxConvUTF8);
-	renderer = wxString((char*)glGetString(GL_RENDERER), wxConvUTF8);
-	version = wxString((char*)glGetString(GL_VERSION), wxConvUTF8);
-
-	glClearDepth(1.0f);									// Depth Buffer Setup
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
-	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	glShadeModel(GL_SMOOTH);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-	glEnable(GL_NORMALIZE);
-
-	glClearColor(0, 0, 0, 1.0f);				// Black Background
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glEnable(GL_COLOR_SUM);
+	if (!m_opengl_init) {
+		opengl_init();
+	}
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);

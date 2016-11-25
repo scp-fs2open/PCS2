@@ -64,6 +64,11 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		projection_mode proj_mode;
 		bool draw_the_grid;
 
+		wxGLContext* m_context;
+		bool m_opengl_init;
+
+		void opengl_init();
+
 		vector3d get_movement_plane_norm(){
 			switch(UI_plane){
 			case XZ_PLANE:
@@ -85,8 +90,6 @@ class wxGL_PMFCanvas : public wxGLCanvas
 		}
 
 		void draw_grid(vector3d min, vector3d max, vector3d point);
-
-		wxGLContext* m_context;
 
 	public:
 		//omnipoint stuff
