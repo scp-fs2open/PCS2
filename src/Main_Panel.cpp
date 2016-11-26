@@ -187,7 +187,7 @@ main_panel::main_panel(wxFrame* parent)
 	pgauge = new wxGauge(pstatus, -1, 100,
 								wxPoint(widths[0]+5, 3), 
 								wxSize(widths[1], 17),
-								wxGA_SMOOTH);
+								wxGA_SMOOTH | wxGA_HORIZONTAL);
 
 	//+++++++++end status bar stuff
 
@@ -1198,11 +1198,10 @@ void main_panel::SignalModelChange(std::string filename, bool skipProgdlg)
 		wxSetWorkingDirectory(tdir);
 	}
 	glcanvas->FreezeRender = true;
-	//while (glcanvas->IsRendering);
 
 	AsyncProgress* prog_messenger;
 
-	if (filename != "")
+	if (!filename.empty())
 	{
 		prog_messenger = new wxAsyncProgress(this, OPEN_FILE_PROGRESS_MESSAGER);
 		model.Reset();
@@ -1218,8 +1217,6 @@ void main_panel::SignalModelChange(std::string filename, bool skipProgdlg)
 		glcanvas->FreezeRender = false;
 		glcanvas->Reinit(false);
 	}
-
-	
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
