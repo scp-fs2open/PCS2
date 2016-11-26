@@ -1192,8 +1192,8 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 void main_panel::SignalModelChange(std::string filename, bool skipProgdlg) 
 {
 	UseThreadedProgBar = !skipProgdlg;
-	wxString tdir;
-	wxFileName::SplitPath(wxString(filename.c_str(), wxConvUTF8), &tdir, nullptr, nullptr);
+
+	wxString tdir = wxFileName(filename).GetPath();
 	if (wxFileName::DirExists(tdir)) {
 		wxSetWorkingDirectory(tdir);
 	}
