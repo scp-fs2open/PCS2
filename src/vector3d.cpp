@@ -410,24 +410,21 @@ void ExpandBoundingBoxes(vector3d &max, vector3d &min, const vector3d &cur)
 float FindObjectRadius(const vector3d &max, const vector3d &min, const vector3d &center)
 {
 	vector3d temp_vector;
-		// Set Radius
-	if (fabs(max.x-center.x) >
-		fabs(center.x-min.x))
-		temp_vector.x = fabs(max.x-center.x);
+	// Set Radius
+	if (std::fabs(max.x-center.x) > std::fabs(center.x-min.x))
+		temp_vector.x = std::fabs(max.x-center.x);
 	else
-		temp_vector.x = fabs(center.x-min.x);
+		temp_vector.x = std::fabs(center.x-min.x);
 	
-	if (fabs(max.y-center.y) >
-		fabs(center.y-min.y))
-		temp_vector.y = fabs(max.y-center.y);
+	if (std::fabs(max.y-center.y) > std::fabs(center.y-min.y))
+		temp_vector.y = std::fabs(max.y-center.y);
 	else
-		temp_vector.y = fabs(center.y-min.y);
+		temp_vector.y = std::fabs(center.y-min.y);
 	
-	if (fabs(max.z-center.z) >
-		fabs(center.z-min.z))
-		temp_vector.z = fabs(max.z-center.z);
+	if (std::fabs(max.z-center.z) > std::fabs(center.z-min.z))
+		temp_vector.z = std::fabs(max.z-center.z);
 	else
-		temp_vector.z = fabs(center.z-min.z);
+		temp_vector.z = std::fabs(center.z-min.z);
 	return Magnitude(temp_vector);
 }
 
@@ -529,9 +526,9 @@ int point_face(vector3d *checkp, std::vector<vector3d> verts, vector3d * norm1)
 	norm = (float *)norm1;
 
 	//project polygon onto plane by finding largest component of normal
-	t.x = fabsf(norm[0]); 
-	t.y = fabsf(norm[1]); 
-	t.z = fabsf(norm[2]);
+	t.x = std::fabs(norm[0]);
+	t.y = std::fabs(norm[1]);
+	t.z = std::fabs(norm[2]);
 
 	if (t.x > t.y) if (t.x > t.z) i0=0; else i0=2;
 	else if (t.y > t.z) i0=1; else i0=2;

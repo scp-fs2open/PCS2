@@ -1284,7 +1284,7 @@ void main_panel::on_moi_recalc(wxCommandEvent& event){
 			return;
 		vector3d min = model.GetMinBounding();
 		vector3d max = model.GetMaxBounding();
-		model.SetMOI(model.moi_recalculate(log(fabs(max.x-min.x)+10)+10, log(fabs(max.z-min.z)+10)+10).a2d);
+		model.SetMOI(model.moi_recalculate(log(std::fabs(max.x-min.x)+10.0f)+10.0f, log(std::fabs(max.z-min.z)+10.0f)+10.0f).a2d);
 
 		control_panel->set_data(model);
 }

@@ -37,7 +37,7 @@ matrix::matrix(vector3d basis) {
 // Construct a rotation matrix from a given rotation angle
 matrix::matrix(float angle) {
 	memset(a2d,0,sizeof(a2d));
-	if (fabs(angle - round(angle)) < 10e-5 && ((int)round(angle) % 90) == 0) {
+	if (std::fabs(angle - std::round(angle)) < 10e-5 && ((int)std::round(angle) % 90) == 0) {
 		int quarters = ((((int)round(angle)) / 90) + 4) % 4;
 		switch(quarters) {
 			case 0:

@@ -373,7 +373,7 @@ public:
 	virtual void set_value_with_default(float v, float default_val){
 		this->default_value = default_val;
 		set_value(v);
-		if (fabs(v - default_val) > 1e-5f) {
+		if (std::fabs(v - default_val) > 1e-5f) {
 			EnableButton();
 		} else {
 			DisableButton();
@@ -386,7 +386,7 @@ public:
 
 	bool is_overridden(){
 		float value = get_value();
-		bool overridden = fabs(value - default_value) > 1e-5f;
+		bool overridden = std::fabs(value - default_value) > 1e-5f;
 		if (overridden) {
 			EnableButton();
 		} else {
