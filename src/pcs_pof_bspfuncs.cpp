@@ -592,9 +592,9 @@ bool Bisect(const vector3d& cmax, const vector3d& cmin,
 	vector3d difference;
 	if (centera==NULL || centerb==NULL)
 	{
-		x = (float)fabs(double(cmax.x-cmin.x));
-		y = (float)fabs(double(cmax.y-cmin.y));
-		z = (float)fabs(double(cmax.z-cmin.z));
+		x = std::fabs(cmax.x-cmin.x);
+		y = std::fabs(cmax.y-cmin.y);
+		z = std::fabs(cmax.z-cmin.z);
 
 		difference = vector3d(x,y,z);
 		difference = difference / 2;
@@ -602,9 +602,9 @@ bool Bisect(const vector3d& cmax, const vector3d& cmin,
 	}
 	else
 	{
-		x = (float)fabs((double)centera->x-centerb->x);
-		y = (float)fabs((double)centera->y-centerb->y);
-		z = (float)fabs((double)centera->z-centerb->z);
+		x = std::fabs(centera->x-centerb->x);
+		y = std::fabs(centera->y-centerb->y);
+		z = std::fabs(centera->z-centerb->z);
 
 		difference = *centera + *centerb;
 		p_point = difference / 2;
@@ -627,7 +627,7 @@ bool Bisect(const vector3d& cmax, const vector3d& cmin,
 		axis = 2;
 		p_norm = MakeVector(0.0, 0.0, 1.0);
 	}
-	if (difference[axis] < 10 * std::numeric_limits<float>::epsilon() * std::max(fabs(cmax[axis]), fabs(cmin[axis]))) {
+	if (difference[axis] < 10 * std::numeric_limits<float>::epsilon() * std::max(std::fabs(cmax[axis]), std::fabs(cmin[axis]))) {
 		return false;
 	}
 	polylist_comparator comparator(&polygons, axis);

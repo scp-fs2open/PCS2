@@ -539,9 +539,9 @@ void DAEHandler::process_sobj_rotate(pugi::xml_node& element, matrix rotation, p
 	x = dot(rotate, {1, 0, 0});
 	y = dot(rotate, {0, 1, 0});
 	z = dot(rotate, {0, 0, 1});
-	x_abs = fabs(x);
-	y_abs = fabs(y);
-	z_abs = fabs(z);
+	x_abs = std::fabs(x);
+	y_abs = std::fabs(y);
+	z_abs = std::fabs(z);
 	float length;
 	if (x_abs > y_abs) {
 		if (x_abs > z_abs) {
@@ -2363,7 +2363,7 @@ void DAESaver::write_transform_binormal(pugi::xml_node& element, const vector3d&
 	element.append_attribute("sid") = "matrix";
 	int order[3] = {0, 2, 1};
 	vector3d one(MakeUnitVector(norm)), two(MakeUnitVector(binorm)), three;
-	if (fabs(dot(one, two)) > 0.9) {
+	if (std::fabs(dot(one, two)) > 0.9) {
 		two = {0, 1, 0};
 	}
 	two = MakeUnitVector(two - dot(one, two) * one);

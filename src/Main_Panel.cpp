@@ -187,7 +187,7 @@ main_panel::main_panel(wxFrame* parent)
 	pgauge = new wxGauge(pstatus, -1, 100,
 								wxPoint(widths[0]+5, 3), 
 								wxSize(widths[1], 17),
-								wxGA_SMOOTH);
+								wxGA_SMOOTH | wxGA_HORIZONTAL);
 
 	//+++++++++end status bar stuff
 
@@ -1192,17 +1192,16 @@ void main_panel::texture_progbar_end(wxAsyncProgressEndEvt &event)
 void main_panel::SignalModelChange(std::string filename, bool skipProgdlg) 
 {
 	UseThreadedProgBar = !skipProgdlg;
-	wxString tdir;
-	wxFileName::SplitPath(wxString(filename.c_str(), wxConvUTF8), &tdir, nullptr, nullptr);
+
+	wxString tdir = wxFileName(filename).GetPath();
 	if (wxFileName::DirExists(tdir)) {
 		wxSetWorkingDirectory(tdir);
 	}
 	glcanvas->FreezeRender = true;
-	//while (glcanvas->IsRendering);
 
 	AsyncProgress* prog_messenger;
 
-	if (filename != "")
+	if (!filename.empty())
 	{
 		prog_messenger = new wxAsyncProgress(this, OPEN_FILE_PROGRESS_MESSAGER);
 		model.Reset();
@@ -1218,8 +1217,6 @@ void main_panel::SignalModelChange(std::string filename, bool skipProgdlg)
 		glcanvas->FreezeRender = false;
 		glcanvas->Reinit(false);
 	}
-
-	
 }
 
 //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1287,7 +1284,7 @@ void main_panel::on_moi_recalc(wxCommandEvent& event){
 			return;
 		vector3d min = model.GetMinBounding();
 		vector3d max = model.GetMaxBounding();
-		model.SetMOI(model.moi_recalculate(log(fabs(max.x-min.x)+10)+10, log(fabs(max.z-min.z)+10)+10).a2d);
+		model.SetMOI(model.moi_recalculate(log(std::fabs(max.x-min.x)+10.0f)+10.0f, log(std::fabs(max.z-min.z)+10.0f)+10.0f).a2d);
 
 		control_panel->set_data(model);
 }

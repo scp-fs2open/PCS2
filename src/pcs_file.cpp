@@ -717,7 +717,7 @@ int PCS_Model::LoadFromPMF(std::string filename, AsyncProgress* progress)
 	header.min_bounding_overridden = header.min_bounding_override != header.min_bounding;
 	header.max_bounding_overridden = header.max_bounding_override != header.max_bounding;
 	for (auto& sobj : subobjects) {
-		sobj.radius_overridden = fabs(sobj.radius - sobj.radius_override) > 0.0001f;
+		sobj.radius_overridden = std::fabs(sobj.radius - sobj.radius_override) > 0.0001f;
 		sobj.bounding_box_min_point_overridden = sobj.bounding_box_min_point != sobj.bounding_box_min_point_override;
 		sobj.bounding_box_max_point_overridden = sobj.bounding_box_max_point != sobj.bounding_box_max_point_override;
 	}
@@ -2522,8 +2522,8 @@ void PCS_Model::Transform(const matrix& transform, const vector3d& translation) 
 		}
 	}
 	header.mass_center = transform * header.mass_center + translation;
-	header.mass *= fabs(transform.determinant());
-	header.max_radius_override *= fabs(transform.determinant());
+	header.mass *= std::fabs(transform.determinant());
+	header.max_radius_override *= std::fabs(transform.determinant());
 	header.min_bounding_override = transform * header.min_bounding_override + translation;
 	header.max_bounding_override = transform * header.max_bounding_override + translation;
 }

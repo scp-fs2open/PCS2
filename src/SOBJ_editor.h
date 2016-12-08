@@ -229,7 +229,7 @@ public:
 		info += fmt::sprintf("Vertices: %zu\n", count_vertices());
 		info += fmt::sprintf("Normals: %zu\n", count_normals());
 		info += fmt::sprintf("H: %0.2f, W: %0.2f, D: %0.2f\nParent submodel:  ",
-			fabs(size.y), fabs(size.x), fabs(size.z));
+			std::fabs(size.y), std::fabs(size.x), std::fabs(size.z));
 		if (data.parent_sobj > -1) {
 			info += model.SOBJ(data.parent_sobj).name.c_str();
 		} else {

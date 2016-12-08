@@ -162,7 +162,7 @@ public:
 		vector3d& min_box = data.min_bounding_overridden ? data.min_bounding_override : data.min_bounding;
 		vector3d& max_box = data.max_bounding_overridden ? data.max_bounding_override : data.max_bounding;
 		vector3d size = max_box - min_box;
-		hinfo->set_value(fmt::sprintf("H: %0.2f, W: %0.2f, D: %0.2f", fabs(size.y), fabs(size.x), fabs(size.z) ));
+		hinfo->set_value(fmt::sprintf("H: %0.2f, W: %0.2f, D: %0.2f", std::fabs(size.y), std::fabs(size.x), std::fabs(size.z) ));
 	}
 
 	//applies the data in the control to the model

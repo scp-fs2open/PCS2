@@ -603,12 +603,12 @@ class PCS_Model
 			//gets the average size of the model
 			float get_avg_dimintion(){
 				float d[6];
-				d[0] = fabs(header.min_bounding.x);
-				d[1] = fabs(header.min_bounding.y);
-				d[2] = fabs(header.min_bounding.z);
-				d[3] = fabs(header.max_bounding.x);
-				d[4] = fabs(header.max_bounding.y);
-				d[5] = fabs(header.max_bounding.z);
+				d[0] = std::fabs(header.min_bounding.x);
+				d[1] = std::fabs(header.min_bounding.y);
+				d[2] = std::fabs(header.min_bounding.z);
+				d[3] = std::fabs(header.max_bounding.x);
+				d[4] = std::fabs(header.max_bounding.y);
+				d[5] = std::fabs(header.max_bounding.z);
 
 				float avg = 0;
 				for(int i = 0; i<6; i++){

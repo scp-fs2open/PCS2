@@ -163,10 +163,10 @@ MOI calc_under_tri(vector3d tri[3], int res){
 		vol_cent.z = float(pz);
 
 		bool s;//if the intersect fails, we will be  in a world of hurt
-		vol_cent.y = plane_line_intersect(pcenter, norm, vol_cent, vector3d(0,1,0), &s).y/2.0f;
+		vol_cent.y = plane_line_intersect(pcenter, norm, vol_cent, vector3d(0.0f,1.0f,0.0f), &s).y/2.0f;
 
 		if(s){
-			ret += calc_cuboid_MOI(vol_cent, R-L, fabs(vol_cent.y*2), pz);
+			ret += calc_cuboid_MOI(vol_cent, R-L, std::fabs(vol_cent.y*2.0f), pz);
 		}
 	}
 	if(norm.y<0)

@@ -410,7 +410,7 @@ void wxGL_PMFCanvas::Render()
 		float asp = (float)GetSize().GetWidth()/(float)GetSize().GetHeight();
 
 		if(proj_mode == PROJ_ORTHO){
-			float z = (position.z+log(fabs(position.z)+1.0f))/1.25f;
+			float z = (position.z+log(std::fabs(position.z)+1.0f))/1.25f;
 			glOrtho((asp+position.x/1000.0f)*z, (-asp+position.x/1000.0f)*z, (1.0f+position.y/1000.0f)*z, (-1.0f+position.y/1000.0f)*z, -500.0, 50000.0);
 		}else{
 			gluPerspective( 75.0f, asp, 1.0f, 250000.0f );
@@ -722,12 +722,12 @@ ERROR_CHECK;
 	glBegin(GL_LINES);
 	float i;
 
-	float scale = pow(10.0f, int(log(fabs(rad)))/int(log(10.0f))-2);
+	float scale = pow(10.0f, int(log(std::fabs(rad)))/int(log(10.0f))-2);
 	//how far the types of grid lines will be apart
 
 	//make finest lines around the thing your editing
-	float u_dir = point[u]/fabs(point[u]) * 0.5;
-	float v_dir = point[v]/fabs(point[v]) * 0.5;
+	float u_dir = point[u]/std::fabs(point[u]) * 0.5;
+	float v_dir = point[v]/std::fabs(point[v]) * 0.5;
 	float pu = int((point[u])/scale+u_dir)*scale;
 	float pv = int((point[v])/scale+v_dir)*scale;
 	for(i = -10; i<11; i++){

@@ -704,9 +704,9 @@ void pcs_thrust_glow::Transform(const matrix& transform, const vector3d& transla
 	norm_after = Magnitude(norm);
 	norm = SafeMakeUnitVector(norm);
 	if (norm_after > 1e-5) {
-		radius *= sqrt(fabs(transform.determinant() / norm_after * norm_before));
+		radius *= sqrt(std::fabs(transform.determinant() / norm_after * norm_before));
 	} else {
-		radius *= pow(fabs(transform.determinant()), 1.0f / 3);
+		radius *= pow(std::fabs(transform.determinant()), 1.0f / 3);
 	}
 }
 
@@ -741,7 +741,7 @@ void pcs_path::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_pvert::Transform(const matrix& transform, const vector3d& translation) {
 	pos = transform * pos + translation;
-	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
+	radius *= pow(std::fabs(transform.determinant()), 1.0f / 3);
 }
 
 void pcs_dock_point::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
@@ -781,7 +781,7 @@ void pcs_slot::Transform(const matrix& transform, const vector3d& translation) {
 
 void pcs_special::Transform(PCS_Model& model, const matrix& transform, const vector3d& translation) {
 	point = transform * point + translation;
-	radius *= pow(fabs(transform.determinant()), 1.0f / 3);
+	radius *= pow(std::fabs(transform.determinant()), 1.0f / 3);
 	for (int i = 0; i < model.GetPathCount(); i++) {
 		pcs_path& path = model.Path(i);
 		if (!path.parent.empty() &&

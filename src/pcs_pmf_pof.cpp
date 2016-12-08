@@ -1098,11 +1098,11 @@ int PCS_Model::LoadFromPOF(std::string filename, AsyncProgress* progress)
 		//bspdata = NULL;
 	}
 	Transform(matrix(), vector3d());
-	header.max_radius_overridden = fabs(header.max_radius - header.max_radius_override) > 0.0001f;
+	header.max_radius_overridden = std::fabs(header.max_radius - header.max_radius_override) > 0.0001f;
 	header.max_bounding_overridden = header.max_bounding != header.max_bounding_override;
 	header.min_bounding_overridden = header.min_bounding != header.min_bounding_override;
 	for (auto& sobj : subobjects) {
-		sobj.radius_overridden = fabs(sobj.radius - sobj.radius_override) > 0.0001f;
+		sobj.radius_overridden = std::fabs(sobj.radius - sobj.radius_override) > 0.0001f;
 		sobj.bounding_box_min_point_overridden = sobj.bounding_box_min_point != sobj.bounding_box_min_point_override;
 		sobj.bounding_box_max_point_overridden = sobj.bounding_box_max_point != sobj.bounding_box_max_point_override;
 	}
