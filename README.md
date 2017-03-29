@@ -67,6 +67,7 @@ If a bug is already reported, add a note to the existing issue, otherwise create
 ---------------------------------------------------
 # 5. Document History
 ---------------------------------------------------
+  * Mar 29, 2017 - Updated bug reporting
   * Jan 26. 2014 - Updated for 2.1
   * May 15. 2008 - Updated for 2.0.2 added Reporting bugs
   * Feb 11, 2008 - Updated for 2.0.1
