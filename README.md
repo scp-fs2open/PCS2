@@ -61,12 +61,13 @@ All supported formats go through PMF as an intermediary and as the active model 
 ---------------------------------------------------
 # 4. Reporting bugs
 ---------------------------------------------------
-To report a bug register an account at http://www.ferrium.org/mantis/ and then check and make sure your
-bug is not already reported - if it is add a note to the existing bug report, otherwise create a new report.
+Since the loss of http://www.ferrium.org/mantis/ all bugs should be reported here via the Github issue tracker.
+If a bug is already reported, add a note to the existing issue, otherwise create a new issue.
 
 ---------------------------------------------------
 # 5. Document History
 ---------------------------------------------------
+  * Mar 29, 2017 - Updated bug reporting
   * Jan 26. 2014 - Updated for 2.1
   * May 15. 2008 - Updated for 2.0.2 added Reporting bugs
   * Feb 11, 2008 - Updated for 2.0.1
