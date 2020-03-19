@@ -62,6 +62,7 @@
 #else // GLX
 	#define __glext_h_  /* prevent glext.h from being included  */
 	#define __glxext_h_ /* prevent glxext.h from being included */
+	#define GL_GLEXT_PROTOTYPES
 	#define GLX_GLXEXT_PROTOTYPES
 	#include <GL/gl.h>
 	#include <GL/glx.h>
