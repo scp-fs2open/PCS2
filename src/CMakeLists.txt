@@ -138,7 +138,7 @@ if(WIN32)
 
 	set(Boost_USE_STATIC_RUNTIME    OFF)
 endif()
-find_package(Boost REQUIRED COMPONENTS system filesystem regex)
+find_package(Boost 1.72.0 REQUIRED COMPONENTS system filesystem regex)
 
 target_link_libraries(pcs2 PRIVATE ${Boost_LIBRARIES})
 target_include_directories(pcs2 PRIVATE ${Boost_INCLUDE_DIRS})
@@ -147,7 +147,7 @@ target_include_directories(pcs2 PRIVATE ${Boost_INCLUDE_DIRS})
 find_package(DevIL REQUIRED)
 
 target_link_libraries(pcs2 PRIVATE ${IL_LIBRARIES} ${ILU_LIBRARIES} ${ILUT_LIBRARIES})
-target_include_directories(pcs2 PRIVATE ${IL_INCLUDE_DIR})
+target_include_directories(pcs2 PRIVATE ${IL_INCLUDE_DIR}/..)
 target_compile_definitions(pcs2 PRIVATE ILUT_USE_OPENGL)
 
 if(WIN32)
@@ -155,7 +155,7 @@ else()
 	set(wxWidgets_USE_DEBUG TRUE)
 	set(wxWidgets_USE_UNICODE TRUE)
 endif()
-find_package(wxWidgets 3.0.2 REQUIRED COMPONENTS core base gl adv)
+find_package(wxWidgets 3.0.5 REQUIRED COMPONENTS core base gl adv)
 
 target_include_directories(pcs2 PRIVATE ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(pcs2 PRIVATE ${wxWidgets_LIBRARIES})

@@ -8,7 +8,7 @@
 #include <limits>
 #include <map>
 #include <unordered_map>
-#include <boost/tr1/regex.hpp>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -694,8 +694,8 @@ void DAEHandler::process_glowpoints_properties(pcs_glow_array &glowbank) {
 }
 
 string strip_texture(string name) {
-	std::tr1::regex re("([^/\\\\]+?)(?:\\.[^./\\\\]+)?$");
-	return std::tr1::regex_replace(name, re, "$1", std::tr1::regex_constants::format_no_copy | std::tr1::regex_constants::format_first_only);
+	boost::regex re("([^/\\\\]+?)(?:\\.[^./\\\\]+)?$");
+	return boost::regex_replace(name, re, "$1", boost::regex_constants::format_no_copy | boost::regex_constants::format_first_only);
 
 }
 
